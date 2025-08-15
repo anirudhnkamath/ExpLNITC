@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.8.2.  */
+/* A Bison parser, made by GNU Bison 3.5.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2020 Free Software Foundation,
    Inc.
 
    This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -31,9 +31,8 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
-   especially those whose name start with YY_ or yy_.  They are
-   private implementation details that can be changed or removed.  */
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
 
 #ifndef YY_YY_Y_TAB_H_INCLUDED
 # define YY_YY_Y_TAB_H_INCLUDED
@@ -45,62 +44,53 @@
 extern int yydebug;
 #endif
 
-/* Token kinds.  */
+/* Token type.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    YYEMPTY = -2,
-    YYEOF = 0,                     /* "end of file"  */
-    YYerror = 256,                 /* error  */
-    YYUNDEF = 257,                 /* "invalid token"  */
-    ALIAS = 258,                   /* ALIAS  */
-    DEFINE = 259,                  /* DEFINE  */
-    DO = 260,                      /* DO  */
-    ELSE = 261,                    /* ELSE  */
-    ENDIF = 262,                   /* ENDIF  */
-    ENDWHILE = 263,                /* ENDWHILE  */
-    IF = 264,                      /* IF  */
-    RETURN = 265,                  /* RETURN  */
-    IRETURN = 266,                 /* IRETURN  */
-    LOAD = 267,                    /* LOAD  */
-    STORE = 268,                   /* STORE  */
-    THEN = 269,                    /* THEN  */
-    WHILE = 270,                   /* WHILE  */
-    HALT = 271,                    /* HALT  */
-    REG = 272,                     /* REG  */
-    NUM = 273,                     /* NUM  */
-    ASSIGNOP = 274,                /* ASSIGNOP  */
-    ARITHOP1 = 275,                /* ARITHOP1  */
-    ARITHOP2 = 276,                /* ARITHOP2  */
-    RELOP = 277,                   /* RELOP  */
-    LOGOP = 278,                   /* LOGOP  */
-    NOTOP = 279,                   /* NOTOP  */
-    ID = 280,                      /* ID  */
-    BREAK = 281,                   /* BREAK  */
-    CONTINUE = 282,                /* CONTINUE  */
-    CHKPT = 283,                   /* CHKPT  */
-    READ = 284,                    /* READ  */
-    READI = 285,                   /* READI  */
-    PRINT = 286,                   /* PRINT  */
-    STRING = 287,                  /* STRING  */
-    INLINE = 288,                  /* INLINE  */
-    BACKUP = 289,                  /* BACKUP  */
-    RESTORE = 290,                 /* RESTORE  */
-    LOADI = 291,                   /* LOADI  */
-    GOTO = 292,                    /* GOTO  */
-    CALL = 293,                    /* CALL  */
-    ENCRYPT = 294,                 /* ENCRYPT  */
-    PORT = 295,                    /* PORT  */
-    UMIN = 296                     /* UMIN  */
+    ALIAS = 258,
+    DEFINE = 259,
+    DO = 260,
+    ELSE = 261,
+    ENDIF = 262,
+    ENDWHILE = 263,
+    IF = 264,
+    RETURN = 265,
+    IRETURN = 266,
+    LOAD = 267,
+    STORE = 268,
+    THEN = 269,
+    WHILE = 270,
+    HALT = 271,
+    REG = 272,
+    NUM = 273,
+    ASSIGNOP = 274,
+    ARITHOP1 = 275,
+    ARITHOP2 = 276,
+    RELOP = 277,
+    LOGOP = 278,
+    NOTOP = 279,
+    ID = 280,
+    BREAK = 281,
+    CONTINUE = 282,
+    CHKPT = 283,
+    READ = 284,
+    READI = 285,
+    PRINT = 286,
+    STRING = 287,
+    INLINE = 288,
+    BACKUP = 289,
+    RESTORE = 290,
+    LOADI = 291,
+    GOTO = 292,
+    CALL = 293,
+    ENCRYPT = 294,
+    PORT = 295,
+    UMIN = 296
   };
-  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Token kinds.  */
-#define YYEMPTY -2
-#define YYEOF 0
-#define YYerror 256
-#define YYUNDEF 257
+/* Tokens.  */
 #define ALIAS 258
 #define DEFINE 259
 #define DO 260
@@ -149,7 +139,7 @@ union YYSTYPE
 
     struct tree *n;
 
-#line 153 "y.tab.h"
+#line 143 "y.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -160,8 +150,6 @@ typedef union YYSTYPE YYSTYPE;
 
 extern YYSTYPE yylval;
 
-
 int yyparse (void);
-
 
 #endif /* !YY_YY_Y_TAB_H_INCLUDED  */

@@ -1,0 +1,3 @@
+yacc -d infix.y;
+lex infix.l;
+gcc y.tab.c lex.yy.c node.c -o parser;
