@@ -1,6 +1,7 @@
 #include "./codeGen.h"
 #include "../registers/registers.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 Tnode* createLeafNode(int val) {
     Tnode* node = (Tnode*)malloc(sizeof(Tnode));
@@ -30,13 +31,23 @@ void setHeader(FILE* targetFile) {
 reg_index_t codeGen(Tnode* node, FILE* targetFile) {
 
     if(node->tnodeType == INTEGER_NODE) {
-        int freeReg = getFreeRegister();
+        reg_index_t freeReg = getFreeRegister();
+        if(freeReg == E_REGFULL) {
+            printf("Registers full\n");
+            exit(1);
+        }
+
         fprintf(targetFile, "MOV R%d, %d\n", freeReg, node->val);
         return freeReg;
     }
 
     reg_index_t leftReg = codeGen(node->left, targetFile);
     reg_index_t rightReg = codeGen(node->right, targetFile);
+
+    if(leftReg == E_REGFULL || rightReg == E_REGFULL) {
+        printf("Registers full\n");
+        exit(1);
+    }
 
     switch(node->op) {
         case '+' :
@@ -65,6 +76,10 @@ reg_index_t codeGen(Tnode* node, FILE* targetFile) {
 
 void printToConsole(reg_index_t regIndex, FILE* targetFile) {
     reg_index_t freeReg = getFreeRegister();
+    if(freeReg == E_REGFULL) {
+        printf("Registers full\n");
+        exit(1);
+    }
 
     fprintf(targetFile, "MOV R%d, \"Write\"\n", freeReg);
     fprintf(targetFile, "PUSH R%d\n", freeReg);
@@ -87,6 +102,10 @@ void printToConsole(reg_index_t regIndex, FILE* targetFile) {
 
 void exitProgram(FILE* targetFile) {
     reg_index_t freeReg = getFreeRegister();
+    if(freeReg == E_REGFULL) {
+        printf("Registers full\n");
+        exit(1);
+    }
 
     fprintf(targetFile, "MOV R%d, \"Exit\"\n", freeReg);
     fprintf(targetFile, "PUSH R%d\n", freeReg);
