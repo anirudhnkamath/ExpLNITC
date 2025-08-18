@@ -1,4 +1,6 @@
 #include "./registers.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 void resetRegisters() {
     for(int i=0; i<NUM_REGISTERS; i++)
@@ -13,10 +15,13 @@ int getFreeRegister() {
         }
     }
 
+    printf("Out of registers\n");
+    exit(1);
+    
     return E_REGFULL;
 }
 
-int releaseRegister(int index) {
+int releaseRegister(reg_index_t index) {
     if(index < 0 || index > NUM_REGISTERS)
         return E_OUTOFBOUNDS;
 

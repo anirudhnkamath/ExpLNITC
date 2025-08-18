@@ -5,8 +5,21 @@
 
 #define NUM_REGISTERS 20
 
-#define OPERATOR_NODE 1
-#define INTEGER_NODE 2
+#define STATIC_ALLOC_START 4096
+
+
+enum nodeTypes {
+    NODE_CONNECTOR = 1,
+    NODE_WRITE,
+    NODE_READ,
+    NODE_ASSIGN,
+    NODE_ADD,
+    NODE_SUB,
+    NODE_DIV,
+    NODE_MULT,
+    NODE_ID_INT,
+    NODE_INT
+};
 
 enum errorCodes {
     SUCCESS = 0,

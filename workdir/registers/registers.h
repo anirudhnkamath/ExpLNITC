@@ -8,6 +8,6 @@ int registerFree[NUM_REGISTERS];
 void resetRegisters();
 
 int getFreeRegister();
-int releaseRegister(int index);
+int releaseRegister(reg_index_t index);
 
 #endif
