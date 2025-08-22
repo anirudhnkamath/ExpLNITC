@@ -9,7 +9,6 @@ typedef struct Tnode {
     struct Tnode* right;
 } Tnode;
 
-void inorder(struct Tnode* root);
 Tnode* createTnode(int tnodeType, int val, char* varName, Tnode* left, Tnode* right);
  
 #endif
