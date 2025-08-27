@@ -1,0 +1,62 @@
+%{
+    #include <stdio.h>
+    #include "./node/node.h"
+    #include "./y.tab.h"
+    #include "./define/constants.h"
+%}
+
+%%
+
+[0-9]+ {
+    int val = atoi(yytext);
+    yylval.node = createTnode(NODE_INT, val, NULL, NULL, NULL);
+    return NUMBER;
+}
+
+[a-z] {
+    yylval.node = createTnode(NODE_ID_INT, -1, strdup(yytext), NULL, NULL);
+    return ID;
+}
+
+"=" { return ASSG; }
+
+"(" { return LPAR; }
+")" { return RPAR; }
+
+"+" { return PLUS; }
+"-" { return MIN; }
+"*" { return MULT; }
+"/" { return DIV; }
+
+"==" { return EQ; }
+"!=" { return NEQ; }
+">=" { return GTE; }
+">" { return GT; }
+"<=" { return LTE; }
+"<" { return LT; }
+
+"begin" { return BEGIN_CODE; }
+"end" { return END_CODE; }
+
+"read" { return READ; }
+"write" { return WRITE; }
+
+"if" { return IF; }
+"then" { return THEN; }
+"else" { return ELSE; }
+"endif" { return ENDIF; }
+
+"while" { return WHILE; }
+"do" { return DO; }
+"endwhile" { return ENDWHILE; }
+
+";" { return EOL; }
+
+[ \t\n]+ {}
+. { return -1; }
+
+%%
+
+int yywrap() {
+    return 1;
+}

@@ -18,7 +18,16 @@ enum nodeTypes {
     NODE_DIV,
     NODE_MULT,
     NODE_ID_INT,
-    NODE_INT
+    NODE_INT,
+    NODE_EQ,
+    NODE_NEQ,
+    NODE_GTE,
+    NODE_GT,
+    NODE_LTE,
+    NODE_LT,
+    NODE_IF,
+    NODE_IF_ELSE,
+    NODE_WHILE
 };
 
 enum errorCodes {
