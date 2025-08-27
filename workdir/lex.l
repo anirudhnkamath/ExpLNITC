@@ -9,12 +9,12 @@
 
 [0-9]+ {
     int val = atoi(yytext);
-    yylval.node = createTnode(NODE_INT, val, NULL, NULL, NULL);
+    yylval.node = createTnode(NODE_INT, INTEGER_TYPE, val, NULL, NULL, NULL);
     return NUMBER;
 }
 
 [a-z] {
-    yylval.node = createTnode(NODE_ID_INT, -1, strdup(yytext), NULL, NULL);
+    yylval.node = createTnode(NODE_ID_INT, INTEGER_TYPE, -1, strdup(yytext), NULL, NULL);
     return ID;
 }
 

@@ -1,15 +1,16 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define reg_index_t int
-
 #define NUM_REGISTERS 20
 
 #define STATIC_ALLOC_START 4096
 
+#define INTEGER_TYPE 0
+#define BOOLEAN_TYPE 1
+#define NO_TYPE 2
 
 enum nodeTypes {
-    NODE_CONNECTOR = 1,
+    NODE_CONNECTOR = 1000,
     NODE_WRITE,
     NODE_READ,
     NODE_ASSIGN,
@@ -31,11 +32,12 @@ enum nodeTypes {
 };
 
 enum errorCodes {
-    SUCCESS = 0,
+    SUCCESS = 999,
     E_OUTOFBOUNDS = -1000,
 
     E_REGFULL,
-    E_INVALIDNODE
+    E_INVALIDNODE,
+    E_TYPEMISMATCH
 };
 
 #endif

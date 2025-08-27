@@ -11,8 +11,8 @@ void setHeader(FILE* targetFile) {
     fprintf(targetFile, "0\n2056\n0\n0\n0\n0\n0\n0\n");
 }
 
-void printToConsole(reg_index_t regIndex, FILE* targetFile) {
-    reg_index_t freeReg = getFreeRegister();
+void printToConsole(int regIndex, FILE* targetFile) {
+    int freeReg = getFreeRegister();
 
     fprintf(targetFile, "MOV R%d, \"Write\"\n", freeReg);
     fprintf(targetFile, "PUSH R%d\n", freeReg);
@@ -36,9 +36,9 @@ void printToConsole(reg_index_t regIndex, FILE* targetFile) {
 void readFromConsole(char* varName, FILE* targetFile) {
     int addr = getStaticAddress(varName);
 
-    reg_index_t freeReg = getFreeRegister();
+    int freeReg = getFreeRegister();
 
-    reg_index_t storeReg = getFreeRegister();
+    int storeReg = getFreeRegister();
     fprintf(targetFile, "MOV R%d, %d\n", storeReg, addr);
 
     fprintf(targetFile, "MOV R%d, \"Read\"\n", freeReg);
@@ -62,7 +62,7 @@ void readFromConsole(char* varName, FILE* targetFile) {
 }
 
 void exitProgram(FILE* targetFile) {
-    reg_index_t freeReg = getFreeRegister();
+    int freeReg = getFreeRegister();
 
     fprintf(targetFile, "MOV R%d, \"Exit\"\n", freeReg);
     fprintf(targetFile, "PUSH R%d\n", freeReg);
@@ -82,18 +82,18 @@ void exitProgram(FILE* targetFile) {
     releaseRegister(freeReg);
 }
 
-void setVariableValue(char* varName, reg_index_t storeReg, FILE* targetFile) {
+void setVariableValue(char* varName, int storeReg, FILE* targetFile) {
     int addr = STATIC_ALLOC_START + varName[0] - 'a';
     fprintf(targetFile, "MOV [%d], R%d\n", addr, storeReg);
     releaseRegister(storeReg);
 }
 
-void getVariableValue(reg_index_t storeReg, char* varName, FILE* targetFile) {
+void getVariableValue(int storeReg, char* varName, FILE* targetFile) {
     int addr = STATIC_ALLOC_START + varName[0] - 'a';
     fprintf(targetFile, "MOV R%d, [%d]\n", storeReg, addr);
 }
 
-void getImmediateValue(reg_index_t storeReg, int val, FILE* targetFile) {
+void getImmediateValue(int storeReg, int val, FILE* targetFile) {
     fprintf(targetFile, "MOV R%d, %d\n", storeReg, val);
 }
 
@@ -101,7 +101,7 @@ void updateStackPointer(int addr, FILE* targetFile) {
     fprintf(targetFile, "MOV SP, %d\n", addr);
 }
 
-reg_index_t codeGen(Tnode* node, FILE* targetFile) {
+int codeGen(Tnode* node, FILE* targetFile) {
     if(node == NULL)
         return E_INVALIDNODE;
 
@@ -112,7 +112,7 @@ reg_index_t codeGen(Tnode* node, FILE* targetFile) {
             break;
 
         case NODE_WRITE : {
-            reg_index_t freeReg = evaluateExpression(node->left, targetFile);
+            int freeReg = evaluateExpression(node->left, targetFile);
             printToConsole(freeReg, targetFile);
             break;
         }
@@ -123,7 +123,7 @@ reg_index_t codeGen(Tnode* node, FILE* targetFile) {
         }
 
         case NODE_ASSIGN : {
-            reg_index_t freeReg = evaluateExpression(node->right, targetFile);
+            int freeReg = evaluateExpression(node->right, targetFile);
             setVariableValue(node->left->varName, freeReg, targetFile);
             break;
         }
@@ -135,25 +135,25 @@ reg_index_t codeGen(Tnode* node, FILE* targetFile) {
     return -1;
 }
 
-reg_index_t evaluateExpression(Tnode* node, FILE* targetFile) {
+int evaluateExpression(Tnode* node, FILE* targetFile) {
 
     if(node == NULL)
         return E_INVALIDNODE;
 
     if(node->tnodeType == NODE_ID_INT) {
-        reg_index_t freeReg = getFreeRegister();
+        int freeReg = getFreeRegister();
         getVariableValue(freeReg, node->varName, targetFile);
         return freeReg;
     }
 
     if(node->tnodeType == NODE_INT) {
-        reg_index_t freeReg = getFreeRegister();
+        int freeReg = getFreeRegister();
         getImmediateValue(freeReg, node->val, targetFile);
         return freeReg;
     }
 
-    reg_index_t leftReg = evaluateExpression(node->left, targetFile);
-    reg_index_t rightReg = evaluateExpression(node->right, targetFile);
+    int leftReg = evaluateExpression(node->left, targetFile);
+    int rightReg = evaluateExpression(node->right, targetFile);
 
     switch(node->tnodeType) {
         case NODE_ADD :

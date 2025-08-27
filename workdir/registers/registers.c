@@ -21,7 +21,7 @@ int getFreeRegister() {
     return E_REGFULL;
 }
 
-int releaseRegister(reg_index_t index) {
+int releaseRegister(int index) {
     if(index < 0 || index > NUM_REGISTERS)
         return E_OUTOFBOUNDS;
 
