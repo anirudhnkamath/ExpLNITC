@@ -15,12 +15,3 @@ Tnode* createTnode(int tnodeType, int val, char* varName, Tnode* left, Tnode* ri
 
     return node;
 }
-
-void inorder(Tnode* root) {
-    if(root == NULL)
-        return;
-
-    inorder(root->left);
-    printf("%d\n", root->tnodeType);
-    inorder(root->right);
-}

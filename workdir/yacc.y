@@ -44,12 +44,10 @@ start :
 
     BEGIN_CODE stmtList END_CODE EOL {
         $$ = $2;
-        inorder($$);
     }|
 
     BEGIN_CODE END_CODE EOL {
         $$ = NULL;
-        inorder($$);
     };
 
 stmtList :
