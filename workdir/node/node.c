@@ -31,7 +31,7 @@ int validateExpressionType(Tnode* root, Tnode* left, Tnode* right) {
         root->tnodeType == NODE_DIV
     ) {
         if(left->type != INTEGER_TYPE || right->type != INTEGER_TYPE) {
-            printf("Type mismatch\n");
+            printf("Error: Type mismatch\n");
             exit(1);
         }
 
@@ -47,7 +47,7 @@ int validateExpressionType(Tnode* root, Tnode* left, Tnode* right) {
         root->tnodeType == NODE_LTE
     ) {
         if (left->type != INTEGER_TYPE || right->type != INTEGER_TYPE) {
-            printf("Type mismatch\n");
+            printf("Error: Type mismatch\n");
             exit(1);
         }
         return BOOLEAN_TYPE;
@@ -72,7 +72,7 @@ int validateExpressionType(Tnode* root, Tnode* left, Tnode* right) {
     }
 
     if(valid == 0) {
-        printf("Type mismatch\n");
+        printf("Error: Type mismatch\n");
         exit(1);
     }
 

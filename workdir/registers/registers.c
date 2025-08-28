@@ -15,7 +15,7 @@ int getFreeRegister() {
         }
     }
 
-    printf("Out of registers\n");
+    printf("Error: Out of registers\n");
     exit(1);
     
     return E_REGFULL;

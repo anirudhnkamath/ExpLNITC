@@ -10,6 +10,7 @@
 
     int yylex(void);
     int yyerror(const char *s);
+    void initiateCodeGen(Tnode* node);
 %}
 
 %union {
@@ -44,10 +45,12 @@ start :
 
     BEGIN_CODE stmtList END_CODE EOL {
         $$ = $2;
+        initiateCodeGen($$);
     }|
 
     BEGIN_CODE END_CODE EOL {
         $$ = NULL;
+        initiateCodeGen($$);
     };
 
 stmtList :
@@ -174,8 +177,19 @@ expr :
 %%
 
 int yyerror(const char* s) {
-    printf("Error occured\n");
+    printf("Error: %s\n", s);
     return 0;
+}
+
+void initiateCodeGen(Tnode* node) {
+    FILE* targetFile = fopen("targetFile.xsm", "w");
+    setHeader(targetFile);
+    resetRegisters();
+    newLabel = 0;
+    updateStackPointer(4121, targetFile);
+    codeGen(node, targetFile);
+    exitProgram(targetFile);
+    exit(1);
 }
 
 int main(int argc, char *argv[]) {

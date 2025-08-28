@@ -5,6 +5,9 @@
 #include "../define/constants.h"
 #include "../node/node.h"
 
+int newLabel;
+int getNewLabel();
+
 int getStaticAddress(char* varName);
 
 int codeGen(Tnode* node, FILE* targetFile);
@@ -19,5 +22,7 @@ void updateStackPointer(int addr, FILE* targetFile);
 void setVariableValue(char* varName, int storeReg, FILE* targetFile);
 void getVariableValue(int storeReg, char* varName, FILE* targetFile);
 void getImmediateValue(int storeReg, int val, FILE* targetFile);
+
+void generateWhileLoop(Tnode* node, FILE* targetFile);
 
 #endif
