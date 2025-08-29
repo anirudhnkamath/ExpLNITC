@@ -24,5 +24,7 @@ void getVariableValue(int storeReg, char* varName, FILE* targetFile);
 void getImmediateValue(int storeReg, int val, FILE* targetFile);
 
 void generateWhileLoop(Tnode* node, FILE* targetFile);
+void generateIfThen(Tnode* node, FILE* targetFile);
+void generateIfElse(Tnode* node, FILE* targetFile);
 
 #endif

@@ -134,6 +134,16 @@ int codeGen(Tnode* node, FILE* targetFile) {
             break;
         }
 
+        case NODE_IF : {
+            generateIfThen(node, targetFile);
+            break;
+        }
+
+        case NODE_IF_ELSE : {
+            generateIfElse(node, targetFile);
+            break;
+        }
+
         default:
             break;
     }
@@ -152,6 +162,37 @@ void generateWhileLoop(Tnode* node, FILE* targetFile) {
 
     codeGen(node->right, targetFile);
     fprintf(targetFile, "JMP L%d\n", label1);
+    fprintf(targetFile, "L%d:\n", label2);
+
+    releaseRegister(flagRegIndex);
+}
+
+void generateIfThen(Tnode* node, FILE* targetFile) {
+    int label1 = getNewLabel();
+
+    int flagRegIndex = evaluateExpression(node->left, targetFile);
+    fprintf(targetFile, "JZ R%d, L%d\n", flagRegIndex, label1);
+
+    codeGen(node->right, targetFile);
+    fprintf(targetFile, "L%d:\n", label1);
+
+    releaseRegister(flagRegIndex);
+}
+
+void generateIfElse(Tnode* node, FILE* targetFile) {
+    int label1 = getNewLabel();
+    int label2 = getNewLabel();
+
+    int flagRegIndex = evaluateExpression(node->left, targetFile);
+
+    fprintf(targetFile, "JZ R%d, L%d\n", flagRegIndex, label1);
+
+    codeGen(node->right->left, targetFile);
+    fprintf(targetFile, "JMP L%d\n", label2);
+
+    fprintf(targetFile, "L%d:\n", label1);
+    codeGen(node->right->right, targetFile);
+
     fprintf(targetFile, "L%d:\n", label2);
 
     releaseRegister(flagRegIndex);
