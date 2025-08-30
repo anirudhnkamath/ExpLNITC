@@ -50,6 +50,9 @@
 "do" { return DO; }
 "endwhile" { return ENDWHILE; }
 
+"break" { return BREAK; }
+"continue" { return CONTINUE; }
+
 ";" { return EOL; }
 
 [ \t\n]+ {}

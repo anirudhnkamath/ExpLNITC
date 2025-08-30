@@ -25,6 +25,7 @@
 %token EQ NEQ GTE GT LTE LT
 %token IF THEN ELSE ENDIF
 %token WHILE DO ENDWHILE
+%token BREAK CONTINUE
 %token LPAR RPAR
 %token EOL
 
@@ -83,6 +84,14 @@ stmt :
 
     whileStmt {
         $$ = $1;
+    }|
+
+    BREAK EOL{
+        $$ = createTnode(NODE_BREAK, NO_TYPE, -1, NULL, NULL, NULL);
+    }|
+
+    CONTINUE EOL{
+        $$ = createTnode(NODE_CONTINUE, NO_TYPE, -1, NULL, NULL, NULL);
     };
 
 inputStmt :

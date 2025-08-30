@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+int curLoopStartLabel = -1, curLoopEndLabel = -1;
+
 int getNewLabel() {
     int ret = newLabel;
     newLabel += 1;
@@ -144,6 +146,16 @@ int codeGen(Tnode* node, FILE* targetFile) {
             break;
         }
 
+        case NODE_BREAK : {
+            fprintf(targetFile, "JMP L%d\n", curLoopEndLabel);
+            break;
+        }
+
+        case NODE_CONTINUE : {
+            fprintf(targetFile, "JMP L%d\n", curLoopStartLabel);
+            break;
+        }
+
         default:
             break;
     }
@@ -155,6 +167,9 @@ void generateWhileLoop(Tnode* node, FILE* targetFile) {
     int label1 = getNewLabel();
     int label2 = getNewLabel();
 
+    curLoopStartLabel = label1;
+    curLoopEndLabel = label2;
+
     fprintf(targetFile, "L%d:\n", label1);
 
     int flagRegIndex = evaluateExpression(node->left, targetFile);
@@ -165,6 +180,9 @@ void generateWhileLoop(Tnode* node, FILE* targetFile) {
     fprintf(targetFile, "L%d:\n", label2);
 
     releaseRegister(flagRegIndex);
+
+    curLoopStartLabel = -1;
+    curLoopEndLabel = -1;
 }
 
 void generateIfThen(Tnode* node, FILE* targetFile) {

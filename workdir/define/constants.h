@@ -28,7 +28,9 @@ enum nodeTypes {
     NODE_LT,
     NODE_IF,
     NODE_IF_ELSE,
-    NODE_WHILE
+    NODE_WHILE,
+    NODE_BREAK,
+    NODE_CONTINUE
 };
 
 enum errorCodes {
