@@ -25,6 +25,7 @@
 %token EQ NEQ GTE GT LTE LT
 %token IF THEN ELSE ENDIF
 %token WHILE DO ENDWHILE
+%token REPEAT UNTIL
 %token BREAK CONTINUE
 %token LPAR RPAR
 %token EOL
@@ -32,7 +33,7 @@
 %type <node> start 
 %type <node> stmtList stmt 
 %type <node> inputStmt outputStmt assignStmt 
-%type <node> ifStmt whileStmt
+%type <node> ifStmt whileStmt doWhileStmt repeatUntilStmt
 %type <node> expr
 
 %nonassoc EQ NEQ GT GTE LT LTE
@@ -86,6 +87,14 @@ stmt :
         $$ = $1;
     }|
 
+    doWhileStmt {
+        $$ = $1;
+    }|
+
+    repeatUntilStmt {
+        $$ = $1;
+    }|
+
     BREAK EOL{
         $$ = createTnode(NODE_BREAK, NO_TYPE, -1, NULL, NULL, NULL);
     }|
@@ -127,6 +136,18 @@ whileStmt :
 
     WHILE LPAR expr RPAR DO stmtList ENDWHILE EOL {
         $$ = createTnode(NODE_WHILE, NO_TYPE, -1, NULL, $3, $6);
+    };
+
+doWhileStmt :
+
+    DO stmtList WHILE LPAR expr RPAR EOL {
+        $$ = createTnode(NODE_DOWHILE, NO_TYPE, -1, NULL, $5, $2);
+    };
+
+repeatUntilStmt : 
+
+    REPEAT stmtList UNTIL LPAR expr RPAR EOL {
+        $$ = createTnode(NODE_REPEATUNTIL, NO_TYPE, -1, NULL, $5, $2);
     };
 
 expr :

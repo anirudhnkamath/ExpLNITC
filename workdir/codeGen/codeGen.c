@@ -146,6 +146,16 @@ int codeGen(Tnode* node, FILE* targetFile) {
             break;
         }
 
+        case NODE_DOWHILE : {
+            generateDoWhile(node, targetFile);
+            break;
+        }
+
+        case NODE_REPEATUNTIL : {
+            generateRepeatUntil(node, targetFile);
+            break;
+        }
+
         case NODE_BREAK : {
             fprintf(targetFile, "JMP L%d\n", curLoopEndLabel);
             break;
@@ -214,6 +224,50 @@ void generateIfElse(Tnode* node, FILE* targetFile) {
     fprintf(targetFile, "L%d:\n", label2);
 
     releaseRegister(flagRegIndex);
+}
+
+void generateDoWhile(Tnode* node, FILE* targetFile) {
+    int label1 = getNewLabel();
+    int label2 = getNewLabel();
+
+    curLoopStartLabel = label1;
+    curLoopEndLabel = label2;
+
+    fprintf(targetFile, "L%d:\n", label1);
+    codeGen(node->right, targetFile);
+
+    int flagRegIndex = evaluateExpression(node->left, targetFile);
+    fprintf(targetFile, "JZ R%d, L%d\n", flagRegIndex, label2);
+
+    fprintf(targetFile, "JMP L%d\n", label1);
+    fprintf(targetFile, "L%d:\n", label2);
+
+    releaseRegister(flagRegIndex);
+
+    curLoopStartLabel = -1;
+    curLoopEndLabel = -1;
+}
+
+void generateRepeatUntil(Tnode* node, FILE* targetFile) {
+    int label1 = getNewLabel();
+    int label2 = getNewLabel();
+
+    curLoopStartLabel = label1;
+    curLoopEndLabel = label2;
+
+    fprintf(targetFile, "L%d:\n", label1);
+    codeGen(node->right, targetFile);
+
+    int flagRegIndex = evaluateExpression(node->left, targetFile);
+    fprintf(targetFile, "JNZ R%d, L%d\n", flagRegIndex, label2);
+
+    fprintf(targetFile, "JMP L%d\n", label1);
+    fprintf(targetFile, "L%d:\n", label2);
+
+    releaseRegister(flagRegIndex);
+
+    curLoopStartLabel = -1;
+    curLoopEndLabel = -1;
 }
 
 int evaluateExpression(Tnode* node, FILE* targetFile) {

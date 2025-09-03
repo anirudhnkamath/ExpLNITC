@@ -50,6 +50,9 @@
 "do" { return DO; }
 "endwhile" { return ENDWHILE; }
 
+"repeat" { return REPEAT; }
+"until" { return UNTIL; }
+
 "break" { return BREAK; }
 "continue" { return CONTINUE; }
 
