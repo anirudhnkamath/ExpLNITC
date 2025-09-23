@@ -9,7 +9,12 @@ INPUT_FILE=$1
 lex lex.l
 yacc -d yacc.y
 
-gcc -o main_compiler lex.yy.c y.tab.c codeGen/codeGen.c node/node.c registers/registers.c
+gcc -o main_compiler \
+    lex.yy.c y.tab.c \
+    codeGen/codeGen.c \
+    node/node.c \
+    registers/registers.c \
+    gsTable/gsTable.c
 
 # compiler to generate labelled code
 ./main_compiler "$INPUT_FILE"

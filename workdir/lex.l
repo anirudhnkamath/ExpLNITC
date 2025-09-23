@@ -13,11 +13,6 @@
     return NUMBER;
 }
 
-[a-z] {
-    yylval.node = createTnode(NODE_ID_INT, INTEGER_TYPE, -1, strdup(yytext), NULL, NULL);
-    return ID;
-}
-
 "=" { return ASSG; }
 
 "(" { return LPAR; }
@@ -38,6 +33,9 @@
 "begin" { return BEGIN_CODE; }
 "end" { return END_CODE; }
 
+"decl" { return BEGIN_DECL; }
+"enddecl" { return END_DECL; }
+
 "read" { return READ; }
 "write" { return WRITE; }
 
@@ -55,6 +53,16 @@
 
 "break" { return BREAK; }
 "continue" { return CONTINUE; }
+
+"int" { return INT; }
+"str" { return STR; }
+
+[a-z][a-z0-9]* {
+    yylval.node = createTnode(NODE_ID_INT, INTEGER_TYPE, -1, strdup(yytext), NULL, NULL);
+    return ID;
+}
+
+"," { return COMMA; }
 
 ";" { return EOL; }
 

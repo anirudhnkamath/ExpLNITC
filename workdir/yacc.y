@@ -5,12 +5,17 @@
     #include "./codeGen/codeGen.h"
     #include "./registers/registers.h"
     #include "./node/node.h"
+    #include "./gsTable/gsTable.h"
 
     FILE* yyin;
 
     int yylex(void);
     int yyerror(const char *s);
     void initiateCodeGen(Tnode* node);
+
+    int curDeclarationType = YACC_DECL_INT;
+    GsTableEntry* gsTableHead = NULL;
+    
 %}
 
 %union {
@@ -18,7 +23,7 @@
 }
 
 %token <node> ID NUMBER
-%token BEGIN_CODE END_CODE 
+%token BEGIN_CODE END_CODE BEGIN_DECL END_DECL
 %token READ WRITE
 %token ASSG
 %token PLUS MIN MULT DIV
@@ -28,7 +33,8 @@
 %token REPEAT UNTIL
 %token BREAK CONTINUE
 %token LPAR RPAR
-%token EOL
+%token INT STR
+%token EOL COMMA
 
 %type <node> start 
 %type <node> stmtList stmt 
@@ -45,14 +51,57 @@
 
 start :
 
-    BEGIN_CODE stmtList END_CODE EOL {
-        $$ = $2;
-        initiateCodeGen($$);
+    BEGIN_DECL END_DECL EOL BEGIN_CODE END_CODE EOL {
+        printGsTable(gsTableHead);
+        $$ = NULL;
     }|
 
-    BEGIN_CODE END_CODE EOL {
+    BEGIN_DECL declList END_DECL EOL BEGIN_CODE END_CODE EOL {
+        printGsTable(gsTableHead);
         $$ = NULL;
-        initiateCodeGen($$);
+    }|
+
+    BEGIN_DECL END_DECL EOL BEGIN_CODE stmtList END_CODE EOL {
+        printGsTable(gsTableHead);
+        $$ = $5;
+    }|
+
+    BEGIN_DECL declList END_DECL EOL BEGIN_CODE stmtList END_CODE EOL {
+        printGsTable(gsTableHead);
+        $$ = $6;
+    };
+
+declList :
+
+    declList decl {
+    }|
+
+    decl {
+    };
+
+decl :
+
+    dataType varList EOL {
+    };
+
+dataType :
+
+    INT {
+        curDeclarationType = YACC_DECL_INT;
+    }|
+
+    STR {
+        curDeclarationType = YACC_DECL_STR;
+    };
+
+varList :
+
+    varList COMMA ID {
+        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, 1);
+    }|
+
+    ID {
+        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, 1);
     };
 
 stmtList :

@@ -4,10 +4,14 @@
 #define NUM_REGISTERS 20
 
 #define STATIC_ALLOC_START 4096
+#define STATIC_ALLOC_END 4121
 
 #define INTEGER_TYPE 0
 #define BOOLEAN_TYPE 1
 #define NO_TYPE 2
+
+#define YACC_DECL_INT 0
+#define YACC_DECL_STR 1
 
 enum nodeTypes {
     NODE_CONNECTOR = 1000,
