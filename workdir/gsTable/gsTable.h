@@ -9,6 +9,10 @@ typedef struct GsTableEntry {
     struct GsTableEntry * next;
 } GsTableEntry;
 
+extern int declarationOverFlag;
+extern int nextBinding;
+extern GsTableEntry* gsTableHead;
+
 int getNextBinding();
 
 GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding);

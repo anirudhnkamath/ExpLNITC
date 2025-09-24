@@ -5,7 +5,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+GsTableEntry* gsTableHead = NULL;
 int nextBinding = STATIC_ALLOC_START; 
+int declarationOverFlag = 0;
 
 int getNextBinding() {
     if(nextBinding > STATIC_ALLOC_END) {

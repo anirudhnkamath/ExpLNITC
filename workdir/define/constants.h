@@ -8,13 +8,15 @@
 
 #define INTEGER_TYPE 0
 #define BOOLEAN_TYPE 1
-#define NO_TYPE 2
+#define STRING_TYPE 2
+#define NO_TYPE 3
 
 #define YACC_DECL_INT 0
 #define YACC_DECL_STR 1
 
 enum nodeTypes {
     NODE_CONNECTOR = 1000,
+    NODE_EMPTY,
     NODE_WRITE,
     NODE_READ,
     NODE_ASSIGN,
@@ -22,7 +24,7 @@ enum nodeTypes {
     NODE_SUB,
     NODE_DIV,
     NODE_MULT,
-    NODE_ID_INT,
+    NODE_ID,
     NODE_INT,
     NODE_EQ,
     NODE_NEQ,

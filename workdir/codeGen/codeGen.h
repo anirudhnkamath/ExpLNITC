@@ -5,7 +5,9 @@
 #include "../define/constants.h"
 #include "../node/node.h"
 
-int newLabel;
+extern int newLabel;
+extern int curLoopStartLabel;
+extern int curLoopEndLabel;
 int getNewLabel();
 
 int getStaticAddress(char* varName);

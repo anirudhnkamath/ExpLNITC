@@ -1,7 +1,13 @@
 decl
-int anirudh, adithyan, lukman, mihir, faizal, vighnesh;
-str a, b, c, d, e, f, g;
-int anirudh1, anirudh2;
+    int a, b, c;
 enddecl;
+
 begin
+    read(a);
+    b = 1;
+    c = 1;
+    while(b == c) do
+        c = c + 1;
+        write(c);
+    endwhile;
 end;

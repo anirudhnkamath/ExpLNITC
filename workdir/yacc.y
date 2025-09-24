@@ -14,8 +14,6 @@
     void initiateCodeGen(Tnode* node);
 
     int curDeclarationType = YACC_DECL_INT;
-    GsTableEntry* gsTableHead = NULL;
-    
 %}
 
 %union {
@@ -37,7 +35,8 @@
 %token EOL COMMA
 
 %type <node> start 
-%type <node> stmtList stmt 
+%type <node> declSection codeSection
+%type <node> stmtList stmt declList decl
 %type <node> inputStmt outputStmt assignStmt 
 %type <node> ifStmt whileStmt doWhileStmt repeatUntilStmt
 %type <node> expr
@@ -51,24 +50,32 @@
 
 start :
 
-    BEGIN_DECL END_DECL EOL BEGIN_CODE END_CODE EOL {
-        printGsTable(gsTableHead);
+    declSection codeSection {
+        $$ = $2;
+        initiateCodeGen($$);
+        exit(0);
+    };
+
+declSection :
+
+    BEGIN_DECL declList END_DECL EOL {
+        $$ = $2;
+        declarationOverFlag = 1;
+    }|
+
+    BEGIN_DECL END_DECL EOL {
         $$ = NULL;
+        declarationOverFlag = 1;
+    };
+
+codeSection :
+
+    BEGIN_CODE stmtList END_CODE EOL {
+        $$ = $2;
     }|
 
-    BEGIN_DECL declList END_DECL EOL BEGIN_CODE END_CODE EOL {
-        printGsTable(gsTableHead);
+    BEGIN_CODE END_CODE EOL {
         $$ = NULL;
-    }|
-
-    BEGIN_DECL END_DECL EOL BEGIN_CODE stmtList END_CODE EOL {
-        printGsTable(gsTableHead);
-        $$ = $5;
-    }|
-
-    BEGIN_DECL declList END_DECL EOL BEGIN_CODE stmtList END_CODE EOL {
-        printGsTable(gsTableHead);
-        $$ = $6;
     };
 
 declList :
@@ -107,7 +114,7 @@ varList :
 stmtList :
 
     stmtList stmt {
-        $$ = createTnode(NODE_CONNECTOR, NO_TYPE, -1, NULL, $1, $2);
+        $$ = createConnectorNode($1, $2);
     }|
 
     stmt {
@@ -145,100 +152,99 @@ stmt :
     }|
 
     BREAK EOL{
-        $$ = createTnode(NODE_BREAK, NO_TYPE, -1, NULL, NULL, NULL);
+        $$ = createBreakNode();
     }|
 
     CONTINUE EOL{
-        $$ = createTnode(NODE_CONTINUE, NO_TYPE, -1, NULL, NULL, NULL);
+        $$ = createContinueNode();
     };
 
 inputStmt :
 
     READ LPAR ID RPAR EOL {
-        $$ = createTnode(NODE_READ, NO_TYPE, -1, NULL, $3, NULL);
+        $$ = createReadNode($3);
     };
 
 outputStmt :
 
     WRITE LPAR expr RPAR EOL {
-        $$ = createTnode(NODE_WRITE, NO_TYPE, -1, NULL, $3, NULL);
+        $$ = createWriteNode($3);
     };
 
 assignStmt :
 
     ID ASSG expr EOL {
-        $$ = createTnode(NODE_ASSIGN, NO_TYPE, -1, NULL, $1, $3); 
+        $$ = createAssignNode($1, $3);
     };
 
 ifStmt :
 
     IF LPAR expr RPAR THEN stmtList ELSE stmtList ENDIF EOL {
-        Tnode* conn = createTnode(NODE_CONNECTOR, NO_TYPE, -1, NULL, $6, $8);
-        $$ = createTnode(NODE_IF_ELSE, NO_TYPE, -1, NULL, $3, conn);
+        $$ = createIfElseNode($3, $6, $8);
     }|
 
     IF LPAR expr RPAR THEN stmtList ENDIF EOL {
-        $$ = createTnode(NODE_IF, NO_TYPE, -1, NULL, $3, $6);
+        $$ = createIfNode($3, $6);
     };
 
 whileStmt :
 
     WHILE LPAR expr RPAR DO stmtList ENDWHILE EOL {
-        $$ = createTnode(NODE_WHILE, NO_TYPE, -1, NULL, $3, $6);
+        $$ = createWhileNode($3, $6);
     };
 
 doWhileStmt :
 
     DO stmtList WHILE LPAR expr RPAR EOL {
-        $$ = createTnode(NODE_DOWHILE, NO_TYPE, -1, NULL, $5, $2);
+        $$ = createDoWhileNode($5, $2);
     };
 
 repeatUntilStmt : 
 
     REPEAT stmtList UNTIL LPAR expr RPAR EOL {
-        $$ = createTnode(NODE_REPEATUNTIL, NO_TYPE, -1, NULL, $5, $2);
+        $$ = createRepeatUntilNode($5, $2);
     };
 
 expr :
 
     expr PLUS expr {
-        $$ = createTnode(NODE_ADD, INTEGER_TYPE, -1, NULL, $1, $3);
+        $$ = createArithOpNode(NODE_ADD, $1, $3);
     }|
 
     expr MIN expr {
-        $$ = createTnode(NODE_SUB, INTEGER_TYPE, -1, NULL, $1, $3);
+        $$ = createArithOpNode(NODE_SUB, $1, $3);
     }|
 
     expr MULT expr {
-        $$ = createTnode(NODE_MULT, INTEGER_TYPE, -1, NULL, $1, $3);
+        $$ = createArithOpNode(NODE_MULT, $1, $3);
     }|
 
     expr DIV expr {
-        $$ = createTnode(NODE_DIV, INTEGER_TYPE, -1, NULL, $1, $3);
+        $$ = createArithOpNode(NODE_DIV, $1, $3);
     }|
 
     expr EQ expr {
-        $$ = createTnode(NODE_EQ, BOOLEAN_TYPE, -1, NULL, $1, $3);
+        $$ = createRelOpNode(NODE_EQ, $1, $3);
     }|
 
     expr NEQ expr {
-        $$ = createTnode(NODE_NEQ, BOOLEAN_TYPE, -1, NULL, $1, $3);
+        $$ = createRelOpNode(NODE_NEQ, $1, $3);
     }|
 
     expr GTE expr {
-        $$ = createTnode(NODE_GTE, BOOLEAN_TYPE, -1, NULL, $1, $3);
+        $$ = createRelOpNode(NODE_GTE, $1, $3);
     }|
 
     expr GT expr {
-        $$ = createTnode(NODE_GT, BOOLEAN_TYPE, -1, NULL, $1, $3);
+        $$ = createRelOpNode(NODE_GT, $1, $3);
     }|
 
     expr LTE expr {
-        $$ = createTnode(NODE_LTE, BOOLEAN_TYPE, -1, NULL, $1, $3);
+        $$ = createRelOpNode(NODE_LTE, $1, $3);
     }|
 
     expr LT expr {
-        $$ = createTnode(NODE_LT, BOOLEAN_TYPE, -1, NULL, $1, $3);
+        $$ = createRelOpNode(NODE_LT, $1, $3);
     }|
 
     LPAR expr RPAR {
@@ -264,8 +270,7 @@ void initiateCodeGen(Tnode* node) {
     FILE* targetFile = fopen("targetFile.xsm", "w");
     setHeader(targetFile);
     resetRegisters();
-    newLabel = 0;
-    updateStackPointer(4121, targetFile);
+    updateStackPointer(STATIC_ALLOC_END, targetFile);
     codeGen(node, targetFile);
     exitProgram(targetFile);
     exit(1);

@@ -1,9 +1,10 @@
 #include "./codeGen.h"
 #include "../registers/registers.h"
+#include "../gsTable/gsTable.h"
 #include <stdlib.h>
 #include <stdio.h>
 
-int curLoopStartLabel = -1, curLoopEndLabel = -1;
+int curLoopStartLabel = -1, curLoopEndLabel = -1, newLabel = 0;;
 
 int getNewLabel() {
     int ret = newLabel;
@@ -12,7 +13,13 @@ int getNewLabel() {
 }
 
 int getStaticAddress(char* varName) {
-    return STATIC_ALLOC_START + varName[0] - 'a';
+    GsTableEntry* found = findInGsTable(gsTableHead, varName);
+    if(!found) {
+        printf("Error: undeclared variable\n");
+        exit(1);
+    }
+
+    return found->binding;
 }
 
 void setHeader(FILE* targetFile) {
@@ -86,13 +93,13 @@ void exitProgram(FILE* targetFile) {
 }
 
 void setVariableValue(char* varName, int storeReg, FILE* targetFile) {
-    int addr = STATIC_ALLOC_START + varName[0] - 'a';
+    int addr = getStaticAddress(varName);
     fprintf(targetFile, "MOV [%d], R%d\n", addr, storeReg);
     releaseRegister(storeReg);
 }
 
 void getVariableValue(int storeReg, char* varName, FILE* targetFile) {
-    int addr = STATIC_ALLOC_START + varName[0] - 'a';
+    int addr = getStaticAddress(varName);
     fprintf(targetFile, "MOV R%d, [%d]\n", storeReg, addr);
 }
 
@@ -275,7 +282,7 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
     if(node == NULL)
         return E_INVALIDNODE;
 
-    if(node->tnodeType == NODE_ID_INT) {
+    if(node->tnodeType == NODE_ID) {
         int freeReg = getFreeRegister();
         getVariableValue(freeReg, node->varName, targetFile);
         return freeReg;
