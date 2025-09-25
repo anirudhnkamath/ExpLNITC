@@ -5,11 +5,6 @@
 #include "../define/constants.h"
 #include "../node/node.h"
 
-extern int newLabel;
-extern int curLoopStartLabel;
-extern int curLoopEndLabel;
-int getNewLabel();
-
 int getStaticAddress(char* varName);
 
 int codeGen(Tnode* node, FILE* targetFile);

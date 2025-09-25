@@ -1,13 +1,24 @@
 decl
-    int a, b, c;
+    int i, j, k;
 enddecl;
 
 begin
-    read(a);
-    b = 1;
-    c = 1;
-    while(b == c) do
-        c = c + 1;
-        write(c);
-    endwhile;
+    i = 1;
+    while(i < 5) do
+        j = 1;
+        while(j < 5) do
+            if(j == 3) then
+                break;
+            endif;
+            write(j);
+            j = j + 1;
+        endwhile;
+
+        i = i + 1;
+    endwhile; // hello this is comment
+    if (i == i) then
+        break;
+        write(i);
+    endif;
 end;
+// this isnt

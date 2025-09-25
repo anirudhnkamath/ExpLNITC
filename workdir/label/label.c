@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 Label* labelHead = NULL;
+int newLabel = 0;
 
 Label* createLabel(char labelName[], int addr) {
     Label* newNode = (Label*)malloc(sizeof(Label));
@@ -42,3 +43,43 @@ int findLabelAddr(char labelName[]) {
 
     return 0;
 }
+
+int getNewLabel() {
+    int ret = newLabel;
+    newLabel += 1;
+    return ret;
+}
+
+
+
+// run time stack for using break and continue
+
+LabelStackNode* labelStackHead = NULL;
+
+void addToLabelStack(int startLabel, int endLabel) {
+    LabelStackNode* n = (LabelStackNode*)malloc(sizeof(LabelStackNode));
+    n->startLabel = startLabel;
+    n->endLabel = endLabel;
+    n->next = NULL;
+
+    n->next = labelStackHead;
+    labelStackHead = n;
+}
+
+void popLabelStack() {
+    if(labelStackHead == NULL) {
+        printf("Error: label stack empty\n");
+        exit(1);
+    }
+
+    LabelStackNode* top = labelStackHead;
+    labelStackHead = labelStackHead->next;
+
+    free(top);
+}
+
+LabelStackNode* peekLabelStack() {
+    return labelStackHead;
+}
+
+

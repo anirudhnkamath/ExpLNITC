@@ -1,16 +1,9 @@
 #include "./codeGen.h"
 #include "../registers/registers.h"
 #include "../gsTable/gsTable.h"
+#include "../label/label.h"
 #include <stdlib.h>
 #include <stdio.h>
-
-int curLoopStartLabel = -1, curLoopEndLabel = -1, newLabel = 0;;
-
-int getNewLabel() {
-    int ret = newLabel;
-    newLabel += 1;
-    return ret;
-}
 
 int getStaticAddress(char* varName) {
     GsTableEntry* found = findInGsTable(gsTableHead, varName);
@@ -164,12 +157,16 @@ int codeGen(Tnode* node, FILE* targetFile) {
         }
 
         case NODE_BREAK : {
-            fprintf(targetFile, "JMP L%d\n", curLoopEndLabel);
+            if(peekLabelStack()) {
+                fprintf(targetFile, "JMP L%d\n", peekLabelStack()->endLabel);
+            }
             break;
         }
 
         case NODE_CONTINUE : {
-            fprintf(targetFile, "JMP L%d\n", curLoopStartLabel);
+            if(peekLabelStack()) {
+                fprintf(targetFile, "JMP L%d\n", peekLabelStack()->startLabel);
+            }
             break;
         }
 
@@ -184,8 +181,7 @@ void generateWhileLoop(Tnode* node, FILE* targetFile) {
     int label1 = getNewLabel();
     int label2 = getNewLabel();
 
-    curLoopStartLabel = label1;
-    curLoopEndLabel = label2;
+    addToLabelStack(label1, label2);
 
     fprintf(targetFile, "L%d:\n", label1);
 
@@ -198,8 +194,7 @@ void generateWhileLoop(Tnode* node, FILE* targetFile) {
 
     releaseRegister(flagRegIndex);
 
-    curLoopStartLabel = -1;
-    curLoopEndLabel = -1;
+    popLabelStack();
 }
 
 void generateIfThen(Tnode* node, FILE* targetFile) {
@@ -237,8 +232,7 @@ void generateDoWhile(Tnode* node, FILE* targetFile) {
     int label1 = getNewLabel();
     int label2 = getNewLabel();
 
-    curLoopStartLabel = label1;
-    curLoopEndLabel = label2;
+    addToLabelStack(label1, label2);
 
     fprintf(targetFile, "L%d:\n", label1);
     codeGen(node->right, targetFile);
@@ -251,16 +245,14 @@ void generateDoWhile(Tnode* node, FILE* targetFile) {
 
     releaseRegister(flagRegIndex);
 
-    curLoopStartLabel = -1;
-    curLoopEndLabel = -1;
+    popLabelStack();
 }
 
 void generateRepeatUntil(Tnode* node, FILE* targetFile) {
     int label1 = getNewLabel();
     int label2 = getNewLabel();
 
-    curLoopStartLabel = label1;
-    curLoopEndLabel = label2;
+    addToLabelStack(label1, label2);
 
     fprintf(targetFile, "L%d:\n", label1);
     codeGen(node->right, targetFile);
@@ -273,8 +265,7 @@ void generateRepeatUntil(Tnode* node, FILE* targetFile) {
 
     releaseRegister(flagRegIndex);
 
-    curLoopStartLabel = -1;
-    curLoopEndLabel = -1;
+    popLabelStack();
 }
 
 int evaluateExpression(Tnode* node, FILE* targetFile) {

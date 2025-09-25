@@ -14,7 +14,8 @@ gcc -o main_compiler \
     codeGen/codeGen.c \
     node/node.c \
     registers/registers.c \
-    gsTable/gsTable.c
+    gsTable/gsTable.c \
+    label/label.c
 
 # compiler to generate labelled code
 ./main_compiler "$INPUT_FILE"
