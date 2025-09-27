@@ -26,6 +26,7 @@ enum nodeTypes {
     NODE_MULT,
     NODE_ID,
     NODE_INT,
+    NODE_STR_LTRL,
     NODE_EQ,
     NODE_NEQ,
     NODE_GTE,

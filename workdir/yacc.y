@@ -14,14 +14,14 @@
     int yyerror(const char *s);
     void initiateCodeGen(Tnode* node);
 
-    int curDeclarationType = YACC_DECL_INT;
+    int curDeclarationType = INTEGER_TYPE;
 %}
 
 %union {
     struct Tnode* node;
 }
 
-%token <node> ID NUMBER
+%token <node> ID NUMBER STR_LTRL
 %token BEGIN_CODE END_CODE BEGIN_DECL END_DECL
 %token READ WRITE
 %token ASSG
@@ -95,11 +95,11 @@ decl :
 dataType :
 
     INT {
-        curDeclarationType = YACC_DECL_INT;
+        curDeclarationType = INTEGER_TYPE;
     }|
 
     STR {
-        curDeclarationType = YACC_DECL_STR;
+        curDeclarationType = STRING_TYPE;
     };
 
 varList :
@@ -170,11 +170,19 @@ outputStmt :
 
     WRITE LPAR expr RPAR EOL {
         $$ = createWriteNode($3);
+    }|
+
+    WRITE LPAR STR_LTRL RPAR EOL {
+        $$ = createWriteNode($3);
     };
 
 assignStmt :
 
     ID ASSG expr EOL {
+        $$ = createAssignNode($1, $3);
+    }|
+
+    ID ASSG STR_LTRL EOL {
         $$ = createAssignNode($1, $3);
     };
 

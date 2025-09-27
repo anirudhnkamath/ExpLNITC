@@ -93,3 +93,10 @@ void getImmediateValue(int storeReg, int val, FILE* targetFile) {
 void updateStackPointer(int addr, FILE* targetFile) {
     fprintf(targetFile, "MOV SP, %d\n", addr);
 }
+
+int movStrLtrlToReg(Tnode* node, FILE* targetFile) {
+    int freeReg = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, %s\n", freeReg, node->strVal);
+    return freeReg;
+}
+

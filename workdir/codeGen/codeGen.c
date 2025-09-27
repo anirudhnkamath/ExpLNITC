@@ -27,7 +27,13 @@ int codeGen(Tnode* node, FILE* targetFile) {
             break;
 
         case NODE_WRITE : {
-            int freeReg = evaluateExpression(node->left, targetFile);
+            int freeReg;
+
+            if(node->left->type == INTEGER_TYPE)
+                freeReg = evaluateExpression(node->left, targetFile);
+            else
+                freeReg = movStrLtrlToReg(node->left, targetFile);
+
             printToConsole(freeReg, targetFile);
             break;
         }
@@ -38,7 +44,13 @@ int codeGen(Tnode* node, FILE* targetFile) {
         }
 
         case NODE_ASSIGN : {
-            int freeReg = evaluateExpression(node->right, targetFile);
+            int freeReg;
+
+            if(node->right->type == INTEGER_TYPE)
+                freeReg = evaluateExpression(node->right, targetFile);
+            else
+                freeReg = movStrLtrlToReg(node->right, targetFile);
+
             setVariableValue(node->left->varName, freeReg, targetFile);
             break;
         }

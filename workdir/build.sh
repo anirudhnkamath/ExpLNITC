@@ -26,5 +26,3 @@ lex label.l
 gcc -o label_translator lex.yy.c label/label.c
 
 ./label_translator targetFile.xsm
-
-echo "Compilation successful"

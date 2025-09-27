@@ -57,6 +57,11 @@
 "int" { return INT; }
 "str" { return STR; }
 
+\"[^\"]+\" {
+    yylval.node = createStrLtrlNode(strdup(yytext));
+    return STR_LTRL;
+}
+
 [a-z][a-z0-9]* {
     yylval.node = createIdNode(strdup(yytext));
     return ID;

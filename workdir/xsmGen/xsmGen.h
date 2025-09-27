@@ -15,5 +15,7 @@ void setVariableValue(char* varName, int storeReg, FILE* targetFile);
 void getVariableValue(int storeReg, char* varName, FILE* targetFile);
 void getImmediateValue(int storeReg, int val, FILE* targetFile);
 
+int movStrLtrlToReg(Tnode* node, FILE* targetFile);
+
 
 #endif

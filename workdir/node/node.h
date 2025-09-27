@@ -7,6 +7,7 @@ typedef struct Tnode {
     int tnodeType;
     int type;
     int val;
+    char* strVal;
     char* varName;
     GsTableEntry* gsTableEntry;
     struct Tnode* left;
@@ -16,6 +17,7 @@ typedef struct Tnode {
 Tnode* createConnectorNode(Tnode* left, Tnode* right);
 
 Tnode* createIntNode(int val);
+Tnode* createStrLtrlNode(char* str);
 Tnode* createIdNode(char varName[]);
 
 Tnode* createReadNode(Tnode* idNode);

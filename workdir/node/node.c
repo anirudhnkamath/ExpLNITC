@@ -27,6 +27,17 @@ Tnode* createIntNode(int val) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_INT;
     n->val = val;
+    n->type = INTEGER_TYPE;
+    
+    return n;
+}
+
+
+Tnode* createStrLtrlNode(char* str) {
+    Tnode* n = createEmptyNode();
+    n->tnodeType = NODE_STR_LTRL;
+    n->strVal = str;
+    n->type = STRING_TYPE;
     
     return n;
 }
@@ -47,6 +58,7 @@ Tnode* createIdNode(char varName[]) {
     }
 
     n->type = found->dataType;
+    n->gsTableEntry = found;
     return n;
 }
 
@@ -76,6 +88,11 @@ Tnode* createAssignNode(Tnode* idNode, Tnode* exprNode) {
     n->tnodeType = NODE_ASSIGN;
 
     if(exprNode->type == BOOLEAN_TYPE) {
+        printf("Error : type mismatch\n");
+        exit(1);
+    }
+
+    if(idNode->type != exprNode->type) {
         printf("Error : type mismatch\n");
         exit(1);
     }

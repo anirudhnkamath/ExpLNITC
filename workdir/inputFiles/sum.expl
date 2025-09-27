@@ -1,13 +1,10 @@
+decl
+    str a,b,c,d;
+    int e;
+enddecl;
+
 begin
-
-    s = 0;
-
-    read(i);
-    while(i != 0) do
-        s = s + i;
-        read(i);
-    endwhile;
-
-    write(s);
-
+    write(a);
+    write(b);
+    write(e);
 end;
