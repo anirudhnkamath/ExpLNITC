@@ -6,6 +6,7 @@
     #include "./registers/registers.h"
     #include "./node/node.h"
     #include "./gsTable/gsTable.h"
+    #include "./xsmGen/xsmGen.h"
 
     FILE* yyin;
 

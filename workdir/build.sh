@@ -15,7 +15,8 @@ gcc -o main_compiler \
     node/node.c \
     registers/registers.c \
     gsTable/gsTable.c \
-    label/label.c
+    label/label.c \
+    xsmGen/xsmGen.c
 
 # compiler to generate labelled code
 ./main_compiler "$INPUT_FILE"
