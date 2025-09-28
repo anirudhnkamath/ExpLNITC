@@ -222,3 +222,41 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
     n->type = BOOLEAN_TYPE;
     return n;
 }
+
+
+void inorder(Tnode* node) {
+    if (node == NULL) return;
+
+    inorder(node->left);
+
+    switch (node->tnodeType) {
+        case NODE_CONNECTOR:   printf("CONNECTOR\n"); break;
+        case NODE_EMPTY:       printf("EMPTY\n"); break;
+        case NODE_WRITE:       printf("WRITE\n"); break;
+        case NODE_READ:        printf("READ\n"); break;
+        case NODE_ASSIGN:      printf("ASSIGN\n"); break;
+        case NODE_ADD:         printf("ADD\n"); break;
+        case NODE_SUB:         printf("SUB\n"); break;
+        case NODE_DIV:         printf("DIV\n"); break;
+        case NODE_MULT:        printf("MULT\n"); break;
+        case NODE_ID:          printf("ID(%s)\n", node->varName); break;
+        case NODE_INT:         printf("INT(%d)\n", node->val); break;
+        case NODE_STR_LTRL:    printf("STR_LTRL(%s)\n", node->strVal); break;
+        case NODE_EQ:          printf("EQ\n"); break;
+        case NODE_NEQ:         printf("NEQ\n"); break;
+        case NODE_GTE:         printf("GTE\n"); break;
+        case NODE_GT:          printf("GT\n"); break;
+        case NODE_LTE:         printf("LTE\n"); break;
+        case NODE_LT:          printf("LT\n"); break;
+        case NODE_IF:          printf("IF\n"); break;
+        case NODE_IF_ELSE:     printf("IF_ELSE\n"); break;
+        case NODE_WHILE:       printf("WHILE\n"); break;
+        case NODE_DOWHILE:     printf("DO_WHILE\n"); break;
+        case NODE_REPEATUNTIL: printf("REPEAT_UNTIL\n"); break;
+        case NODE_BREAK:       printf("BREAK\n"); break;
+        case NODE_CONTINUE:    printf("CONTINUE\n"); break;
+        default:               printf("UNKNOWN\n"); break;
+    }
+
+    inorder(node->right);
+}

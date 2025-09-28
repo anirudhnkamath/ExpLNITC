@@ -37,4 +37,6 @@ Tnode* createContinueNode();
 Tnode* createArithOpNode(int tNodeType, Tnode* left, Tnode* right);
 Tnode* createRelOpNode(int tNodeType, Tnode* left, Tnode* right);
 
+void inorder(Tnode* root);
+
 #endif
