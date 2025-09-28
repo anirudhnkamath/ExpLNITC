@@ -4,7 +4,9 @@ decl
 enddecl;
 
 begin
+    a = "anirudh";
+    b = "barath";
+    c = "cat";
+    d = "haha";
     write(a);
-    write(b);
-    write(e);
 end;

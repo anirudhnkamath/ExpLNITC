@@ -170,19 +170,11 @@ outputStmt :
 
     WRITE LPAR expr RPAR EOL {
         $$ = createWriteNode($3);
-    }|
-
-    WRITE LPAR STR_LTRL RPAR EOL {
-        $$ = createWriteNode($3);
     };
 
 assignStmt :
 
     ID ASSG expr EOL {
-        $$ = createAssignNode($1, $3);
-    }|
-
-    ID ASSG STR_LTRL EOL {
         $$ = createAssignNode($1, $3);
     };
 
@@ -265,6 +257,10 @@ expr :
     }|
 
     NUMBER {
+        $$ = $1;
+    }|
+
+    STR_LTRL {
         $$ = $1;
     };
 
