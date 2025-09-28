@@ -1,12 +1,8 @@
 decl
-    str a,b,c,d;
-    int e;
+    str a;
 enddecl;
 
 begin
-    a = "anirudh";
-    b = "barath";
-    c = "cat";
-    d = "haha";
+    read(a);
     write(a);
 end;

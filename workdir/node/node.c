@@ -36,8 +36,10 @@ Tnode* createIntNode(int val) {
 Tnode* createStrLtrlNode(char* str) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_STR_LTRL;
-    n->strVal = str;
+    n->strVal = strdup(str);
     n->type = STRING_TYPE;
+
+    printf("%s\n", n->strVal);
     
     return n;
 }

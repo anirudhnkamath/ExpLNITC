@@ -96,7 +96,13 @@ void updateStackPointer(int addr, FILE* targetFile) {
 
 int movStrLtrlToReg(Tnode* node, FILE* targetFile) {
     int freeReg = getFreeRegister();
-    fprintf(targetFile, "MOV R%d, %s\n", freeReg, node->strVal);
+    
+    if(node->tnodeType == NODE_ID) {
+        getVariableValue(freeReg, node->varName, targetFile);
+    }
+    else {
+        fprintf(targetFile, "MOV R%d, %s\n", freeReg, node->strVal);
+    }
     return freeReg;
 }
 
