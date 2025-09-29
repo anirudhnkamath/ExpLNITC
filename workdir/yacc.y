@@ -31,7 +31,7 @@
 %token WHILE DO ENDWHILE
 %token REPEAT UNTIL
 %token BREAK CONTINUE
-%token LPAR RPAR
+%token LPAR RPAR LBRACK RBRACK
 %token INT STR
 %token EOL COMMA
 
@@ -53,7 +53,7 @@ start :
 
     declSection codeSection {
         $$ = $2;
-        initiateCodeGen($$);
+        printGsTable(gsTableHead);
         exit(0);
     };
 
@@ -105,11 +105,19 @@ dataType :
 varList :
 
     varList COMMA ID {
-        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, 1);
+        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, 1, 0);
+    }|
+
+    varList COMMA ID LBRACK NUMBER RBRACK {
+        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, ($5)->val, 1);
+    }|
+
+    ID LBRACK NUMBER RBRACK {
+        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, ($3)->val, 1);
     }|
 
     ID {
-        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, 1);
+        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, 1, 0);
     };
 
 stmtList :

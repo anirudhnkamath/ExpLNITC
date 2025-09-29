@@ -9,21 +9,30 @@ GsTableEntry* gsTableHead = NULL;
 int nextBinding = STATIC_ALLOC_START; 
 int declarationOverFlag = 0;
 
-int getNextBinding() {
-    if(nextBinding > STATIC_ALLOC_END) {
+int getNextBinding(int size) {
+
+    if(size <= 0) {
+        printf("Error : Invalid variable size\n");
+        exit(1);
+    }
+
+    if(nextBinding > STATIC_ALLOC_END || nextBinding + size - 1 > STATIC_ALLOC_END) {
         printf("Error: Out of Static Memory\n");
         exit(1);
     }
 
-    return nextBinding++; 
+    int ret = nextBinding;
+    nextBinding += size;
+    return ret;
 }
 
-GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding) {
+GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension) {
     GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
     n->varName = strdup(varName);
     n->dataType = dataType;
     n->size = size;
     n->binding = binding;
+    n->dimension = dimension;
 
     return n;
 }
@@ -39,7 +48,7 @@ GsTableEntry* findInGsTable(GsTableEntry* head, char* varName) {
     return NULL;
 }
 
-GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, int size) {
+GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, int size, int dimension) {
     GsTableEntry* exists = findInGsTable(head, varName);
 
     if(exists) {
@@ -47,8 +56,8 @@ GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, i
         exit(1);
     }
 
-    int binding = getNextBinding();
-    GsTableEntry* newEntry = createGsTableEntry(varName, dataType, size, binding);
+    int binding = getNextBinding(size);
+    GsTableEntry* newEntry = createGsTableEntry(varName, dataType, size, binding, dimension);
 
     if(!head)
         return newEntry;
@@ -66,7 +75,7 @@ void printGsTable(GsTableEntry* head) {
     
     GsTableEntry* temp = head;
     while (temp != NULL) {
-        printf("%s %d %d %d\n", temp->varName, temp->dataType, temp->size, temp->binding);
+        printf("%s %d %d %d %d\n", temp->varName, temp->dataType, temp->size, temp->binding, temp->dimension);
         temp = temp->next;
     }
 }

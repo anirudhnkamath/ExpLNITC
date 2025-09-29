@@ -18,6 +18,9 @@
 "(" { return LPAR; }
 ")" { return RPAR; }
 
+"[" { return LBRACK; }
+"]" { return RBRACK; }
+
 "+" { return PLUS; }
 "-" { return MIN; }
 "*" { return MULT; }

@@ -6,6 +6,7 @@ typedef struct GsTableEntry {
     int dataType;
     int size;
     int binding;
+    int dimension;
     struct GsTableEntry * next;
 } GsTableEntry;
 
@@ -13,10 +14,10 @@ extern int declarationOverFlag;
 extern int nextBinding;
 extern GsTableEntry* gsTableHead;
 
-int getNextBinding();
+int getNextBinding(int size);
 
-GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding);
-GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, int size);
+GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension);
+GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, int size, int dimension);
 
 GsTableEntry* findInGsTable(GsTableEntry* head, char* varName);
 
