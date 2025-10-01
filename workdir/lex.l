@@ -25,6 +25,7 @@
 "-" { return MIN; }
 "*" { return MULT; }
 "/" { return DIV; }
+"%" { return MOD; }
 
 "==" { return EQ; }
 "!=" { return NEQ; }

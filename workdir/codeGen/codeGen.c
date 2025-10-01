@@ -259,6 +259,10 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
             fprintf(targetFile, "MUL R%d, R%d\n", leftReg, rightReg);
             break;
 
+        case NODE_MOD :
+            fprintf(targetFile, "MOD R%d, R%d\n", leftReg, rightReg);
+            break;
+
         case NODE_EQ :
             fprintf(targetFile, "EQ R%d, R%d\n", leftReg, rightReg);
             break;

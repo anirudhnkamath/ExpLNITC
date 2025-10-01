@@ -23,6 +23,7 @@ enum nodeTypes {
     NODE_ADD,
     NODE_SUB,
     NODE_DIV,
+    NODE_MOD,
     NODE_MULT,
     NODE_ID,
     NODE_INT,

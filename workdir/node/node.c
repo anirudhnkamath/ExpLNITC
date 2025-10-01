@@ -276,6 +276,7 @@ void inorder(Tnode* node) {
         case NODE_BREAK:       printf("BREAK\n"); break;
         case NODE_CONTINUE:    printf("CONTINUE\n"); break;
         case NODE_ARR_IND:     printf("NODE_ARR_INDEX\n"); break;
+        case NODE_MOD:         printf("NODE_MOD\n"); break;
         default:               printf("UNKNOWN\n"); break;
     }
 

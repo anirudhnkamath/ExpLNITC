@@ -45,7 +45,7 @@
 
 %nonassoc EQ NEQ GT GTE LT LTE
 %left PLUS MIN
-%left MULT DIV
+%left MULT DIV MOD
 %nonassoc ASSG
 
 %%
@@ -245,6 +245,10 @@ expr :
 
     expr DIV expr {
         $$ = createArithOpNode(NODE_DIV, $1, $3);
+    }|
+
+    expr MOD expr {
+        $$ = createArithOpNode(NODE_MOD, $1, $3);
     }|
 
     expr EQ expr {
