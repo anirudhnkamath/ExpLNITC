@@ -20,6 +20,8 @@ Tnode* createIntNode(int val);
 Tnode* createStrLtrlNode(char* str);
 Tnode* createIdNode(char varName[]);
 
+Tnode* createArrIndexNode(Tnode* idNode, Tnode* exprNode);
+
 Tnode* createReadNode(Tnode* idNode);
 Tnode* createWriteNode(Tnode* exprNode);
 Tnode* createAssignNode(Tnode* idNode, Tnode* exprNode);

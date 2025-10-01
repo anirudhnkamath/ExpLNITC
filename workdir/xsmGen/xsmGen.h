@@ -15,7 +15,10 @@ void setVariableValue(char* varName, int storeReg, FILE* targetFile);
 void getVariableValue(int storeReg, char* varName, FILE* targetFile);
 void getImmediateValue(int storeReg, int val, FILE* targetFile);
 
+void setArrIndexValue(char* varName, int indexReg, int exprReg, FILE* targetFile);
+
 int movStrLtrlToReg(Tnode* node, FILE* targetFile);
+
 
 
 #endif

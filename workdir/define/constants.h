@@ -40,6 +40,7 @@ enum nodeTypes {
     NODE_REPEATUNTIL,
     NODE_BREAK,
     NODE_CONTINUE,
+    NODE_ARR_IND,
 };
 
 enum errorCodes {

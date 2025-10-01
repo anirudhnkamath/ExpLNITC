@@ -86,6 +86,13 @@ void getVariableValue(int storeReg, char* varName, FILE* targetFile) {
     fprintf(targetFile, "MOV R%d, [%d]\n", storeReg, addr);
 }
 
+void setArrIndexValue(char* varName, int indexReg, int exprReg, FILE* targetFile) {
+    int baseAddr = getStaticAddress(varName);
+    
+    fprintf(targetFile, "ADD R%d, %d\n", indexReg, baseAddr);
+    fprintf(targetFile, "MOV [R%d], R%d\n", indexReg, exprReg);
+}
+
 void getImmediateValue(int storeReg, int val, FILE* targetFile) {
     fprintf(targetFile, "MOV R%d, %d\n", storeReg, val);
 }

@@ -39,8 +39,6 @@ Tnode* createStrLtrlNode(char* str) {
     n->strVal = strdup(str);
     n->type = STRING_TYPE;
 
-    printf("%s\n", n->strVal);
-    
     return n;
 }
 
@@ -65,6 +63,26 @@ Tnode* createIdNode(char varName[]) {
 }
 
 
+Tnode* createArrIndexNode(Tnode* idNode, Tnode* exprNode) {
+    Tnode* n = createEmptyNode();
+    n->tnodeType = NODE_ARR_IND;
+
+    if(idNode->gsTableEntry->dimension == 0) {
+        printf("Error : indexing not allowed\n");
+        exit(1);
+    }
+    if(exprNode->type != INTEGER_TYPE) {
+        printf("Error : type mismatch in array index\n");
+        exit(1);
+    }
+
+    n->type = idNode->gsTableEntry->dataType;
+    n->left = idNode;
+    n->right = exprNode;
+    return n;
+}
+
+
 Tnode* createReadNode(Tnode* idNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_READ;
@@ -85,7 +103,7 @@ Tnode* createWriteNode(Tnode* exprNode) {
     return n;
 }
 
-Tnode* createAssignNode(Tnode* idNode, Tnode* exprNode) {
+Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_ASSIGN;
 
@@ -94,12 +112,12 @@ Tnode* createAssignNode(Tnode* idNode, Tnode* exprNode) {
         exit(1);
     }
 
-    if(idNode->type != exprNode->type) {
+    if(leftNode->type != exprNode->type) {
         printf("Error : type mismatch\n");
         exit(1);
     }
 
-    n->left = idNode;
+    n->left = leftNode;
     n->right = exprNode;
     return n;
 }

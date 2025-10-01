@@ -41,6 +41,7 @@
 %type <node> inputStmt outputStmt assignStmt 
 %type <node> ifStmt whileStmt doWhileStmt repeatUntilStmt
 %type <node> expr
+%type <node> arrIndex
 
 %nonassoc EQ NEQ GT GTE LT LTE
 %left PLUS MIN
@@ -53,7 +54,7 @@ start :
 
     declSection codeSection {
         $$ = $2;
-        printGsTable(gsTableHead);
+        initiateCodeGen($$);
         exit(0);
     };
 
@@ -184,6 +185,10 @@ assignStmt :
 
     ID ASSG expr EOL {
         $$ = createAssignNode($1, $3);
+    }|
+
+    arrIndex ASSG expr EOL {
+        $$ = createAssignNode($1, $3);
     };
 
 ifStmt :
@@ -212,6 +217,12 @@ repeatUntilStmt :
 
     REPEAT stmtList UNTIL LPAR expr RPAR EOL {
         $$ = createRepeatUntilNode($5, $2);
+    };
+
+arrIndex :
+
+    ID LBRACK expr RBRACK {
+        $$ = createArrIndexNode($1, $3);
     };
 
 expr :

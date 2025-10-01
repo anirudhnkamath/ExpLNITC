@@ -44,14 +44,23 @@ int codeGen(Tnode* node, FILE* targetFile) {
         }
 
         case NODE_ASSIGN : {
-            int freeReg;
+            int exprReg;
 
             if(node->right->type == INTEGER_TYPE)
-                freeReg = evaluateExpression(node->right, targetFile);
+                exprReg = evaluateExpression(node->right, targetFile);
             else
-                freeReg = movStrLtrlToReg(node->right, targetFile);
+                exprReg = movStrLtrlToReg(node->right, targetFile);
 
-            setVariableValue(node->left->varName, freeReg, targetFile);
+            
+            if(node->left->tnodeType == NODE_ID)
+                setVariableValue(node->left->varName, exprReg, targetFile);
+            else {
+                int indexReg = evaluateExpression(node->left->right, targetFile);
+                setArrIndexValue(node->left->left->varName, indexReg, exprReg, targetFile);
+                releaseRegister(indexReg);
+            }
+
+            releaseRegister(exprReg);
             break;
         }
 
