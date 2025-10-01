@@ -120,6 +120,15 @@ void readArrIndex(char* varName, int indexReg, FILE* targetFile) {
     releaseRegister(storeReg);
 }
 
+int getArrIndexReg(char* varName, int indexReg, FILE* targetFile) {
+    int baseAddr = getStaticAddress(varName);
+    fprintf(targetFile, "ADD R%d, %d\n", indexReg, baseAddr);
+
+    int storeReg = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, [R%d]\n", storeReg, indexReg);
+    return storeReg;
+}
+
 void getImmediateValue(int storeReg, int val, FILE* targetFile) {
     fprintf(targetFile, "MOV R%d, %d\n", storeReg, val);
 }

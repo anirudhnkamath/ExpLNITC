@@ -29,10 +29,17 @@ int codeGen(Tnode* node, FILE* targetFile) {
         case NODE_WRITE : {
             int freeReg;
 
-            if(node->left->type == INTEGER_TYPE)
-                freeReg = evaluateExpression(node->left, targetFile);
-            else
+            if(node->left->tnodeType == NODE_ARR_IND) {
+                int indexReg = evaluateExpression(node->left->right, targetFile);
+                freeReg = getArrIndexReg(node->left->left->varName, indexReg, targetFile);
+                releaseRegister(indexReg);
+            }
+            else if(node->left->type == INTEGER_TYPE) {
+                freeReg = evaluateExpression(node->left, targetFile);   
+            }
+            else {
                 freeReg = movStrLtrlToReg(node->left, targetFile);
+            }
 
             printToConsole(freeReg, targetFile);
             break;
@@ -212,6 +219,13 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
 
     if(node == NULL)
         return E_INVALIDNODE;
+
+    if(node->tnodeType == NODE_ARR_IND) {
+        int indexReg = evaluateExpression(node->right, targetFile);
+        int ret = getArrIndexReg(node->left->varName, indexReg, targetFile);
+        releaseRegister(indexReg);
+        return ret;
+    }
 
     if(node->tnodeType == NODE_ID) {
         int freeReg = getFreeRegister();

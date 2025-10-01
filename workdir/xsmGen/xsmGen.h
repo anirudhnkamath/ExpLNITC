@@ -17,6 +17,7 @@ void getImmediateValue(int storeReg, int val, FILE* targetFile);
 
 void setArrIndexValue(char* varName, int indexReg, int exprReg, FILE* targetFile);
 void readArrIndex(char* varName, int indexReg, FILE* targetFile);
+int getArrIndexReg(char* varName, int indexReg, FILE* targetFile);
 
 int movStrLtrlToReg(Tnode* node, FILE* targetFile);
 
