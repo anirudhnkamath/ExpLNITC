@@ -93,6 +93,33 @@ void setArrIndexValue(char* varName, int indexReg, int exprReg, FILE* targetFile
     fprintf(targetFile, "MOV [R%d], R%d\n", indexReg, exprReg);
 }
 
+void readArrIndex(char* varName, int indexReg, FILE* targetFile) {
+    int baseAddr = getStaticAddress(varName);
+    fprintf(targetFile, "ADD R%d, %d\n", indexReg, baseAddr);
+
+    int freeReg = getFreeRegister();
+    int storeReg = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, R%d\n", storeReg, indexReg);
+
+    fprintf(
+        targetFile,
+        "MOV R%d, \"Read\"\nPUSH R%d\nMOV R%d, -1\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\n",
+        freeReg, freeReg, freeReg, freeReg, storeReg, freeReg, freeReg
+    );
+
+    fprintf(targetFile, "CALL 0\n");
+
+    fprintf(
+        targetFile,
+        "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n",
+        freeReg, freeReg, freeReg, freeReg, freeReg
+    );
+
+
+    releaseRegister(freeReg);
+    releaseRegister(storeReg);
+}
+
 void getImmediateValue(int storeReg, int val, FILE* targetFile) {
     fprintf(targetFile, "MOV R%d, %d\n", storeReg, val);
 }

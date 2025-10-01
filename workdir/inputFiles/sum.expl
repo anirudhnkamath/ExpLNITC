@@ -3,5 +3,5 @@ decl
 enddecl;
 
 begin
-    arr[1] = 1;
+    read(arr[1+2]);
 end;

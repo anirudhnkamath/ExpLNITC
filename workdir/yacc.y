@@ -173,6 +173,10 @@ inputStmt :
 
     READ LPAR ID RPAR EOL {
         $$ = createReadNode($3);
+    }|
+
+    READ LPAR arrIndex RPAR EOL {
+        $$ = createReadNode($3);
     };
 
 outputStmt :

@@ -39,7 +39,14 @@ int codeGen(Tnode* node, FILE* targetFile) {
         }
 
         case NODE_READ : {
-            readFromConsole(node->left->varName, targetFile);
+            if(node->left->tnodeType == NODE_ID) {
+                readFromConsole(node->left->varName, targetFile);
+            }
+            else {
+                int indexReg = evaluateExpression(node->left->right, targetFile);
+                readArrIndex(node->left->left->varName, indexReg, targetFile);
+                releaseRegister(indexReg);
+            }
             break;
         }
 
