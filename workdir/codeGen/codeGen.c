@@ -27,75 +27,17 @@ int codeGen(Tnode* node, FILE* targetFile) {
             break;
 
         case NODE_WRITE : {
-            int freeReg;
-
-            if(node->left->tnodeType == NODE_ARR_IND) {
-                int indexReg = evaluateExpression(node->left->right, targetFile);
-                freeReg = getArrIndexReg(node->left->left->varName, indexReg, targetFile);
-                releaseRegister(indexReg);
-            }
-            else if(node->left->type == NODE_ARR_IND_2D) {
-                int rowReg = evaluateExpression(node->left->right->left, targetFile);
-                int colReg = evaluateExpression(node->left->right->right, targetFile);
-                freeReg = getArrIndex2DReg(node->left->left, rowReg, colReg, targetFile);
-                releaseRegister(rowReg);
-                releaseRegister(colReg);
-            }
-            else if(node->left->type == INTEGER_TYPE) {
-                freeReg = evaluateExpression(node->left, targetFile);   
-            }
-            else {
-                freeReg = movStrLtrlToReg(node->left, targetFile);
-            }
-
-            printToConsole(freeReg, targetFile);
+            generateWriteCode(node->left, targetFile);
             break;
         }
 
         case NODE_READ : {
-            if(node->left->tnodeType == NODE_ID) {
-                readFromConsole(node->left->varName, targetFile);
-            }
-            else if(node->left->tnodeType == NODE_ARR_IND) {
-                int indexReg = evaluateExpression(node->left->right, targetFile);
-                readArrIndex(node->left->left->varName, indexReg, targetFile);
-                releaseRegister(indexReg);
-            } 
-            else {
-                int rowReg = evaluateExpression(node->left->right->left, targetFile);
-                int colReg = evaluateExpression(node->left->right->right, targetFile);
-                readArrIndex2D(node->left->left, rowReg, colReg, targetFile);
-                releaseRegister(rowReg);
-                releaseRegister(colReg);
-            }
+            generateReadCode(node->left, targetFile);
             break;
         }
 
         case NODE_ASSIGN : {
-            int exprReg;
-
-            if(node->right->type == INTEGER_TYPE)
-                exprReg = evaluateExpression(node->right, targetFile);
-            else
-                exprReg = movStrLtrlToReg(node->right, targetFile);
-
-            
-            if(node->left->tnodeType == NODE_ID)
-                setVariableValue(node->left->varName, exprReg, targetFile);
-            else if(node->left->tnodeType == NODE_ARR_IND) {
-                int indexReg = evaluateExpression(node->left->right, targetFile);
-                setArrIndexValue(node->left->left->varName, indexReg, exprReg, targetFile);
-                releaseRegister(indexReg);
-            }
-            else { // 2d array
-                int rowReg = evaluateExpression(node->left->right->left, targetFile);
-                int colReg = evaluateExpression(node->left->right->right, targetFile);
-                setArrIndex2DValue(node->left->left, rowReg, colReg, exprReg, targetFile);
-                releaseRegister(rowReg);
-                releaseRegister(colReg);
-            }
-
-            releaseRegister(exprReg);
+            generateAssignCode(node->left, node->right, targetFile);
             break;
         }
 
@@ -143,6 +85,76 @@ int codeGen(Tnode* node, FILE* targetFile) {
     }
 
     return -1;
+}
+
+void generateWriteCode(Tnode* node, FILE* targetFile) {
+    int freeReg;
+
+    if(node->tnodeType == NODE_ARR_IND) {
+        int indexReg = evaluateExpression(node->right, targetFile);
+        freeReg = getMemValue(node->left, indexReg, -1, -1, targetFile);
+        releaseRegister(indexReg);
+    }
+    else if(node->tnodeType == NODE_ARR_IND_2D) {
+        int rowReg = evaluateExpression(node->right->left, targetFile);
+        int colReg = evaluateExpression(node->right->right, targetFile);
+        freeReg = getMemValue(node->left, -1, rowReg, colReg, targetFile);
+        releaseRegister(rowReg);
+        releaseRegister(colReg);
+    }
+    else if(node->type == INTEGER_TYPE) {
+        freeReg = evaluateExpression(node, targetFile);   
+    }
+    else {
+        freeReg = movStrLtrlToReg(node, targetFile);
+    }
+
+    printToConsole(freeReg, targetFile);
+    releaseRegister(freeReg);
+}
+
+void generateReadCode(Tnode* node, FILE* targetFile) {
+    if(node->tnodeType == NODE_ID) {
+        readFromConsole(node, -1, -1, -1, targetFile);
+    }
+    else if(node->tnodeType == NODE_ARR_IND) {
+        int indexReg = evaluateExpression(node->right, targetFile);
+        readFromConsole(node->left, indexReg, -1, -1, targetFile);
+        releaseRegister(indexReg);
+    } 
+    else {
+        int rowReg = evaluateExpression(node->right->left, targetFile);
+        int colReg = evaluateExpression(node->right->right, targetFile);
+        readFromConsole(node->left, -1, rowReg, colReg, targetFile);
+        releaseRegister(rowReg);
+        releaseRegister(colReg);
+    }
+}
+
+void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
+
+    int exprReg;
+    if(rhs->type == INTEGER_TYPE)
+        exprReg = evaluateExpression(rhs, targetFile);
+    else
+        exprReg = movStrLtrlToReg(rhs, targetFile);
+
+    if(lhs->tnodeType == NODE_ID)
+        setMemValue(lhs, exprReg, -1, -1, -1, targetFile);
+    else if(lhs->tnodeType == NODE_ARR_IND) {
+        int indexReg = evaluateExpression(lhs->right, targetFile);
+        setMemValue(lhs->left, exprReg, indexReg, -1, -1, targetFile);
+        releaseRegister(indexReg);
+    }
+    else {
+        int rowReg = evaluateExpression(lhs->right->left, targetFile);
+        int colReg = evaluateExpression(lhs->right->right, targetFile);
+        setMemValue(lhs->left, exprReg, -1, rowReg, colReg, targetFile);
+        releaseRegister(rowReg);
+        releaseRegister(colReg);
+    }
+
+    releaseRegister(exprReg);
 }
 
 void generateWhileLoop(Tnode* node, FILE* targetFile) {
@@ -243,7 +255,7 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
 
     if(node->tnodeType == NODE_ARR_IND) {
         int indexReg = evaluateExpression(node->right, targetFile);
-        int ret = getArrIndexReg(node->left->varName, indexReg, targetFile);
+        int ret = getMemValue(node->left, indexReg, -1, -1, targetFile);
         releaseRegister(indexReg);
         return ret;
     }
@@ -251,16 +263,14 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
     if(node->tnodeType == NODE_ARR_IND_2D) {
         int rowReg = evaluateExpression(node->right->left, targetFile);
         int colReg = evaluateExpression(node->right->right, targetFile);
-        int ret = getArrIndex2DReg(node->left, rowReg, colReg, targetFile);
+        int ret = getMemValue(node->left, -1, rowReg, colReg, targetFile);
         releaseRegister(rowReg);
         releaseRegister(colReg);
         return ret;
     }
 
     if(node->tnodeType == NODE_ID) {
-        int freeReg = getFreeRegister();
-        getVariableValue(freeReg, node->varName, targetFile);
-        return freeReg;
+        return getMemValue(node, -1, -1, -1, targetFile);
     }
 
     if(node->tnodeType == NODE_INT) {

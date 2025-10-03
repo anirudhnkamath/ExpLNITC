@@ -2,6 +2,7 @@
 #include "../gsTable/gsTable.h"
 #include "../label/label.h"
 #include "../codeGen/codeGen.h"
+#include "xsmGen.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -29,32 +30,6 @@ void printToConsole(int regIndex, FILE* targetFile) {
     releaseRegister(freeReg);
 }
 
-void readFromConsole(char* varName, FILE* targetFile) {
-    int addr = getStaticAddress(varName);
-
-    int freeReg = getFreeRegister();
-    int storeReg = getFreeRegister();
-    fprintf(targetFile, "MOV R%d, %d\n", storeReg, addr);
-
-    fprintf(
-        targetFile,
-        "MOV R%d, \"Read\"\nPUSH R%d\nMOV R%d, -1\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\n",
-        freeReg, freeReg, freeReg, freeReg, storeReg, freeReg, freeReg
-    );
-
-    fprintf(targetFile, "CALL 0\n");
-
-    fprintf(
-        targetFile,
-        "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n",
-        freeReg, freeReg, freeReg, freeReg, freeReg
-    );
-
-
-    releaseRegister(freeReg);
-    releaseRegister(storeReg);
-}
-
 void exitProgram(FILE* targetFile) {
     int freeReg = getFreeRegister();
 
@@ -75,125 +50,6 @@ void exitProgram(FILE* targetFile) {
     releaseRegister(freeReg);
 }
 
-void setVariableValue(char* varName, int storeReg, FILE* targetFile) {
-    int addr = getStaticAddress(varName);
-    fprintf(targetFile, "MOV [%d], R%d\n", addr, storeReg);
-    releaseRegister(storeReg);
-}
-
-void getVariableValue(int storeReg, char* varName, FILE* targetFile) {
-    int addr = getStaticAddress(varName);
-    fprintf(targetFile, "MOV R%d, [%d]\n", storeReg, addr);
-}
-
-void setArrIndexValue(char* varName, int indexReg, int exprReg, FILE* targetFile) {
-    int baseAddr = getStaticAddress(varName);
-    
-    fprintf(targetFile, "ADD R%d, %d\n", indexReg, baseAddr);
-    fprintf(targetFile, "MOV [R%d], R%d\n", indexReg, exprReg);
-}
-
-void readArrIndex(char* varName, int indexReg, FILE* targetFile) {
-    int baseAddr = getStaticAddress(varName);
-    fprintf(targetFile, "ADD R%d, %d\n", indexReg, baseAddr);
-
-    int freeReg = getFreeRegister();
-    int storeReg = getFreeRegister();
-    fprintf(targetFile, "MOV R%d, R%d\n", storeReg, indexReg);
-
-    fprintf(
-        targetFile,
-        "MOV R%d, \"Read\"\nPUSH R%d\nMOV R%d, -1\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\n",
-        freeReg, freeReg, freeReg, freeReg, storeReg, freeReg, freeReg
-    );
-
-    fprintf(targetFile, "CALL 0\n");
-
-    fprintf(
-        targetFile,
-        "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n",
-        freeReg, freeReg, freeReg, freeReg, freeReg
-    );
-
-
-    releaseRegister(freeReg);
-    releaseRegister(storeReg);
-}
-
-int getArrIndexReg(char* varName, int indexReg, FILE* targetFile) {
-    int baseAddr = getStaticAddress(varName);
-    fprintf(targetFile, "ADD R%d, %d\n", indexReg, baseAddr);
-
-    int storeReg = getFreeRegister();
-    fprintf(targetFile, "MOV R%d, [R%d]\n", storeReg, indexReg);
-    return storeReg;
-}
-
-void setArrIndex2DValue(Tnode* idNode, int rowReg, int colReg, int exprReg, FILE* targetFile) {
-    int baseAddr = idNode->gsTableEntry->binding;
-    int numCols  = idNode->gsTableEntry->numCols;
-
-    int tempReg = getFreeRegister();
-    fprintf(targetFile, "MOV R%d, %d\n", tempReg, numCols);
-    fprintf(targetFile, "MUL R%d, R%d\n", rowReg, tempReg);
-    fprintf(targetFile, "ADD R%d, R%d\n", rowReg, colReg);
-
-    fprintf(targetFile, "ADD R%d, %d\n", rowReg, baseAddr);
-    fprintf(targetFile, "MOV [R%d], R%d\n", rowReg, exprReg);
-
-    releaseRegister(tempReg);
-}
-
-void readArrIndex2D(Tnode* idNode, int rowReg, int colReg, FILE* targetFile) {
-    int baseAddr = idNode->gsTableEntry->binding;
-    int numCols  = idNode->gsTableEntry->numCols;
-
-    int tempReg = getFreeRegister();
-    fprintf(targetFile, "MOV R%d, %d\n", tempReg, numCols);
-    fprintf(targetFile, "MUL R%d, R%d\n", rowReg, tempReg);
-    fprintf(targetFile, "ADD R%d, R%d\n", rowReg, colReg);
-    fprintf(targetFile, "ADD R%d, %d\n", rowReg, baseAddr);
-    releaseRegister(tempReg);
-
-    int freeReg = getFreeRegister();
-    int storeReg = getFreeRegister();
-    fprintf(targetFile, "MOV R%d, R%d\n", storeReg, rowReg);
-
-    fprintf(
-        targetFile,
-        "MOV R%d, \"Read\"\nPUSH R%d\nMOV R%d, -1\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\n",
-        freeReg, freeReg, freeReg, freeReg, storeReg, freeReg, freeReg
-    );
-
-    fprintf(targetFile, "CALL 0\n");
-
-    fprintf(
-        targetFile,
-        "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n",
-        freeReg, freeReg, freeReg, freeReg, freeReg
-    );
-
-    releaseRegister(freeReg);
-    releaseRegister(storeReg);
-}
-
-int getArrIndex2DReg(Tnode* idNode, int rowReg, int colReg, FILE* targetFile) {
-    int baseAddr = idNode->gsTableEntry->binding;
-    int numCols  = idNode->gsTableEntry->numCols;
-
-    int tempReg = getFreeRegister();
-    fprintf(targetFile, "MOV R%d, %d\n", tempReg, numCols);
-    fprintf(targetFile, "MUL R%d, R%d\n", rowReg, tempReg);
-    fprintf(targetFile, "ADD R%d, R%d\n", rowReg, colReg);
-    fprintf(targetFile, "ADD R%d, %d\n", rowReg, baseAddr);
-    releaseRegister(tempReg);
-
-    int storeReg = getFreeRegister();
-    fprintf(targetFile, "MOV R%d, [R%d]\n", storeReg, rowReg);
-
-    return storeReg;
-}
-
 void getImmediateValue(int storeReg, int val, FILE* targetFile) {
     fprintf(targetFile, "MOV R%d, %d\n", storeReg, val);
 }
@@ -206,11 +62,87 @@ int movStrLtrlToReg(Tnode* node, FILE* targetFile) {
     int freeReg = getFreeRegister();
     
     if(node->tnodeType == NODE_ID) {
-        getVariableValue(freeReg, node->varName, targetFile);
+        freeReg = getMemValue(node, -1, -1, -1, targetFile);
     }
     else {
         fprintf(targetFile, "MOV R%d, %s\n", freeReg, node->strVal);
     }
+    
     return freeReg;
 }
+
+int getEffectiveAddr(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
+
+    // offset is only used for 1d and rowreg and colreg are used for 2d
+
+    int addrReg = getFreeRegister();
+    int baseAddr = idNode->gsTableEntry->binding;
+    int dimension = idNode->gsTableEntry->dimension;
+
+    fprintf(targetFile, "MOV R%d, %d\n", addrReg, baseAddr);
+
+    if(dimension == 0) {
+        return addrReg;
+    }
+    else if(dimension == 1) {
+        fprintf(targetFile, "ADD R%d, R%d\n", addrReg, rowReg);
+        return addrReg;
+    }
+    else if(dimension == 2) {
+        int temp = getFreeRegister();
+        int numCols = idNode->gsTableEntry->numCols;
+        fprintf(targetFile, "MOV R%d, %d\n", temp, numCols);
+        fprintf(targetFile, "MUL R%d, R%d\n", rowReg, temp);
+        fprintf(targetFile, "ADD R%d, R%d\n", rowReg, colReg);
+        fprintf(targetFile, "ADD R%d, R%d\n", addrReg, rowReg);
+
+        releaseRegister(temp);
+        return addrReg;
+    }
+    else {
+        printf("Error : wrong dimension\n");
+        exit(1);
+    }
+
+    return -1;
+}
+
+void setMemValue(Tnode* idNode, int exprReg, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
+    int addrReg = getEffectiveAddr(idNode, offsetReg, rowReg, colReg, targetFile);
+    fprintf(targetFile, "MOV [R%d], R%d\n", addrReg, exprReg);
+    releaseRegister(addrReg);
+}
+
+int getMemValue(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
+    int addrReg = getEffectiveAddr(idNode, offsetReg, rowReg, colReg, targetFile);
+    int storeReg = getFreeRegister();
+
+    fprintf(targetFile, "MOV R%d, [R%d]\n", storeReg, addrReg);
+    releaseRegister(addrReg);
+    return storeReg;
+}
+
+void readFromConsole(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
+    int addrReg = getEffectiveAddr(idNode, offsetReg, rowReg, colReg, targetFile);
+    int freeReg = getFreeRegister();
+
+    fprintf(
+        targetFile,
+        "MOV R%d, \"Read\"\nPUSH R%d\nMOV R%d, -1\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\n",
+        freeReg, freeReg, freeReg, freeReg, addrReg, freeReg, freeReg
+    );
+
+    fprintf(targetFile, "CALL 0\n");
+
+    fprintf(
+        targetFile,
+        "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n",
+        freeReg, freeReg, freeReg, freeReg, freeReg
+    );
+
+    releaseRegister(freeReg);
+    releaseRegister(addrReg);
+}
+
+
 

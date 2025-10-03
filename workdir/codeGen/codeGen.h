@@ -16,4 +16,9 @@ void generateIfElse(Tnode* node, FILE* targetFile);
 void generateRepeatUntil(Tnode* node, FILE* targetFile);
 void generateDoWhile(Tnode* node, FILE* targetFile);
 
+void generateWriteCode(Tnode* node, FILE* targetFile);
+void generateReadCode(Tnode* node, FILE* targetFile);
+void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile);
+
+
 #endif

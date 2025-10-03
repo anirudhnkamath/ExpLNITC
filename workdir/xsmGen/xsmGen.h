@@ -3,28 +3,28 @@
 
 #include <stdio.h>
 
+#include "../registers/registers.h"
+#include "../gsTable/gsTable.h"
+#include "../label/label.h"
+#include "../codeGen/codeGen.h"
+#include <stdlib.h>
+#include <stdio.h>
+
 void setHeader(FILE* targetFile);
 
-void readFromConsole(char* varName, FILE* targetFile);
+void readFromConsole(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile);
 void printToConsole(int regIndex, FILE* targetFile);
 void exitProgram(FILE* targetFile);
 
-void updateStackPointer(int addr, FILE* targetFile);
-
-void setVariableValue(char* varName, int storeReg, FILE* targetFile);
-void getVariableValue(int storeReg, char* varName, FILE* targetFile);
 void getImmediateValue(int storeReg, int val, FILE* targetFile);
 
-void setArrIndexValue(char* varName, int indexReg, int exprReg, FILE* targetFile);
-void readArrIndex(char* varName, int indexReg, FILE* targetFile);
-int getArrIndexReg(char* varName, int indexReg, FILE* targetFile);
-
-void setArrIndex2DValue(Tnode* idNode, int rowReg, int colReg, int exprReg, FILE* targetFile);
-void readArrIndex2D(Tnode* idNode, int rowReg, int colReg, FILE* targetFile);
-int getArrIndex2DReg(Tnode* idNode, int rowReg, int colReg, FILE* targetFile);
+void updateStackPointer(int addr, FILE* targetFile);
 
 int movStrLtrlToReg(Tnode* node, FILE* targetFile);
 
+int getEffectiveAddr(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile);
 
+void setMemValue(Tnode* idNode, int exprReg, int offsetReg, int rowReg, int colReg, FILE* targetFile);
+int getMemValue(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile);
 
 #endif
