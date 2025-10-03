@@ -26,13 +26,15 @@ int getNextBinding(int size) {
     return ret;
 }
 
-GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension) {
+GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols) {
     GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
     n->varName = strdup(varName);
     n->dataType = dataType;
     n->size = size;
     n->binding = binding;
     n->dimension = dimension;
+    n->numRows = rows;
+    n->numCols = cols;
 
     return n;
 }
@@ -48,7 +50,7 @@ GsTableEntry* findInGsTable(GsTableEntry* head, char* varName) {
     return NULL;
 }
 
-GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, int size, int dimension) {
+GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, int size, int dimension, int rows, int cols) {
     GsTableEntry* exists = findInGsTable(head, varName);
 
     if(exists) {
@@ -57,7 +59,7 @@ GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, i
     }
 
     int binding = getNextBinding(size);
-    GsTableEntry* newEntry = createGsTableEntry(varName, dataType, size, binding, dimension);
+    GsTableEntry* newEntry = createGsTableEntry(varName, dataType, size, binding, dimension, rows, cols);
 
     if(!head)
         return newEntry;

@@ -129,6 +129,71 @@ int getArrIndexReg(char* varName, int indexReg, FILE* targetFile) {
     return storeReg;
 }
 
+void setArrIndex2DValue(Tnode* idNode, int rowReg, int colReg, int exprReg, FILE* targetFile) {
+    int baseAddr = idNode->gsTableEntry->binding;
+    int numCols  = idNode->gsTableEntry->numCols;
+
+    int tempReg = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, %d\n", tempReg, numCols);
+    fprintf(targetFile, "MUL R%d, R%d\n", rowReg, tempReg);
+    fprintf(targetFile, "ADD R%d, R%d\n", rowReg, colReg);
+
+    fprintf(targetFile, "ADD R%d, %d\n", rowReg, baseAddr);
+    fprintf(targetFile, "MOV [R%d], R%d\n", rowReg, exprReg);
+
+    releaseRegister(tempReg);
+}
+
+void readArrIndex2D(Tnode* idNode, int rowReg, int colReg, FILE* targetFile) {
+    int baseAddr = idNode->gsTableEntry->binding;
+    int numCols  = idNode->gsTableEntry->numCols;
+
+    int tempReg = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, %d\n", tempReg, numCols);
+    fprintf(targetFile, "MUL R%d, R%d\n", rowReg, tempReg);
+    fprintf(targetFile, "ADD R%d, R%d\n", rowReg, colReg);
+    fprintf(targetFile, "ADD R%d, %d\n", rowReg, baseAddr);
+    releaseRegister(tempReg);
+
+    int freeReg = getFreeRegister();
+    int storeReg = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, R%d\n", storeReg, rowReg);
+
+    fprintf(
+        targetFile,
+        "MOV R%d, \"Read\"\nPUSH R%d\nMOV R%d, -1\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\n",
+        freeReg, freeReg, freeReg, freeReg, storeReg, freeReg, freeReg
+    );
+
+    fprintf(targetFile, "CALL 0\n");
+
+    fprintf(
+        targetFile,
+        "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n",
+        freeReg, freeReg, freeReg, freeReg, freeReg
+    );
+
+    releaseRegister(freeReg);
+    releaseRegister(storeReg);
+}
+
+int getArrIndex2DReg(Tnode* idNode, int rowReg, int colReg, FILE* targetFile) {
+    int baseAddr = idNode->gsTableEntry->binding;
+    int numCols  = idNode->gsTableEntry->numCols;
+
+    int tempReg = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, %d\n", tempReg, numCols);
+    fprintf(targetFile, "MUL R%d, R%d\n", rowReg, tempReg);
+    fprintf(targetFile, "ADD R%d, R%d\n", rowReg, colReg);
+    fprintf(targetFile, "ADD R%d, %d\n", rowReg, baseAddr);
+    releaseRegister(tempReg);
+
+    int storeReg = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, [R%d]\n", storeReg, rowReg);
+
+    return storeReg;
+}
+
 void getImmediateValue(int storeReg, int val, FILE* targetFile) {
     fprintf(targetFile, "MOV R%d, %d\n", storeReg, val);
 }

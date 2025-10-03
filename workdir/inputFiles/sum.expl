@@ -1,32 +1,28 @@
 decl
-int n,arr[20],i,j,dup;
+int i, j, m, n, arr[4][4];
 enddecl;
 
 begin
+    read(m);
     read(n);
-    i=0;
-    while(i<n) do 
-        read(arr[i]); 
-        i = i+1; 
-    endwhile;
 
-    i=0;
-    while(i<n) do
-        j=i;
-        while(j<n) do
-            if(arr[i]>arr[j]) then
-                dup = arr[i];
-                arr[i] = arr[j];
-                arr[j] = dup;
-            endif;
+    i = 0;
+    while(i < m) do
+        j = 0;
+        while(j < n) do
+            read(arr[i][j]);
             j = j + 1;
         endwhile;
-        i = i+1;
+        i = i + 1;
     endwhile;
 
-    i=0;
-    while(i<n) do
-        write(arr[i]);
-        i = i+1;
+    i = 0;
+    while(i < m) do
+        j = 0;
+        while(j < n) do
+            write(arr[i][j]);
+            j = j + 1;
+        endwhile;
+        i = i + 1;
     endwhile;
 end;

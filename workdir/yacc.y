@@ -41,7 +41,7 @@
 %type <node> inputStmt outputStmt assignStmt 
 %type <node> ifStmt whileStmt doWhileStmt repeatUntilStmt
 %type <node> expr
-%type <node> arrIndex
+%type <node> arrIndex arrIndex2D
 
 %nonassoc EQ NEQ GT GTE LT LTE
 %left PLUS MIN
@@ -106,19 +106,27 @@ dataType :
 varList :
 
     varList COMMA ID {
-        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, 1, 0);
+        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, 1, 0, 0, 0);
     }|
 
     varList COMMA ID LBRACK NUMBER RBRACK {
-        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, ($5)->val, 1);
+        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, ($5)->val, 1, 0, 0);
+    }|
+
+    varList COMMA ID LBRACK NUMBER RBRACK LBRACK NUMBER RBRACK {
+        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, ($5)->val * ($8)->val, 2, ($5)->val, ($8)->val);
     }|
 
     ID LBRACK NUMBER RBRACK {
-        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, ($3)->val, 1);
+        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, ($3)->val, 1, 0, 0);
+    }|
+
+    ID LBRACK NUMBER RBRACK LBRACK NUMBER RBRACK {
+        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, ($3)->val * ($6)->val, 2, ($3)->val, ($6)->val);
     }|
 
     ID {
-        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, 1, 0);
+        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, 1, 0, 0, 0);
     };
 
 stmtList :
@@ -177,6 +185,10 @@ inputStmt :
 
     READ LPAR arrIndex RPAR EOL {
         $$ = createReadNode($3);
+    }|
+
+    READ LPAR arrIndex2D RPAR EOL {
+        $$ = createReadNode($3);
     };
 
 outputStmt :
@@ -192,6 +204,10 @@ assignStmt :
     }|
 
     arrIndex ASSG expr EOL {
+        $$ = createAssignNode($1, $3);
+    }|
+
+    arrIndex2D ASSG expr EOL {
         $$ = createAssignNode($1, $3);
     };
 
@@ -227,6 +243,12 @@ arrIndex :
 
     ID LBRACK expr RBRACK {
         $$ = createArrIndexNode($1, $3);
+    };
+
+arrIndex2D :
+
+    ID LBRACK expr RBRACK LBRACK expr RBRACK {
+        $$ = createArrIndex2DNode($1, $3, $6);
     };
 
 expr :
@@ -284,6 +306,10 @@ expr :
     }|
 
     arrIndex {
+        $$ = $1;
+    }|
+
+    arrIndex2D {
         $$ = $1;
     }|
 

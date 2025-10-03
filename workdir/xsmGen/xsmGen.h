@@ -19,6 +19,10 @@ void setArrIndexValue(char* varName, int indexReg, int exprReg, FILE* targetFile
 void readArrIndex(char* varName, int indexReg, FILE* targetFile);
 int getArrIndexReg(char* varName, int indexReg, FILE* targetFile);
 
+void setArrIndex2DValue(Tnode* idNode, int rowReg, int colReg, int exprReg, FILE* targetFile);
+void readArrIndex2D(Tnode* idNode, int rowReg, int colReg, FILE* targetFile);
+int getArrIndex2DReg(Tnode* idNode, int rowReg, int colReg, FILE* targetFile);
+
 int movStrLtrlToReg(Tnode* node, FILE* targetFile);
 
 

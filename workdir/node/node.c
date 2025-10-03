@@ -82,6 +82,25 @@ Tnode* createArrIndexNode(Tnode* idNode, Tnode* exprNode) {
     return n;
 }
 
+Tnode* createArrIndex2DNode(Tnode* idNode, Tnode* expr1Node, Tnode* expr2Node) {
+    Tnode* n = createEmptyNode();
+    n->tnodeType = NODE_ARR_IND_2D;
+
+    if(idNode->gsTableEntry->dimension != 2) {
+        printf("Error : indexing not allowed\n");
+        exit(1);
+    }
+    if(expr1Node->type != INTEGER_TYPE || expr2Node->type != INTEGER_TYPE) {
+        printf("Error : type mismatch in array index\n");
+        exit(1);
+    }
+
+    n->type = idNode->gsTableEntry->dataType;
+    n->left = idNode;
+    n->right = createConnectorNode(expr1Node, expr2Node);
+    return n;
+}
+
 
 Tnode* createReadNode(Tnode* idNode) {
     Tnode* n = createEmptyNode();

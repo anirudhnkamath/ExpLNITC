@@ -42,6 +42,7 @@ enum nodeTypes {
     NODE_BREAK,
     NODE_CONTINUE,
     NODE_ARR_IND,
+    NODE_ARR_IND_2D,
 };
 
 enum errorCodes {
