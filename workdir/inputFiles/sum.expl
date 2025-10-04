@@ -4,6 +4,5 @@ decl
 enddecl;
 
 begin
-    x = "anirudh";
-    p = &x;
+    q = &x;
 end;

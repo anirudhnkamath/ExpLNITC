@@ -60,6 +60,13 @@ void updateStackPointer(int addr, FILE* targetFile) {
 
 int movStrLtrlToReg(Tnode* node, FILE* targetFile) {
     int freeReg = getFreeRegister();
+
+    if(node->tnodeType == NODE_DEREF) {
+        int addrReg = getFreeRegister();
+        fprintf(targetFile, "MOV R%d, [%d]\n", addrReg, node->left->gsTableEntry->binding);
+        fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
+        return addrReg;
+    }
     
     if(node->tnodeType == NODE_ID) {
         freeReg = getMemValue(node, -1, -1, -1, targetFile);

@@ -273,6 +273,13 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
     if(node == NULL)
         return E_INVALIDNODE;
 
+    if(node->tnodeType == NODE_DEREF) {
+        int addrReg = getFreeRegister();
+        fprintf(targetFile, "MOV R%d, [%d]\n", addrReg, node->left->gsTableEntry->binding);
+        fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
+        return addrReg;
+    }
+
     if(node->tnodeType == NODE_ARR_IND) {
         int indexReg = evaluateExpression(node->right, targetFile);
         int ret = getMemValue(node->left, indexReg, -1, -1, targetFile);

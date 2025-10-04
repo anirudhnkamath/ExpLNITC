@@ -336,6 +336,10 @@ expr :
 
     STR_LTRL {
         $$ = $1;
+    }|
+
+    MULT ID {
+        $$ = createDerefNode($2);
     };
 
 %%
