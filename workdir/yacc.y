@@ -106,27 +106,27 @@ dataType :
 varList :
 
     varList COMMA ID {
-        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, 1, 0, 0, 0);
+        insertIdToGsTable(($3)->varName, curDeclarationType);
     }|
 
     varList COMMA ID LBRACK NUMBER RBRACK {
-        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, ($5)->val, 1, 0, 0);
+        insertArrToGsTable(($3)->varName, curDeclarationType, ($5)->val);
     }|
 
     varList COMMA ID LBRACK NUMBER RBRACK LBRACK NUMBER RBRACK {
-        gsTableHead = insertToGsTable(gsTableHead, ($3)->varName, curDeclarationType, ($5)->val * ($8)->val, 2, ($5)->val, ($8)->val);
+        insert2DArrToGsTable(($3)->varName, curDeclarationType, ($5)->val, ($8)->val);
     }|
 
     ID LBRACK NUMBER RBRACK {
-        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, ($3)->val, 1, 0, 0);
+        insertArrToGsTable(($1)->varName, curDeclarationType, ($3)->val);
     }|
 
     ID LBRACK NUMBER RBRACK LBRACK NUMBER RBRACK {
-        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, ($3)->val * ($6)->val, 2, ($3)->val, ($6)->val);
+        insert2DArrToGsTable(($1)->varName, curDeclarationType, ($3)->val, ($6)->val);
     }|
 
     ID {
-        gsTableHead = insertToGsTable(gsTableHead, ($1)->varName, curDeclarationType, 1, 0, 0, 0);
+        insertIdToGsTable(($1)->varName, curDeclarationType);
     };
 
 stmtList :

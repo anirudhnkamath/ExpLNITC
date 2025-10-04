@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 int getStaticAddress(char* varName) {
-    GsTableEntry* found = findInGsTable(gsTableHead, varName);
+    GsTableEntry* found = findInGsTable(varName);
     if(!found) {
         printf("Error: undeclared variable\n");
         exit(1);

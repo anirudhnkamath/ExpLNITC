@@ -19,10 +19,14 @@ extern GsTableEntry* gsTableHead;
 int getNextBinding(int size);
 
 GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols);
-GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, int size, int dimension, int rows, int cols);
+void insertToGsTable(char* varName, int dataType, int size, int dimension, int rows, int cols);
 
-GsTableEntry* findInGsTable(GsTableEntry* head, char* varName);
+GsTableEntry* findInGsTable(char* varName);
 
-void printGsTable(GsTableEntry* head);
+void insertIdToGsTable(char* varName, int dataType);
+void insertArrToGsTable(char* varName, int dataType, int size);
+void insert2DArrToGsTable(char* varName, int dataType, int rows, int cols);
+
+void printGsTable();
 
 #endif

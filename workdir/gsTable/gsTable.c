@@ -26,21 +26,8 @@ int getNextBinding(int size) {
     return ret;
 }
 
-GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols) {
-    GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
-    n->varName = strdup(varName);
-    n->dataType = dataType;
-    n->size = size;
-    n->binding = binding;
-    n->dimension = dimension;
-    n->numRows = rows;
-    n->numCols = cols;
-
-    return n;
-}
-
-GsTableEntry* findInGsTable(GsTableEntry* head, char* varName) {
-    GsTableEntry* temp = head;
+GsTableEntry* findInGsTable(char* varName) {
+    GsTableEntry* temp = gsTableHead;
     while(temp) {
         if(strcmp(temp->varName, varName) == 0)
             return temp;
@@ -50,8 +37,23 @@ GsTableEntry* findInGsTable(GsTableEntry* head, char* varName) {
     return NULL;
 }
 
-GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, int size, int dimension, int rows, int cols) {
-    GsTableEntry* exists = findInGsTable(head, varName);
+
+GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols) {
+    GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
+    n->varName = strdup(varName);
+    n->dataType = dataType;
+    n->size = size;
+    n->binding = binding;
+    n->dimension = dimension;
+    n->numRows = rows;
+    n->numCols = cols;
+    n->next = NULL;
+
+    return n;
+}
+
+void insertToGsTable(char* varName, int dataType, int size, int dimension, int rows, int cols) {
+    GsTableEntry* exists = findInGsTable(varName);
 
     if(exists) {
         printf("Error: Duplicate variable\n");
@@ -61,23 +63,43 @@ GsTableEntry* insertToGsTable(GsTableEntry* head, char* varName, int dataType, i
     int binding = getNextBinding(size);
     GsTableEntry* newEntry = createGsTableEntry(varName, dataType, size, binding, dimension, rows, cols);
 
-    if(!head)
-        return newEntry;
+    printf("inserting\n");
+    // inserting in LL
+    if(!gsTableHead) {
+        gsTableHead = newEntry;
+        printf("head set\n");
+        return;
+    }
 
-    GsTableEntry* temp = head;
+    GsTableEntry* temp = gsTableHead;
     while(temp->next != NULL)
         temp = temp->next;
 
     temp->next = newEntry;
-    return head;
+
+    printf("done\n");
 }
 
-void printGsTable(GsTableEntry* head) {
+
+void insertIdToGsTable(char* varName, int dataType) {
+    insertToGsTable(varName, dataType, 1, -1, -1, -1);
+}
+
+void insertArrToGsTable(char* varName, int dataType, int size) {
+    insertToGsTable(varName, dataType, size, 1, -1, -1);
+}
+
+void insert2DArrToGsTable(char* varName, int dataType, int rows, int cols) {
+    insertToGsTable(varName, dataType, rows*cols, 2, rows, cols);
+}
+
+
+void printGsTable() {
     printf("\nName Type Size Binding\n");
     
-    GsTableEntry* temp = head;
+    GsTableEntry* temp = gsTableHead;
     while (temp != NULL) {
-        printf("%s %d %d %d %d\n", temp->varName, temp->dataType, temp->size, temp->binding, temp->dimension);
+        printf("%s %d %d %d %d %d %d\n", temp->varName, temp->dataType, temp->size, temp->binding, temp->dimension, temp->numRows, temp->numCols);
         temp = temp->next;
     }
 }

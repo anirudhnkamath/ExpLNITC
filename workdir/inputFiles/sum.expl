@@ -1,28 +1,7 @@
 decl
-int i, j, m, n, arr[4][4];
+int arr[4][4];
+str hi, anirudh;
 enddecl;
 
 begin
-    read(m);
-    read(n);
-
-    i = 0;
-    while(i < m) do
-        j = 0;
-        while(j < n) do
-            read(arr[i][j]);
-            j = j + 1;
-        endwhile;
-        i = i + 1;
-    endwhile;
-
-    i = 0;
-    while(i < m) do
-        j = 0;
-        while(j < n) do
-            write(arr[i][j]);
-            j = j + 1;
-        endwhile;
-        i = i + 1;
-    endwhile;
 end;
