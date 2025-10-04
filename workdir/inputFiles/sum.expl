@@ -1,7 +1,9 @@
 decl
-int arr[4][4];
-str hi, anirudh;
+    str x, *p;
+    int y, *q;
 enddecl;
 
 begin
+    x = "anirudh";
+    p = &x;
 end;

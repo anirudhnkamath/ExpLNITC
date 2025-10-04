@@ -133,25 +133,45 @@ void generateReadCode(Tnode* node, FILE* targetFile) {
 
 void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
 
-    int exprReg;
-    if(rhs->type == INTEGER_TYPE)
-        exprReg = evaluateExpression(rhs, targetFile);
-    else
-        exprReg = movStrLtrlToReg(rhs, targetFile);
-
-    if(lhs->tnodeType == NODE_ID)
+    // p = &x;
+    if(rhs->tnodeType == NODE_ADDR_TO) {
+        int exprReg = getFreeRegister();
+        fprintf(targetFile, "MOV R%d, %d\n", exprReg, rhs->left->gsTableEntry->binding);
         setMemValue(lhs, exprReg, -1, -1, -1, targetFile);
+        releaseRegister(exprReg);
+
+        return;
+    }
+
+    // calculate rhs
+    int exprReg;
+    if(rhs->type == INTEGER_TYPE) {
+        exprReg = evaluateExpression(rhs, targetFile);
+    }
+    else {
+        exprReg = movStrLtrlToReg(rhs, targetFile);
+    }
+
+    // assign to lhs
+    if(lhs->tnodeType == NODE_ID) {
+        setMemValue(lhs, exprReg, -1, -1, -1, targetFile);
+    }
     else if(lhs->tnodeType == NODE_ARR_IND) {
         int indexReg = evaluateExpression(lhs->right, targetFile);
         setMemValue(lhs->left, exprReg, indexReg, -1, -1, targetFile);
         releaseRegister(indexReg);
     }
-    else {
+    else if(lhs->tnodeType == NODE_ARR_IND_2D) {
         int rowReg = evaluateExpression(lhs->right->left, targetFile);
         int colReg = evaluateExpression(lhs->right->right, targetFile);
         setMemValue(lhs->left, exprReg, -1, rowReg, colReg, targetFile);
         releaseRegister(rowReg);
         releaseRegister(colReg);
+    }
+    else if(lhs->tnodeType == NODE_DEREF) {
+        int addrReg = getFreeRegister();
+        fprintf(targetFile, "MOV R%d, [%d]\n", addrReg, lhs->left->gsTableEntry->binding);
+        fprintf(targetFile, "MOV [R%d], R%d\n", addrReg, exprReg);
     }
 
     releaseRegister(exprReg);

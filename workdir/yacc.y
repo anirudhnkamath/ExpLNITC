@@ -25,6 +25,7 @@
 %token BEGIN_CODE END_CODE BEGIN_DECL END_DECL
 %token READ WRITE
 %token ASSG
+%token AMPSAND
 %token PLUS MIN MULT DIV
 %token EQ NEQ GTE GT LTE LT
 %token IF THEN ELSE ENDIF
@@ -117,6 +118,10 @@ varList :
         insert2DArrToGsTable(($3)->varName, curDeclarationType, ($5)->val, ($8)->val);
     }|
 
+    varList COMMA MULT ID {
+        insertPtrToGsTable(($4)->varName, curDeclarationType);
+    }|
+
     ID LBRACK NUMBER RBRACK {
         insertArrToGsTable(($1)->varName, curDeclarationType, ($3)->val);
     }|
@@ -127,6 +132,10 @@ varList :
 
     ID {
         insertIdToGsTable(($1)->varName, curDeclarationType);
+    }|
+
+    MULT ID {
+        insertPtrToGsTable(($2)->varName, curDeclarationType);
     };
 
 stmtList :
@@ -209,7 +218,15 @@ assignStmt :
 
     arrIndex2D ASSG expr EOL {
         $$ = createAssignNode($1, $3);
-    };
+    }|
+
+    ID ASSG AMPSAND ID EOL {
+        $$ = createAssignNode($1, createAddrToNode($4));
+    }|
+
+    MULT ID ASSG expr EOL {
+        $$ = createAssignNode(createDerefNode($2), $4);
+    }
 
 ifStmt :
 

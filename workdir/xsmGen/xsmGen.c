@@ -109,6 +109,7 @@ int getEffectiveAddr(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE*
 
 void setMemValue(Tnode* idNode, int exprReg, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
     int addrReg = getEffectiveAddr(idNode, offsetReg, rowReg, colReg, targetFile);
+    
     fprintf(targetFile, "MOV [R%d], R%d\n", addrReg, exprReg);
     releaseRegister(addrReg);
 }

@@ -43,6 +43,8 @@ enum nodeTypes {
     NODE_CONTINUE,
     NODE_ARR_IND,
     NODE_ARR_IND_2D,
+    NODE_ADDR_TO,
+    NODE_DEREF,
 };
 
 enum errorCodes {

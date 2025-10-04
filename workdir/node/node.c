@@ -126,12 +126,7 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_ASSIGN;
 
-    if(exprNode->type == BOOLEAN_TYPE) {
-        printf("Error : type mismatch\n");
-        exit(1);
-    }
-
-    if(leftNode->type != exprNode->type) {
+    if(exprNode->type == BOOLEAN_TYPE || leftNode->type != exprNode->type) {
         printf("Error : type mismatch\n");
         exit(1);
     }
@@ -259,6 +254,35 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
     n->left = left;
     n->right = right;
     n->type = BOOLEAN_TYPE;
+    return n;
+}
+
+
+Tnode* createAddrToNode(Tnode* idNode) {
+    if(idNode->gsTableEntry->dimension != 0) {
+        printf("Error : not pointer addressable\n");
+        exit(1);
+    }
+
+    Tnode* n = createEmptyNode();
+    n->tnodeType = NODE_ADDR_TO;
+    n->type = idNode->gsTableEntry->dataType;
+    n->left = idNode;
+
+    return n;
+}
+
+Tnode* createDerefNode(Tnode* idNode) {
+    if(idNode->gsTableEntry->isPtr == 0) {
+        printf("Error : not dereferencable\n");
+        exit(1);
+    }
+
+    Tnode* n = createEmptyNode();
+    n->tnodeType = NODE_DEREF;
+    n->type = idNode->gsTableEntry->dataType;
+    n->left = idNode;
+
     return n;
 }
 

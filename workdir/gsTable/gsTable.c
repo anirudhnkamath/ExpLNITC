@@ -38,7 +38,7 @@ GsTableEntry* findInGsTable(char* varName) {
 }
 
 
-GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols) {
+GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols, int isPtr) {
     GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
     n->varName = strdup(varName);
     n->dataType = dataType;
@@ -48,11 +48,12 @@ GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int bind
     n->numRows = rows;
     n->numCols = cols;
     n->next = NULL;
+    n->isPtr = isPtr;
 
     return n;
 }
 
-void insertToGsTable(char* varName, int dataType, int size, int dimension, int rows, int cols) {
+void insertToGsTable(char* varName, int dataType, int size, int dimension, int rows, int cols, int isPtr) {
     GsTableEntry* exists = findInGsTable(varName);
 
     if(exists) {
@@ -61,13 +62,11 @@ void insertToGsTable(char* varName, int dataType, int size, int dimension, int r
     }
 
     int binding = getNextBinding(size);
-    GsTableEntry* newEntry = createGsTableEntry(varName, dataType, size, binding, dimension, rows, cols);
+    GsTableEntry* newEntry = createGsTableEntry(varName, dataType, size, binding, dimension, rows, cols, isPtr);
 
-    printf("inserting\n");
     // inserting in LL
     if(!gsTableHead) {
         gsTableHead = newEntry;
-        printf("head set\n");
         return;
     }
 
@@ -77,20 +76,23 @@ void insertToGsTable(char* varName, int dataType, int size, int dimension, int r
 
     temp->next = newEntry;
 
-    printf("done\n");
 }
 
 
 void insertIdToGsTable(char* varName, int dataType) {
-    insertToGsTable(varName, dataType, 1, -1, -1, -1);
+    insertToGsTable(varName, dataType, 1, 0, -1, -1, 0);
 }
 
 void insertArrToGsTable(char* varName, int dataType, int size) {
-    insertToGsTable(varName, dataType, size, 1, -1, -1);
+    insertToGsTable(varName, dataType, size, 1, -1, -1, 0);
 }
 
 void insert2DArrToGsTable(char* varName, int dataType, int rows, int cols) {
-    insertToGsTable(varName, dataType, rows*cols, 2, rows, cols);
+    insertToGsTable(varName, dataType, rows*cols, 2, rows, cols, 0);
+}
+
+void insertPtrToGsTable(char* varName, int dataType) {
+    insertToGsTable(varName, dataType, 1, 0, -1, -1, 1);
 }
 
 
