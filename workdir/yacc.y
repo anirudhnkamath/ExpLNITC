@@ -22,27 +22,29 @@
 }
 
 %token <node> ID NUMBER STR_LTRL
-%token BEGIN_CODE END_CODE BEGIN_DECL END_DECL
+%token BEGIN_DECL END_DECL
+%token BEGIN_CODE END_CODE
 %token READ WRITE
 %token ASSG
 %token AMPSAND
 %token PLUS MIN MULT DIV
-%token EQ NEQ GTE GT LTE LT
+%token EQ NEQ GTE GT LTE LT MOD
 %token IF THEN ELSE ENDIF
 %token WHILE DO ENDWHILE
 %token REPEAT UNTIL
 %token BREAK CONTINUE
-%token LPAR RPAR LBRACK RBRACK
+%token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
 %token EOL COMMA
+%token MAIN
 
-%type <node> start 
-%type <node> declSection codeSection
-%type <node> stmtList stmt declList decl
+%type <node> stmtList stmt
 %type <node> inputStmt outputStmt assignStmt 
 %type <node> ifStmt whileStmt doWhileStmt repeatUntilStmt
 %type <node> expr
-%type <node> arrIndex arrIndex2D
+%type <node> arrIndex
+
+%type <node> program gDeclBlock fDefBlock mainBlock gDeclList body
 
 %nonassoc EQ NEQ GT GTE LT LTE
 %left PLUS MIN
@@ -51,112 +53,157 @@
 
 %%
 
-start       :   declSection codeSection     {   
-                                                $$ = $2;
-                                                initiateCodeGen($$);
-                                                exit(0);
-                                            }
+program     :   gDeclBlock fDefBlock mainBlock  { }
+            |   gDeclBlock mainBlock            { }
+            |   mainBlock                       { }
             ;
 
-declSection :   BEGIN_DECL declList END_DECL EOL        {
-                                                            $$ = $2;
-                                                            declarationOverFlag = 1;
-                                                        }
-            |   BEGIN_DECL END_DECL EOL                 {
-                                                            $$ = NULL;
-                                                            declarationOverFlag = 1;
-                                                        }
+
+
+/*  GLOBAL DECLARATIONS  */
+
+gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { }
+            |   BEGIN_DECL END_DECL                 { }
             ;
 
-codeSection :   BEGIN_CODE stmtList END_CODE EOL        { $$ = $2; }
-            |   BEGIN_CODE END_CODE EOL                 { $$ = NULL; }
+gDeclList   :   gDeclList gDecl     { }
+            |   gDecl               { }
             ;
 
-declList    :   declList decl   {}
-            |   decl    {}
+gDecl       :   type gidList EOL    { }
             ;
 
-decl        :   dataType varList EOL    {}
+gidList     :   gidList COMMA gid   { }
+            |   gid                 { }
             ;
 
-dataType    :   INT     { curDeclarationType = INTEGER_TYPE; }
-            |   STR     { curDeclarationType = STRING_TYPE; }
+gid         :   ID                          { }
+            |   ID LBRACK NUMBER RBRACK     { }
+            |   ID LPAR paramList RPAR      { }
             ;
 
-varList     :   varList COMMA ID                                              { insertIdToGsTable(($3)->varName, curDeclarationType); } 
-            |   varList COMMA ID LBRACK NUMBER RBRACK                         { insertArrToGsTable(($3)->varName, curDeclarationType, ($5)->val); }
-            |   varList COMMA ID LBRACK NUMBER RBRACK LBRACK NUMBER RBRACK    { insert2DArrToGsTable(($3)->varName, curDeclarationType, ($5)->val, ($8)->val); }
-            |   varList COMMA MULT ID                                         { insertPtrToGsTable(($4)->varName, curDeclarationType); }
-            |   ID LBRACK NUMBER RBRACK                                       { insertArrToGsTable(($1)->varName, curDeclarationType, ($3)->val); }
-            |   ID LBRACK NUMBER RBRACK LBRACK NUMBER RBRACK                  { insert2DArrToGsTable(($1)->varName, curDeclarationType, ($3)->val, ($6)->val); }
-            |   ID                                                            { insertIdToGsTable(($1)->varName, curDeclarationType); }
-            |   MULT ID                                                       { insertPtrToGsTable(($2)->varName, curDeclarationType); }
+type        :   INT     { }
+            |   STR     { }
             ;
 
-stmtList    :   stmtList stmt       { $$ = createConnectorNode($1, $2); }
-            |   stmt                { $$ = $1; }
+
+
+/*  FUNCTION DEFINITIONS  */
+
+fDefBlock   :   fDefBlock fDef      { }
+            |   fDef                { }
             ;
 
-stmt        :   inputStmt           { $$ = $1; }
-            |   outputStmt          { $$ = $1; }
-            |   assignStmt          { $$ = $1; }
-            |   ifStmt              { $$ = $1; }
-            |   whileStmt           { $$ = $1; }
-            |   doWhileStmt         { $$ = $1; }
-            |   repeatUntilStmt     { $$ = $1; }
-            |   BREAK EOL           { $$ = createBreakNode(); }
-            |   CONTINUE EOL        { $$ = createContinueNode(); }
+fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock body RCURL     { }
             ;
 
-inputStmt   :   READ LPAR ID RPAR EOL           { $$ = createReadNode($3); }
-            |   READ LPAR arrIndex RPAR EOL     { $$ = createReadNode($3); }
-            |   READ LPAR arrIndex2D RPAR EOL   { $$ = createReadNode($3); }
+paramList   :   paramList COMMA param   { }
+            |   param                   { }
+            |                           { }
             ;
 
-outputStmt  :   WRITE LPAR expr RPAR EOL        { $$ = createWriteNode($3); }
+param       :   type ID     { }
             ;
 
-assignStmt  :   ID ASSG expr EOL            { $$ = createAssignNode($1, $3); }
-            |   arrIndex ASSG expr EOL      { $$ = createAssignNode($1, $3); }
-            |   arrIndex2D ASSG expr EOL    { $$ = createAssignNode($1, $3); }
-            |   ID ASSG AMPSAND ID EOL      { $$ = createAssignNode($1, createAddrToNode($4)); }
-            |   MULT ID ASSG expr EOL       { $$ = createAssignNode(createDerefNode($2), $4); }
+
+
+/*  LOCAL DECLARATIONS  */
+
+lDeclBlock  :   BEGIN_DECL lDeclList END_DECL       { }
+            |   BEGIN_DECL END_DECL                 { }
             ;
 
-ifStmt      :   IF LPAR expr RPAR THEN stmtList ELSE stmtList ENDIF EOL         { $$ = createIfElseNode($3, $6, $8); }
-            |   IF LPAR expr RPAR THEN stmtList ENDIF EOL                       { $$ = createIfNode($3, $6); }
+lDeclList   :   lDeclList lDecl     { }
+            |   lDecl               { }
             ;
 
-whileStmt       :   WHILE LPAR expr RPAR DO stmtList ENDWHILE EOL   { $$ = createWhileNode($3, $6); }
+lDecl       :   type idList EOL     { }
+            ;
+
+idList      :   idList COMMA ID     { }
+            |   ID                  { } 
+            ;
+
+
+
+/*  MAIN BLOCK  */
+
+mainBlock   :   type MAIN LPAR RPAR LCURL lDeclBlock body RCURL     { }
+            ;
+
+
+
+/*  BODY  */
+
+body        :   BEGIN_CODE stmtList END_CODE        { }
+            |   BEGIN_CODE END_CODE                 { }
+            ;
+
+stmtList    :   stmtList stmt       { }
+            |   stmt                { }
+            ;
+
+stmt        :   inputStmt           { }
+            |   outputStmt          { }
+            |   assignStmt          { }
+            |   ifStmt              { }
+            |   whileStmt           { }
+            |   doWhileStmt         { }
+            |   repeatUntilStmt     { }
+            |   BREAK EOL           { }
+            |   CONTINUE EOL        { }
+            ;
+
+inputStmt   :   READ LPAR ID RPAR EOL           { }
+            |   READ LPAR arrIndex RPAR EOL     { }
+            ;
+
+outputStmt  :   WRITE LPAR expr RPAR EOL        { }
+            ;
+
+assignStmt  :   ID ASSG expr EOL            { }
+            |   arrIndex ASSG expr EOL      { }
+            |   ID ASSG AMPSAND ID EOL      { }
+            |   MULT ID ASSG expr EOL       { }
+            ;
+
+ifStmt      :   IF LPAR expr RPAR THEN stmtList ELSE stmtList ENDIF EOL         { }
+            |   IF LPAR expr RPAR THEN stmtList ENDIF EOL                       { }
+            ;
+
+whileStmt       :   WHILE LPAR expr RPAR DO stmtList ENDWHILE EOL   { }
                 ;
-doWhileStmt     :   DO stmtList WHILE LPAR expr RPAR EOL            { $$ = createDoWhileNode($5, $2); }
+doWhileStmt     :   DO stmtList WHILE LPAR expr RPAR EOL            { }
                 ;
-repeatUntilStmt :   REPEAT stmtList UNTIL LPAR expr RPAR EOL        { $$ = createRepeatUntilNode($5, $2); }
+repeatUntilStmt :   REPEAT stmtList UNTIL LPAR expr RPAR EOL        { }
                 ;
 
-arrIndex    :   ID LBRACK expr RBRACK                       { $$ = createArrIndexNode($1, $3); }
-            ;
-arrIndex2D  :   ID LBRACK expr RBRACK LBRACK expr RBRACK    { $$ = createArrIndex2DNode($1, $3, $6); }
+arrIndex    :   ID LBRACK expr RBRACK                       { }
             ;
 
-expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $3); }
-            |   expr MIN expr           { $$ = createArithOpNode(NODE_SUB, $1, $3); }
-            |   expr MULT expr          { $$ = createArithOpNode(NODE_MULT, $1, $3); }
-            |   expr DIV expr           { $$ = createArithOpNode(NODE_DIV, $1, $3); }
-            |   expr MOD expr           { $$ = createArithOpNode(NODE_MOD, $1, $3); }
-            |   expr EQ expr            { $$ = createRelOpNode(NODE_EQ, $1, $3); }
-            |   expr NEQ expr           { $$ = createRelOpNode(NODE_NEQ, $1, $3); }
-            |   expr GTE expr           { $$ = createRelOpNode(NODE_GTE, $1, $3); }
-            |   expr GT expr            { $$ = createRelOpNode(NODE_GT, $1, $3); }
-            |   expr LTE expr           { $$ = createRelOpNode(NODE_LTE, $1, $3); }
-            |   expr LT expr            { $$ = createRelOpNode(NODE_LT, $1, $3); }
-            |   LPAR expr RPAR          { $$ = $2; }
-            |   ID                      { $$ = $1; }
-            |   arrIndex                { $$ = $1; }
-            |   arrIndex2D              { $$ = $1; }
-            |   NUMBER                  { $$ = $1; }
-            |   STR_LTRL                { $$ = $1; }
-            |   MULT ID                 { $$ = createDerefNode($2); }
+expr        :   expr PLUS expr          { }
+            |   expr MIN expr           { }
+            |   expr MULT expr          { }
+            |   expr DIV expr           { }
+            |   expr MOD expr           { }
+            |   expr EQ expr            { }
+            |   expr NEQ expr           { }
+            |   expr GTE expr           { }
+            |   expr GT expr            { }
+            |   expr LTE expr           { }
+            |   expr LT expr            { }
+            |   LPAR expr RPAR          { }
+            |   ID                      { }
+            |   arrIndex                { }
+            |   NUMBER                  { }
+            |   STR_LTRL                { }
+            |   MULT ID                 { }
+            |   ID LPAR RPAR            { }
+            |   ID LPAR argList RPAR    { }
+            ;
+
+argList     :   argList COMMA expr      { }
+            |   expr                    { }
             ;
 
 %%

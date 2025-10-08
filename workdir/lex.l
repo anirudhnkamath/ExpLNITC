@@ -17,9 +17,10 @@
 
 "(" { return LPAR; }
 ")" { return RPAR; }
-
 "[" { return LBRACK; }
 "]" { return RBRACK; }
+"{" { return LCURL; }
+"}" { return RCURL; }
 
 "+" { return PLUS; }
 "-" { return MIN; }
@@ -62,6 +63,8 @@
 
 "int" { return INT; }
 "str" { return STR; }
+
+"main" { return MAIN; }
 
 \"[^\"]+\" {
     yylval.node = createStrLtrlNode(strdup(yytext));
