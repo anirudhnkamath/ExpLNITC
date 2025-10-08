@@ -51,7 +51,7 @@ Tnode* createIdNode(char varName[]) {
     if(declarationOverFlag == 0)
         return n;
 
-    GsTableEntry* found = findInGsTable(varName);
+    GsTableEntry* found = findInGsTable(gsTableHead, varName);
     if(!found) {
         printf("Error: undeclared variable\n");
         exit(1);

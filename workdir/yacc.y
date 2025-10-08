@@ -4,47 +4,46 @@
     #include "./define/constants.h"
     #include "./codeGen/codeGen.h"
     #include "./registers/registers.h"
+    #include "./gsTable/gsTable.h"
     #include "./node/node.h"
     #include "./gsTable/gsTable.h"
     #include "./xsmGen/xsmGen.h"
 
     FILE* yyin;
-
     int yylex(void);
     int yyerror(const char *s);
     void initiateCodeGen(Tnode* node);
-
-    int curDeclarationType = INTEGER_TYPE;
 %}
 
 %union {
-    struct Tnode* node;
+    struct Tnode* astNode;
+    struct GsTableEntry* gsTableEntry;
+    struct ParamListEntry* paramListEntry;
+    int declDataType;
 }
 
-%token <node> ID NUMBER STR_LTRL
-%token BEGIN_DECL END_DECL
-%token BEGIN_CODE END_CODE
-%token READ WRITE
+%token <astNode> ID NUMBER STR_LTRL
+%token BEGIN_DECL END_DECL BEGIN_CODE END_CODE
 %token ASSG
 %token AMPSAND
-%token PLUS MIN MULT DIV
-%token EQ NEQ GTE GT LTE LT MOD
-%token IF THEN ELSE ENDIF
-%token WHILE DO ENDWHILE
-%token REPEAT UNTIL
-%token BREAK CONTINUE
+%token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD
+%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
 %token EOL COMMA
-%token MAIN
 
-%type <node> stmtList stmt
-%type <node> inputStmt outputStmt assignStmt 
-%type <node> ifStmt whileStmt doWhileStmt repeatUntilStmt
-%type <node> expr
-%type <node> arrIndex
+%type <astNode> stmtList stmt
+%type <astNode> inputStmt outputStmt assignStmt 
+%type <astNode> ifStmt whileStmt doWhileStmt repeatUntilStmt
+%type <astNode> expr
+%type <astNode> arrIndex
+%type <astNode> program fDefBlock mainBlock body
 
-%type <node> program gDeclBlock fDefBlock mainBlock gDeclList body
+%type <gsTableEntry> gDeclBlock gDeclList gDecl gidList gid
+
+%type <declDataType> type
+
+%type <paramListEntry> paramList param
 
 %nonassoc EQ NEQ GT GTE LT LTE
 %left PLUS MIN
@@ -62,28 +61,28 @@ program     :   gDeclBlock fDefBlock mainBlock  { }
 
 /*  GLOBAL DECLARATIONS  */
 
-gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { }
-            |   BEGIN_DECL END_DECL                 { }
+gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; printGsTable(); }
+            |   BEGIN_DECL END_DECL                 { gsTableHead = NULL; }
             ;
 
-gDeclList   :   gDeclList gDecl     { }
-            |   gDecl               { }
+gDeclList   :   gDeclList gDecl     { $$ = concatGsTable($1, $2); }
+            |   gDecl               { $$ = $1; }
             ;
 
-gDecl       :   type gidList EOL    { }
+gDecl       :   type gidList EOL    { $$ = setGsTableType($2, $1); }
             ;
 
-gidList     :   gidList COMMA gid   { }
-            |   gid                 { }
+gidList     :   gidList COMMA gid   { $$ = concatGsTable($1, $3); }
+            |   gid                 { $$ = $1; }
             ;
 
-gid         :   ID                          { }
-            |   ID LBRACK NUMBER RBRACK     { }
-            |   ID LPAR paramList RPAR      { }
+gid         :   ID                          { $$ = createIdEntryInGsTable($1->varName); }
+            |   ID LBRACK NUMBER RBRACK     { $$ = createArrEntryInGsTable($1->varName, $3->val); }
+            |   ID LPAR paramList RPAR      { $$ = createFnEntryInGsTable($1->varName, $3); }
             ;
 
-type        :   INT     { }
-            |   STR     { }
+type        :   INT     { $$ = INTEGER_TYPE; }
+            |   STR     { $$ = STRING_TYPE; }
             ;
 
 
@@ -97,12 +96,12 @@ fDefBlock   :   fDefBlock fDef      { }
 fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock body RCURL     { }
             ;
 
-paramList   :   paramList COMMA param   { }
-            |   param                   { }
-            |                           { }
+paramList   :   paramList COMMA param   { $$ = concatParamList($1, $3); }
+            |   param                   { $$ = $1; }
+            |                           { $$ = NULL; }
             ;
 
-param       :   type ID     { }
+param       :   type ID     { $$ = createParamListEntry($2->varName, $1); }
             ;
 
 
@@ -217,7 +216,7 @@ void initiateCodeGen(Tnode* node) {
     FILE* targetFile = fopen("targetFile.xsm", "w");
     setHeader(targetFile);
     resetRegisters();
-    updateStackPointer(STATIC_ALLOC_END, targetFile);
+    updateStackPointer(STACK_END, targetFile);
     codeGen(node, targetFile);
     exitProgram(targetFile);
     exit(1);

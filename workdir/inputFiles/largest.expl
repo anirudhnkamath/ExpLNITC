@@ -1,24 +1,21 @@
 decl
-    int a, b, arr[10], f(int n, int f, int j);
-    str hi, bye;
-    int hello, bello;
+    int arr[100];
+    int fn(int a, str b, int c);
+    int arr2[2];
 enddecl
 
-int fib(int n, int f, int j) {
-    decl
-        int hi, bye;
+int fn(int a) {
+    decl 
     enddecl
     begin
-        n = n + 1;
-        f = f + j;
+    write(e);
     end
 }
 
 int main() {
-    decl 
-        str bye, hi;
+    decl
     enddecl
-    begin 
-        write(e);
+    begin
+
     end
 }

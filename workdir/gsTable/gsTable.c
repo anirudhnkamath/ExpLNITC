@@ -6,8 +6,10 @@
 #include <stdio.h>
 
 GsTableEntry* gsTableHead = NULL;
-int nextBinding = STATIC_ALLOC_START; 
+int nextBinding = STACK_START; 
 int declarationOverFlag = 0;
+
+
 
 int getNextBinding(int size) {
 
@@ -16,7 +18,7 @@ int getNextBinding(int size) {
         exit(1);
     }
 
-    if(nextBinding > STATIC_ALLOC_END || nextBinding + size - 1 > STATIC_ALLOC_END) {
+    if(nextBinding > STACK_END || nextBinding + size - 1 > STACK_END) {
         printf("Error: Out of Static Memory\n");
         exit(1);
     }
@@ -26,19 +28,7 @@ int getNextBinding(int size) {
     return ret;
 }
 
-GsTableEntry* findInGsTable(char* varName) {
-    GsTableEntry* temp = gsTableHead;
-    while(temp) {
-        if(strcmp(temp->varName, varName) == 0)
-            return temp;
-        temp = temp->next;
-    }
-
-    return NULL;
-}
-
-
-GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols, int isPtr) {
+GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols, int isPtr, ParamListEntry* paramListHead) {
     GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
     n->varName = strdup(varName);
     n->dataType = dataType;
@@ -49,59 +39,117 @@ GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int bind
     n->numCols = cols;
     n->next = NULL;
     n->isPtr = isPtr;
+    n->paramList = paramListHead;
 
     return n;
 }
 
-void insertToGsTable(char* varName, int dataType, int size, int dimension, int rows, int cols, int isPtr) {
-    GsTableEntry* exists = findInGsTable(varName);
-
-    if(exists) {
-        printf("Error: Duplicate variable\n");
-        exit(1);
-    }
-
-    int binding = getNextBinding(size);
-    GsTableEntry* newEntry = createGsTableEntry(varName, dataType, size, binding, dimension, rows, cols, isPtr);
-
-    // inserting in LL
-    if(!gsTableHead) {
-        gsTableHead = newEntry;
-        return;
-    }
-
-    GsTableEntry* temp = gsTableHead;
-    while(temp->next != NULL)
+GsTableEntry* findInGsTable(GsTableEntry* head, char* varName) {
+    GsTableEntry* temp = head;
+    while(temp) {
+        if(strcmp(temp->varName, varName) == 0)
+            return temp;
         temp = temp->next;
+    }
 
-    temp->next = newEntry;
-
+    return NULL;
 }
 
+GsTableEntry* concatGsTable(GsTableEntry* head1, GsTableEntry* head2) {
+    GsTableEntry* temp = head2;
+    while(temp) {
+        GsTableEntry* found = findInGsTable(head1, temp->varName);
+        if(found) {
+            printf("Error : Duplicate variable found\n");
+            exit(1);
+        }
+        temp = temp->next;
+    }
 
-void insertIdToGsTable(char* varName, int dataType) {
-    insertToGsTable(varName, dataType, 1, 0, -1, -1, 0);
+    GsTableEntry* tail = head1;
+    while(tail->next)
+        tail = tail->next;
+
+    tail->next = head2;
+    return head1;
 }
 
-void insertArrToGsTable(char* varName, int dataType, int size) {
-    insertToGsTable(varName, dataType, size, 1, -1, -1, 0);
+GsTableEntry* createIdEntryInGsTable(char* varName) {
+    return createGsTableEntry(varName, -1, 1, getNextBinding(1), 0, -1, -1, 0, NULL);
 }
 
-void insert2DArrToGsTable(char* varName, int dataType, int rows, int cols) {
-    insertToGsTable(varName, dataType, rows*cols, 2, rows, cols, 0);
+GsTableEntry* createArrEntryInGsTable(char* varName, int size) {
+    return createGsTableEntry(varName, -1, size, getNextBinding(size), 1, -1, -1, 0, NULL);
 }
 
-void insertPtrToGsTable(char* varName, int dataType) {
-    insertToGsTable(varName, dataType, 1, 0, -1, -1, 1);
+GsTableEntry* createFnEntryInGsTable(char* varName, ParamListEntry* paramListHead) {
+    return createGsTableEntry(varName, -1, 1, -1, 0, -1, -1, 0, paramListHead);
 }
 
+GsTableEntry* setGsTableType(GsTableEntry* head, int type) {
+    GsTableEntry* temp = head;
+    while(temp) {
+        temp->dataType = type;
+        temp = temp->next;
+    }
+    return head;
+}
 
 void printGsTable() {
-    printf("\nName Type Size Binding\n");
-    
     GsTableEntry* temp = gsTableHead;
-    while (temp != NULL) {
-        printf("%s %d %d %d %d %d %d\n", temp->varName, temp->dataType, temp->size, temp->binding, temp->dimension, temp->numRows, temp->numCols);
+    while(temp) {
+        printf("Name  : %s\nType  : %s\nSize  : %d\nBind  : %d\n", temp->varName, temp->dataType == INTEGER_TYPE ? "INT" : "STR", temp->size, temp->binding);
+        if(temp->paramList) printParamList(temp->paramList);
+        else printf("No parameters\n");
+        printf("\n");
         temp = temp->next;
     }
+}
+
+
+ParamListEntry* createParamListEntry(char* varName, int dataType) {
+    ParamListEntry* n = (ParamListEntry*)malloc(sizeof(ParamListEntry));
+    n->varName = strdup(varName);
+    n->dataType = dataType;
+    n->next = NULL;
+    return n;
+}
+
+ParamListEntry* findInParamList(ParamListEntry* head, char* varName) {
+    ParamListEntry* temp = head;
+    while(temp) {
+        if(strcmp(temp->varName, varName) == 0)
+            return temp;
+        temp = temp->next;
+    }
+
+    return NULL;
+}
+
+ParamListEntry* concatParamList(ParamListEntry* head1, ParamListEntry* head2) {
+    ParamListEntry* temp = head2;
+    while(temp) {
+        if(findInParamList(head1, temp->varName)) {
+            printf("Error : Duplicate parameters in function declaration\n");
+            exit(1);
+        }
+        temp = temp->next;
+    }
+
+    ParamListEntry* tail = head1;
+    while(tail->next)
+        tail = tail->next;
+
+    tail->next = head2;
+    return head1;
+}
+
+void printParamList(ParamListEntry* paramListHead) {
+    ParamListEntry* temp = paramListHead;
+    printf("Params: ");
+    while(temp) {
+        printf("%s(%s) ", temp->varName, temp->dataType == INTEGER_TYPE ? "INT" : "STR");
+        temp = temp->next;
+    }
+    printf("\n");
 }

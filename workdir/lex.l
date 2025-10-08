@@ -9,7 +9,7 @@
 
 [0-9]+ {
     int val = atoi(yytext);
-    yylval.node = createIntNode(val);
+    yylval.astNode = createIntNode(val);
     return NUMBER;
 }
 
@@ -67,12 +67,12 @@
 "main" { return MAIN; }
 
 \"[^\"]+\" {
-    yylval.node = createStrLtrlNode(strdup(yytext));
+    yylval.astNode = createStrLtrlNode(strdup(yytext));
     return STR_LTRL;
 }
 
 [a-z][a-z0-9]* {
-    yylval.node = createIdNode(strdup(yytext));
+    yylval.astNode = createIdNode(strdup(yytext));
     return ID;
 }
 
