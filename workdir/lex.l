@@ -28,8 +28,6 @@
 "/" { return DIV; }
 "%" { return MOD; }
 
-"&" { return AMPSAND; }
-
 "==" { return EQ; }
 "!=" { return NEQ; }
 ">=" { return GTE; }

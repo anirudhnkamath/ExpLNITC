@@ -25,7 +25,6 @@
 %token <astNode> ID NUMBER STR_LTRL
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE
 %token ASSG
-%token AMPSAND
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
@@ -162,8 +161,6 @@ outputStmt  :   WRITE LPAR expr RPAR EOL        { }
 
 assignStmt  :   ID ASSG expr EOL            { }
             |   arrIndex ASSG expr EOL      { }
-            |   ID ASSG AMPSAND ID EOL      { }
-            |   MULT ID ASSG expr EOL       { }
             ;
 
 ifStmt      :   IF LPAR expr RPAR THEN stmtList ELSE stmtList ENDIF EOL         { }
@@ -196,7 +193,6 @@ expr        :   expr PLUS expr          { }
             |   arrIndex                { }
             |   NUMBER                  { }
             |   STR_LTRL                { }
-            |   MULT ID                 { }
             |   ID LPAR RPAR            { }
             |   ID LPAR argList RPAR    { }
             ;
