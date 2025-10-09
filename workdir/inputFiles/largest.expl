@@ -1,21 +1,35 @@
 decl
-    int arr[100];
-    int fn(int a, str b, int c);
-    int arr2[2];
+
+    int n;
+    str programname;
+    int f(str name, int weight, int height);
+    int f2(str name, int marks);
+
 enddecl
 
-int fn(int a) {
+int f(str name, int weight, int height) {
+
     decl 
-    enddecl
-    begin
-    write(e);
+        int bmi;
+        str revname;
+    enddecl 
+
+    begin 
+        f = 1;
     end
+
 }
 
 int main() {
+
     decl
     enddecl
-    begin
 
+    begin
+        write(n);
+        while(n < 1) do
+            read(n);
+        endwhile;
     end
+    
 }

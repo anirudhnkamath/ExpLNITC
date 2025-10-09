@@ -10,6 +10,8 @@ typedef struct Tnode {
     char* strVal;
     char* varName;
     GsTableEntry* gsTableEntry;
+    LsTableEntry* lsTableEntry;
+    struct Tnode* argList;
     struct Tnode* left;
     struct Tnode* right;
 } Tnode;
@@ -43,6 +45,13 @@ Tnode* createRelOpNode(int tNodeType, Tnode* left, Tnode* right);
 Tnode* createAddrToNode(Tnode* idNode);
 Tnode* createDerefNode(Tnode* idNode);
 
+Tnode* addArgToArgList(Tnode* list, Tnode* expr);
+Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode);
+void functionValidate(int retType, char* fnName, ParamListEntry* fnParams);
+
+void setIdNodeType(Tnode* idNode);
+
+void freeTree(Tnode* root);
 void inorder(Tnode* root);
 
 #endif

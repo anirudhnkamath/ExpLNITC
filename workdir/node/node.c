@@ -8,10 +8,14 @@
 Tnode* createEmptyNode() {
     Tnode* n = (Tnode*)malloc(sizeof(Tnode));
     n->tnodeType = NODE_EMPTY;
-    n->left = n->right = NULL;
+    n->left = n->right = n->argList = NULL;
+    n->gsTableEntry = NULL;
+    n->lsTableEntry = NULL;
+    n->strVal = NULL;
+    n->val = -1;
+    n->type = NO_TYPE;
     return n;
 }
-
 
 Tnode* createConnectorNode(Tnode* left, Tnode* right) {
     Tnode* n = (Tnode*)malloc(sizeof(Tnode));
@@ -28,40 +32,25 @@ Tnode* createIntNode(int val) {
     n->tnodeType = NODE_INT;
     n->val = val;
     n->type = INTEGER_TYPE;
+    n->argList = NULL;
     
     return n;
 }
-
 
 Tnode* createStrLtrlNode(char* str) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_STR_LTRL;
     n->strVal = strdup(str);
     n->type = STRING_TYPE;
-
     return n;
 }
-
 
 Tnode* createIdNode(char varName[]) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_ID;
     n->varName = varName;
-
-    if(declarationOverFlag == 0)
-        return n;
-
-    GsTableEntry* found = findInGsTable(gsTableHead, varName);
-    if(!found) {
-        printf("Error: undeclared variable\n");
-        exit(1);
-    }
-
-    n->type = found->dataType;
-    n->gsTableEntry = found;
     return n;
 }
-
 
 Tnode* createArrIndexNode(Tnode* idNode, Tnode* exprNode) {
     Tnode* n = createEmptyNode();
@@ -167,7 +156,6 @@ Tnode* createIfNode(Tnode* condNode, Tnode* stmtNode) {
     return n;
 }
 
-
 Tnode* createWhileNode(Tnode* condNode, Tnode* stmtNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_WHILE;
@@ -239,6 +227,7 @@ Tnode* createArithOpNode(int tnodeType, Tnode* left, Tnode* right) {
     n->left = left;
     n->right = right;
     n->type = INTEGER_TYPE;
+    n->argList = NULL;
     return n;
 }
 
@@ -254,6 +243,7 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
     n->left = left;
     n->right = right;
     n->type = BOOLEAN_TYPE;
+    n->argList = NULL;
     return n;
 }
 
@@ -282,10 +272,109 @@ Tnode* createDerefNode(Tnode* idNode) {
     n->tnodeType = NODE_DEREF;
     n->type = idNode->gsTableEntry->dataType;
     n->left = idNode;
+    n->argList = NULL;
 
     return n;
 }
 
+
+Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
+    Tnode* n = createEmptyNode();
+
+    // checking datattypes with declarations
+    ParamListEntry* declParams = idNode->gsTableEntry->paramList;
+    ParamListEntry *temp1 = declParams;
+    Tnode* temp2 = argListNode;
+    while(temp1 && temp2) {
+        if(temp1->dataType != temp2->type) {
+            printf("Error : type mismatch in function call\n");
+            exit(1);
+        }
+        temp1 = temp1->next;
+        temp2 = temp2->argList;
+    }
+    if(temp1 || temp2) {
+        printf("Error : invalid function call arguments\n");
+        exit(1);
+    }
+
+    n->tnodeType = NODE_FN_CALL;
+    n->argList = argListNode;
+    n->type = idNode->type;
+    return n;
+}
+
+Tnode* addArgToArgList(Tnode* list, Tnode* expr) {
+    Tnode* n = list;
+    while(n->argList != NULL)
+        n = n->argList;
+
+    n->argList = expr;
+    return list;
+}
+
+void setIdNodeType(Tnode* idNode) {
+    LsTableEntry* lsEntry = findInLsTable(lsTableHead, idNode->varName);
+    if(lsEntry) {
+        idNode->lsTableEntry = lsEntry;
+        idNode->type = lsEntry->dataType;
+        return;
+    }
+
+    GsTableEntry* gsEntry = findInGsTable(gsTableHead, idNode->varName);
+    if(gsEntry) {
+        idNode->gsTableEntry = gsEntry;
+        idNode->type = gsEntry->dataType;
+        return;
+    }
+
+    printf("Error : undeclared variable\n");
+    exit(1);
+    return;
+}
+
+void functionValidate(int retType, char* fnName, ParamListEntry* fnParams) {
+    GsTableEntry* found = findInGsTable(gsTableHead, fnName);
+    if(!found) {
+        printf("Error : fn not exists\n");
+        exit(1);
+    }
+
+    if(found->dataType != retType) {
+        printf("Error : invalid ret type in fn definition\n");
+        exit(1);
+    }
+
+    ParamListEntry* declParams = found->paramList;
+    ParamListEntry *temp1 = fnParams, *temp2 = declParams;
+    while(temp1 && temp2) {
+        if(temp1->dataType != temp2->dataType || strcmp(temp1->varName, temp2->varName) != 0) {
+            printf("Error : definition doesnt match declaration\n");
+            exit(1);
+        }
+        temp1 = temp1->next;
+        temp2 = temp2->next;
+    }
+
+    if(temp1 || temp2) {
+        printf("Error : definition doesnt match declaration\n");
+        exit(1);
+    }
+
+    return;
+}
+
+void freeTree(Tnode* root) {
+    if (root == NULL) 
+        return;
+
+    freeTree(root->left);
+    freeTree(root->right);
+    freeTree(root->argList);
+    
+    if(root->strVal) free(root->strVal);
+    free(root);
+}
 
 void inorder(Tnode* node) {
     if (node == NULL) return;
@@ -320,6 +409,10 @@ void inorder(Tnode* node) {
         case NODE_CONTINUE:    printf("CONTINUE\n"); break;
         case NODE_ARR_IND:     printf("NODE_ARR_INDEX\n"); break;
         case NODE_MOD:         printf("NODE_MOD\n"); break;
+        case NODE_ARR_IND_2D:  printf("NODE_ARR_INDEX_2D\n"); break;
+        case NODE_ADDR_TO:     printf("NODE_ADDR\n"); break;
+        case NODE_DEREF:       printf("NODE_DEREF\n"); break;
+        case NODE_FN_CALL:     printf("NODE_FN_CALL\n"); break;
         default:               printf("UNKNOWN\n"); break;
     }
 

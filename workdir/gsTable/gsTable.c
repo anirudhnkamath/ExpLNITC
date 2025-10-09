@@ -6,9 +6,9 @@
 #include <stdio.h>
 
 GsTableEntry* gsTableHead = NULL;
-int nextBinding = STACK_START; 
-int declarationOverFlag = 0;
+LsTableEntry* lsTableHead = NULL;
 
+int nextBinding = STACK_START;
 
 
 int getNextBinding(int size) {
@@ -27,6 +27,7 @@ int getNextBinding(int size) {
     nextBinding += size;
     return ret;
 }
+
 
 GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols, int isPtr, ParamListEntry* paramListHead) {
     GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
@@ -67,6 +68,10 @@ GsTableEntry* concatGsTable(GsTableEntry* head1, GsTableEntry* head2) {
     }
 
     GsTableEntry* tail = head1;
+
+    if(!tail)
+        return head2;
+        
     while(tail->next)
         tail = tail->next;
 
@@ -97,6 +102,7 @@ GsTableEntry* setGsTableType(GsTableEntry* head, int type) {
 
 void printGsTable() {
     GsTableEntry* temp = gsTableHead;
+    printf("\nGlobal symbol table : \n\n");
     while(temp) {
         printf("Name  : %s\nType  : %s\nSize  : %d\nBind  : %d\n", temp->varName, temp->dataType == INTEGER_TYPE ? "INT" : "STR", temp->size, temp->binding);
         if(temp->paramList) printParamList(temp->paramList);
@@ -137,6 +143,9 @@ ParamListEntry* concatParamList(ParamListEntry* head1, ParamListEntry* head2) {
     }
 
     ParamListEntry* tail = head1;
+    if(!tail)
+        return head2;
+
     while(tail->next)
         tail = tail->next;
 
@@ -152,4 +161,89 @@ void printParamList(ParamListEntry* paramListHead) {
         temp = temp->next;
     }
     printf("\n");
+}
+
+
+LsTableEntry* findInLsTable(LsTableEntry* head, char* varName) {
+    LsTableEntry* temp = head;
+    while(temp) {
+        if(strcmp(temp->varName, varName) == 0) 
+            return temp;
+        temp = temp->next;
+    }
+    return NULL;
+}
+
+LsTableEntry* createLsTableEntry(char* varName, int dataType, int binding) {
+    LsTableEntry* n = (LsTableEntry*)malloc(sizeof(LsTableEntry));
+    n->varName = strdup(varName);
+    n->dataType = dataType;
+    n->binding = binding;
+    n->next = NULL;
+    return n;
+}
+
+LsTableEntry* createIdEntryInLsTable(char* varName) {
+    return createLsTableEntry(varName, -1, -1);
+}
+
+LsTableEntry* concatLsTable(LsTableEntry* head1, LsTableEntry* head2) {
+    LsTableEntry* temp = head2;
+    while(temp) {
+        LsTableEntry* found = findInLsTable(head1, temp->varName);
+        if(found) {
+            printf("Error : duplicat local varaible\n");
+            exit(1);
+        }
+        temp = temp->next;
+    }
+
+    LsTableEntry* tail = head1;
+    if(!tail)
+        return head2;
+
+    while(tail->next)
+        tail = tail->next;
+
+    tail->next = head2;
+    return head1;
+}
+
+LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHead) {
+    ParamListEntry* temp = paramListHead;
+    while(temp) {
+        LsTableEntry* n = createLsTableEntry(temp->varName, temp->dataType, -1);
+        head = concatLsTable(head, n);
+        temp = temp->next;
+    }
+
+    return head;
+}
+
+LsTableEntry* setLsTableType(LsTableEntry* head, int type) {
+    LsTableEntry* temp = head;
+    while(temp) {
+        temp->dataType = type;
+        temp = temp->next;
+    }
+    return head;
+}
+
+void freeLsTable() {
+    LsTableEntry* temp = lsTableHead;
+    while(temp) {
+        free(temp->varName);
+        LsTableEntry* temp2 = temp->next;
+        free(temp);
+        temp = temp2;
+    }
+}
+
+void printLsTable() {
+    LsTableEntry* temp = lsTableHead;
+    printf("\nLocal symbol table : \n\n");
+    while(temp) {
+        printf("Name : %s\nType : %s\nBind : %d\n\n", temp->varName, temp->dataType == INTEGER_TYPE ? "INT" : "STR", temp->binding);
+        temp = temp->next;
+    }
 }

@@ -19,6 +19,7 @@
     struct Tnode* astNode;
     struct GsTableEntry* gsTableEntry;
     struct ParamListEntry* paramListEntry;
+    struct LsTableEntry* lsTableEntry;
     int declDataType;
 }
 
@@ -33,16 +34,19 @@
 
 %type <astNode> stmtList stmt
 %type <astNode> inputStmt outputStmt assignStmt 
-%type <astNode> ifStmt whileStmt doWhileStmt repeatUntilStmt
+%type <astNode> ifStmt whileStmt doWhileStmt rptUntStmt
 %type <astNode> expr
 %type <astNode> arrIndex
-%type <astNode> program fDefBlock mainBlock body
+%type <astNode> body fDef argList mainBlock
 
 %type <gsTableEntry> gDeclBlock gDeclList gDecl gidList gid
+%type <lsTableEntry> idList lDecl lDeclList
 
 %type <declDataType> type
 
 %type <paramListEntry> paramList param
+
+
 
 %nonassoc EQ NEQ GT GTE LT LTE
 %left PLUS MIN
@@ -60,7 +64,7 @@ program     :   gDeclBlock fDefBlock mainBlock  { }
 
 /*  GLOBAL DECLARATIONS  */
 
-gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; printGsTable(); }
+gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; }
             |   BEGIN_DECL END_DECL                 { gsTableHead = NULL; }
             ;
 
@@ -92,7 +96,14 @@ fDefBlock   :   fDefBlock fDef      { }
             |   fDef                { }
             ;
 
-fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock body RCURL     { }
+fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    { lsTableHead = addParamsToLsTable(lsTableHead, $4); } 
+                        /* mid-rule action */      body RCURL   {
+                                                                    functionValidate($1, $2->varName, $4);
+                                                                    $$ = $9;
+                                                                    // codegen here i guess
+                                                                    freeLsTable();
+                                                                    freeTree($$);
+                                                                } 
             ;
 
 paramList   :   paramList COMMA param   { $$ = concatParamList($1, $3); }
@@ -107,98 +118,98 @@ param       :   type ID     { $$ = createParamListEntry($2->varName, $1); }
 
 /*  LOCAL DECLARATIONS  */
 
-lDeclBlock  :   BEGIN_DECL lDeclList END_DECL       { }
-            |   BEGIN_DECL END_DECL                 { }
+lDeclBlock  :   BEGIN_DECL lDeclList END_DECL       { lsTableHead = $2; }
+            |   BEGIN_DECL END_DECL                 { lsTableHead = NULL; }
             ;
 
-lDeclList   :   lDeclList lDecl     { }
-            |   lDecl               { }
+lDeclList   :   lDeclList lDecl     { $$ = concatLsTable($1, $2); }
+            |   lDecl               { $$ = $1; }
             ;
 
-lDecl       :   type idList EOL     { }
+lDecl       :   type idList EOL     { $$ = setLsTableType($2, $1); }
             ;
 
-idList      :   idList COMMA ID     { }
-            |   ID                  { } 
+idList      :   idList COMMA ID     { $$ = concatLsTable($1, createIdEntryInLsTable($3->varName)); }
+            |   ID                  { $$ = createIdEntryInLsTable($1->varName); } 
             ;
 
 
 
 /*  MAIN BLOCK  */
 
-mainBlock   :   type MAIN LPAR RPAR LCURL lDeclBlock body RCURL     { }
+mainBlock   :   type MAIN LPAR RPAR LCURL lDeclBlock body RCURL     { $$ = $7; }
             ;
 
 
 
 /*  BODY  */
 
-body        :   BEGIN_CODE stmtList END_CODE        { }
-            |   BEGIN_CODE END_CODE                 { }
+body        :   BEGIN_CODE stmtList END_CODE    { $$ = $2; }
+            |   BEGIN_CODE END_CODE             { $$ = NULL; }
             ;
 
-stmtList    :   stmtList stmt       { }
-            |   stmt                { }
+stmtList    :   stmtList stmt                   { $$ = createConnectorNode($1, $2); }
+            |   stmt                            { $$ = $1; }
             ;
 
-stmt        :   inputStmt           { }
-            |   outputStmt          { }
-            |   assignStmt          { }
-            |   ifStmt              { }
-            |   whileStmt           { }
-            |   doWhileStmt         { }
-            |   repeatUntilStmt     { }
-            |   BREAK EOL           { }
-            |   CONTINUE EOL        { }
+stmt        :   inputStmt                       { $$ = $1; }
+            |   outputStmt                      { $$ = $1; }
+            |   assignStmt                      { $$ = $1; }
+            |   ifStmt                          { $$ = $1; }
+            |   whileStmt                       { $$ = $1; }
+            |   doWhileStmt                     { $$ = $1; }
+            |   rptUntStmt                      { $$ = $1; }
+            |   BREAK EOL                       { $$ = createBreakNode(); }
+            |   CONTINUE EOL                    { $$ = createContinueNode(); }
             ;
 
-inputStmt   :   READ LPAR ID RPAR EOL           { }
-            |   READ LPAR arrIndex RPAR EOL     { }
+inputStmt   :   READ LPAR ID RPAR EOL           { setIdNodeType($3); $$ = createReadNode($3); }
+            |   READ LPAR arrIndex RPAR EOL     { $$ = createReadNode($3); }
             ;
 
-outputStmt  :   WRITE LPAR expr RPAR EOL        { }
+outputStmt  :   WRITE LPAR expr RPAR EOL        { $$ = createWriteNode($3); }
             ;
 
-assignStmt  :   ID ASSG expr EOL            { }
-            |   arrIndex ASSG expr EOL      { }
+assignStmt  :   ID ASSG expr EOL                { setIdNodeType($1); $$ = createAssignNode($1, $3); }
+            |   arrIndex ASSG expr EOL          { $$ = createAssignNode($1, $3); }
             ;
 
-ifStmt      :   IF LPAR expr RPAR THEN stmtList ELSE stmtList ENDIF EOL         { }
-            |   IF LPAR expr RPAR THEN stmtList ENDIF EOL                       { }
+ifStmt      :   IF LPAR expr RPAR THEN stmtList ELSE stmtList ENDIF EOL         { $$ = createIfElseNode($3, $6, $8); }
+            |   IF LPAR expr RPAR THEN stmtList ENDIF EOL                       { $$ = createIfNode($3, $6); }
             ;
 
-whileStmt       :   WHILE LPAR expr RPAR DO stmtList ENDWHILE EOL   { }
-                ;
-doWhileStmt     :   DO stmtList WHILE LPAR expr RPAR EOL            { }
-                ;
-repeatUntilStmt :   REPEAT stmtList UNTIL LPAR expr RPAR EOL        { }
-                ;
-
-arrIndex    :   ID LBRACK expr RBRACK                       { }
+whileStmt   :   WHILE LPAR expr RPAR DO stmtList ENDWHILE EOL                   { $$ = createWhileNode($3, $6); }
+            ;
+doWhileStmt :   DO stmtList WHILE LPAR expr RPAR EOL                            { $$ = createDoWhileNode($2, $5); }
+            ;
+rptUntStmt  :   REPEAT stmtList UNTIL LPAR expr RPAR EOL                        { $$ = createRepeatUntilNode($2, $5); }
             ;
 
-expr        :   expr PLUS expr          { }
-            |   expr MIN expr           { }
-            |   expr MULT expr          { }
-            |   expr DIV expr           { }
-            |   expr MOD expr           { }
-            |   expr EQ expr            { }
-            |   expr NEQ expr           { }
-            |   expr GTE expr           { }
-            |   expr GT expr            { }
-            |   expr LTE expr           { }
-            |   expr LT expr            { }
-            |   LPAR expr RPAR          { }
-            |   ID                      { }
-            |   arrIndex                { }
-            |   NUMBER                  { }
-            |   STR_LTRL                { }
-            |   ID LPAR RPAR            { }
-            |   ID LPAR argList RPAR    { }
+arrIndex    :   ID LBRACK expr RBRACK           { setIdNodeType($1); $$ = createArrIndexNode($1, $3); }
             ;
 
-argList     :   argList COMMA expr      { }
-            |   expr                    { }
+expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $3); }
+            |   expr MIN expr           { $$ = createArithOpNode(NODE_SUB, $1, $3); }
+            |   expr MULT expr          { $$ = createArithOpNode(NODE_MULT, $1, $3); }
+            |   expr DIV expr           { $$ = createArithOpNode(NODE_DIV, $1, $3); }
+            |   expr MOD expr           { $$ = createArithOpNode(NODE_MOD, $1, $3); }
+            |   expr EQ expr            { $$ = createRelOpNode(NODE_EQ, $1, $3); }
+            |   expr NEQ expr           { $$ = createRelOpNode(NODE_NEQ, $1, $3);}
+            |   expr GTE expr           { $$ = createRelOpNode(NODE_GTE, $1, $3);}
+            |   expr GT expr            { $$ = createRelOpNode(NODE_GT, $1, $3);}
+            |   expr LTE expr           { $$ = createRelOpNode(NODE_LTE, $1, $3);}
+            |   expr LT expr            { $$ = createRelOpNode(NODE_LT, $1, $3);}
+            |   LPAR expr RPAR          { $$ = $2; }
+            |   ID                      { setIdNodeType($1); $$ = $1; }
+            |   arrIndex                { $$ = $1; }
+            |   NUMBER                  { $$ = $1; }
+            |   STR_LTRL                { $$ = $1; }
+            |   ID LPAR RPAR            { setIdNodeType($1); $$ = createFnCallNode($1, NULL); }
+            |   ID LPAR argList RPAR    { setIdNodeType($1); $$ = createFnCallNode($1, $3); }
+            ;
+
+argList     :   argList COMMA expr      { $$ = addArgToArgList($1, $3); }
+            |   expr                    { $$ = $1; }
             ;
 
 %%

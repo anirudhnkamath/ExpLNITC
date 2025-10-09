@@ -45,6 +45,7 @@ enum nodeTypes {
     NODE_ARR_IND_2D,
     NODE_ADDR_TO,
     NODE_DEREF,
+    NODE_FN_CALL,
 };
 
 enum errorCodes {
