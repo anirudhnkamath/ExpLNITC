@@ -48,6 +48,7 @@ Tnode* createDerefNode(Tnode* idNode);
 Tnode* addArgToArgList(Tnode* list, Tnode* expr);
 Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode);
 void functionValidate(int retType, char* fnName, ParamListEntry* fnParams);
+void validateIdForExpr(Tnode* idNode);
 
 void setIdNodeType(Tnode* idNode);
 

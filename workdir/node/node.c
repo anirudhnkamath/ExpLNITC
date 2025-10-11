@@ -281,6 +281,11 @@ Tnode* createDerefNode(Tnode* idNode) {
 Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
     Tnode* n = createEmptyNode();
 
+    if(idNode->gsTableEntry->fLabel == -1) {
+        printf("Error : ID doesnt accept aruments\n");
+        exit(1);
+    }
+
     // checking datattypes with declarations
     ParamListEntry* declParams = idNode->gsTableEntry->paramList;
     ParamListEntry *temp1 = declParams;
@@ -362,6 +367,17 @@ void functionValidate(int retType, char* fnName, ParamListEntry* fnParams) {
     }
 
     return;
+}
+
+void validateIdForExpr(Tnode* idNode) {
+    if(idNode->lsTableEntry)
+        return;
+    
+    if(idNode->gsTableEntry && idNode->gsTableEntry->fLabel != -1)
+        return;
+
+    printf("Error : invalid use of function\n");
+    exit(1);
 }
 
 void freeTree(Tnode* root) {

@@ -64,7 +64,7 @@ program     :   gDeclBlock fDefBlock mainBlock  { }
 
 /*  GLOBAL DECLARATIONS  */
 
-gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; printGsTable(); }
+gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; }
             |   BEGIN_DECL END_DECL                 { gsTableHead = NULL; }
             ;
 
@@ -97,7 +97,7 @@ fDefBlock   :   fDefBlock fDef      { }
             ;
 
 fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    { lsTableHead = addParamsToLsTable(lsTableHead, $4); } 
-                        /* mid-rule action */      body RCURL   {
+                        /* mid-rule action */      body RCURL   {   
                                                                     functionValidate($1, $2->varName, $4);
                                                                     $$ = $9;
                                                                     // codegen here i guess
@@ -163,14 +163,14 @@ stmt        :   inputStmt                       { $$ = $1; }
             |   CONTINUE EOL                    { $$ = createContinueNode(); }
             ;
 
-inputStmt   :   READ LPAR ID RPAR EOL           { setIdNodeType($3); $$ = createReadNode($3); }
+inputStmt   :   READ LPAR ID RPAR EOL           { setIdNodeType($3); validateIdForExpr($3); $$ = createReadNode($3); }
             |   READ LPAR arrIndex RPAR EOL     { $$ = createReadNode($3); }
             ;
 
 outputStmt  :   WRITE LPAR expr RPAR EOL        { $$ = createWriteNode($3); }
             ;
 
-assignStmt  :   ID ASSG expr EOL                { setIdNodeType($1); $$ = createAssignNode($1, $3); }
+assignStmt  :   ID ASSG expr EOL                { setIdNodeType($1); validateIdForExpr($1); $$ = createAssignNode($1, $3); }
             |   arrIndex ASSG expr EOL          { $$ = createAssignNode($1, $3); }
             ;
 
@@ -200,7 +200,7 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   expr LTE expr           { $$ = createRelOpNode(NODE_LTE, $1, $3);}
             |   expr LT expr            { $$ = createRelOpNode(NODE_LT, $1, $3);}
             |   LPAR expr RPAR          { $$ = $2; }
-            |   ID                      { setIdNodeType($1); $$ = $1; }
+            |   ID                      { setIdNodeType($1); validateIdForExpr($1); $$ = $1; }
             |   arrIndex                { $$ = $1; }
             |   NUMBER                  { $$ = $1; }
             |   STR_LTRL                { $$ = $1; }

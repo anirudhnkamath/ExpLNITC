@@ -14,11 +14,10 @@ int f(str name, int weight, int height) {
 
     decl 
         int bmi;
-        str revname;
     enddecl 
 
     begin 
-        f = 1;
+        bmi = 4;
     end
 
 }
@@ -29,10 +28,6 @@ int main() {
     enddecl
 
     begin
-        write(n);
-        while(n < 1) do
-            read(n);
-        endwhile;
     end
     
 }
