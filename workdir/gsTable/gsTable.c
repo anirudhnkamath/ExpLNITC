@@ -8,9 +8,12 @@
 GsTableEntry* gsTableHead = NULL;
 LsTableEntry* lsTableHead = NULL;
 
+int nextFLabel = 0;
+int getNextFLabel() {
+    return nextFLabel++;
+}
+
 int nextBinding = STACK_START;
-
-
 int getNextBinding(int size) {
 
     if(size <= 0) {
@@ -29,6 +32,7 @@ int getNextBinding(int size) {
 }
 
 
+
 GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols, int isPtr, ParamListEntry* paramListHead) {
     GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
     n->varName = strdup(varName);
@@ -41,6 +45,7 @@ GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int bind
     n->next = NULL;
     n->isPtr = isPtr;
     n->paramList = paramListHead;
+    n->fLabel = -1;
 
     return n;
 }
@@ -88,7 +93,9 @@ GsTableEntry* createArrEntryInGsTable(char* varName, int size) {
 }
 
 GsTableEntry* createFnEntryInGsTable(char* varName, ParamListEntry* paramListHead) {
-    return createGsTableEntry(varName, -1, 1, -1, 0, -1, -1, 0, paramListHead);
+    GsTableEntry * n = createGsTableEntry(varName, -1, -1, -1, -1, -1, -1, -1, paramListHead);
+    n->fLabel = getNextFLabel();
+    return n;
 }
 
 GsTableEntry* setGsTableType(GsTableEntry* head, int type) {
@@ -102,15 +109,36 @@ GsTableEntry* setGsTableType(GsTableEntry* head, int type) {
 
 void printGsTable() {
     GsTableEntry* temp = gsTableHead;
-    printf("\nGlobal symbol table : \n\n");
-    while(temp) {
-        printf("Name  : %s\nType  : %s\nSize  : %d\nBind  : %d\n", temp->varName, temp->dataType == INTEGER_TYPE ? "INT" : "STR", temp->size, temp->binding);
-        if(temp->paramList) printParamList(temp->paramList);
-        else printf("No parameters\n");
-        printf("\n");
+
+    printf("\n--- Global Symbol Table ---\n\n");
+
+    while (temp) {
+        const char* dtype = (temp->dataType == INTEGER_TYPE) ? "INT" : "STR";
+
+        printf("Name       : %s\n", temp->varName);
+        printf("Type       : %s\n", dtype);
+        printf("Size       : %d\n", temp->size);
+        printf("Binding    : %d\n", temp->binding);
+        printf("fLabel     : %d\n", temp->fLabel);
+        printf("Dimension  : %d\n", temp->dimension);
+        printf("Rows       : %d\n", temp->numRows);
+        printf("Cols       : %d\n", temp->numCols);
+        printf("isPtr      : %d\n", temp->isPtr);
+
+        if (temp->paramList) {
+            printf("Parameters :\n");
+            printParamList(temp->paramList);
+        } else {
+            printf("Parameters : None\n");
+        }
+
+        printf("\n----------------------------\n");
         temp = temp->next;
     }
+
+    printf("\n--- End of Table ---\n");
 }
+
 
 
 ParamListEntry* createParamListEntry(char* varName, int dataType) {

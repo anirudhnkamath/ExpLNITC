@@ -4,6 +4,9 @@ decl
     str programname;
     int f(str name, int weight, int height);
     int f2(str name, int marks);
+    int f3();
+    int f4();
+    int f5();
 
 enddecl
 

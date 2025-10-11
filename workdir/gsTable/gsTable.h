@@ -24,11 +24,15 @@ void printParamList(ParamListEntry* paramListHead);
 
 /* GLOBAL SYMBOL TABLE */
 
+int nextFLabel;
+int getNextFLabel();
+
 typedef struct GsTableEntry {
     char* varName;
     int dataType;
     int size;
     int binding;
+    int fLabel;
     struct ParamListEntry* paramList;
     struct GsTableEntry * next;
 

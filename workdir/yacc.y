@@ -64,7 +64,7 @@ program     :   gDeclBlock fDefBlock mainBlock  { }
 
 /*  GLOBAL DECLARATIONS  */
 
-gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; }
+gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; printGsTable(); }
             |   BEGIN_DECL END_DECL                 { gsTableHead = NULL; }
             ;
 
