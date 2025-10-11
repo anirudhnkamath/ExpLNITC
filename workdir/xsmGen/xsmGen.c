@@ -92,7 +92,7 @@ int getEffectiveAddr(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE*
         return addrReg;
     }
     else if(dimension == 1) {
-        fprintf(targetFile, "ADD R%d, R%d\n", addrReg, rowReg);
+        fprintf(targetFile, "ADD R%d, R%d\n", addrReg, offsetReg);
         return addrReg;
     }
     else if(dimension == 2) {
