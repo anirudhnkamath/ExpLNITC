@@ -10,6 +10,7 @@
     #include "./xsmGen/xsmGen.h"
 
     FILE* yyin;
+    FILE* targetFile;
     int yylex(void);
     int yyerror(const char *s);
     void initiateCodeGen(Tnode* node);
@@ -27,7 +28,7 @@
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE
 %token ASSG
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD
-%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE
+%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
 %token EOL COMMA
@@ -37,7 +38,7 @@
 %type <astNode> ifStmt whileStmt doWhileStmt rptUntStmt
 %type <astNode> expr
 %type <astNode> arrIndex
-%type <astNode> body fDef argList mainBlock
+%type <astNode> body fDef argList mainBlock retStmt
 
 %type <gsTableEntry> gDeclBlock gDeclList gDecl gidList gid
 %type <lsTableEntry> idList lDecl lDeclList
@@ -96,11 +97,21 @@ fDefBlock   :   fDefBlock fDef      { }
             |   fDef                { }
             ;
 
-fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    { lsTableHead = addParamsToLsTable(lsTableHead, $4); } 
-                        /* mid-rule action */      body RCURL   {   
+fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
+                                                                    curFnType = $1;
+                                                                    setIdNodeType($2);
                                                                     functionValidate($1, $2->varName, $4);
+                                                                    
+                                                                    setLDeclBinding(lsTableHead);
+                                                                    functionEntryCodeGen($2, targetFile);
+                                                                    lsTableHead = addParamsToLsTable(lsTableHead, $4);
+                                                                } 
+                /* mid-rule action */               body RCURL  {   
                                                                     $$ = $9;
-                                                                    // codegen here i guess
+
+                                                                    codeGen($$, targetFile);
+                                                                    functionExitCodeGen($2, targetFile);
+
                                                                     freeLsTable();
                                                                     freeTree($$);
                                                                 } 
@@ -137,15 +148,22 @@ idList      :   idList COMMA ID     { $$ = concatLsTable($1, createIdEntryInLsTa
 
 /*  MAIN BLOCK  */
 
-mainBlock   :   type MAIN LPAR RPAR LCURL lDeclBlock body RCURL     { $$ = $7; }
+mainBlock   :   type {curFnType = $1; } MAIN LPAR RPAR LCURL lDeclBlock body RCURL     {
+                                                                                        $$ = $8; 
+                                                                                        setLDeclBinding(lsTableHead);
+
+                                                                                        initialiseMainFn(targetFile);
+                                                                                        pushLocalVariables(lsTableHead, targetFile); 
+                                                                                        codeGen($8, targetFile); 
+                                                                                    }
             ;
 
 
 
 /*  BODY  */
 
-body        :   BEGIN_CODE stmtList END_CODE    { $$ = $2; }
-            |   BEGIN_CODE END_CODE             { $$ = NULL; }
+body        :   BEGIN_CODE stmtList retStmt END_CODE    { $$ = createConnectorNode($2, $3); }
+            |   BEGIN_CODE retStmt END_CODE             { $$ = $2; }
             ;
 
 stmtList    :   stmtList stmt                   { $$ = createConnectorNode($1, $2); }
@@ -185,6 +203,8 @@ doWhileStmt :   DO stmtList WHILE LPAR expr RPAR EOL                            
 rptUntStmt  :   REPEAT stmtList UNTIL LPAR expr RPAR EOL                        { $$ = createRepeatUntilNode($2, $5); }
             ;
 
+retStmt     :   RETURN LPAR expr RPAR EOL       { $$ = createReturnNode($3); }
+
 arrIndex    :   ID LBRACK expr RBRACK           { setIdNodeType($1); $$ = createArrIndexNode($1, $3); }
             ;
 
@@ -219,22 +239,19 @@ int yyerror(const char* s) {
     return 0;
 }
 
-void initiateCodeGen(Tnode* node) {
-    FILE* targetFile = fopen("targetFile.xsm", "w");
-    setHeader(targetFile);
-    resetRegisters();
-    updateStackPointer(STACK_END, targetFile);
-    codeGen(node, targetFile);
-    exitProgram(targetFile);
-    exit(1);
-}
-
 int main(int argc, char *argv[]) {
     if(argc > 1)
         yyin = fopen(argv[1], "r");
     else 
         yyin = stdin;
+
+    targetFile = fopen("targetFile.xsm", "w");
     
+    setHeader(targetFile);
+    resetRegisters();
+
     yyparse();
+
+    exitProgram(targetFile);
     return 0;
 }

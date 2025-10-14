@@ -16,8 +16,17 @@ jz_instr (JZ[ ]{register},[ ]{label_name})
 jnz_instr (JNZ[ ]{register},[ ]{label_name})
 jmp_instr (JMP[ ]{label_name})
 call_instr (CALL[ ]{label_name})
+main_header MAIN
 
 %%
+
+{main_header}\n {
+    if(scanNumber == 1) {}
+    else {
+        int addr = findLabelAddr("MAIN");
+        fprintf(translatedFile, "%d\n", addr);
+    }
+}
 
 {number}\n {
     if(scanNumber == 1) {}

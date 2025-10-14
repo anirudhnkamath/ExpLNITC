@@ -3,7 +3,7 @@
 
 #include "../define/constants.h"
 
-int registerFree[NUM_REGISTERS];
+extern int registerFree[NUM_REGISTERS];
 
 void resetRegisters();
 

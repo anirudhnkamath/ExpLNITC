@@ -3,6 +3,8 @@
 
 #include "../gsTable/gsTable.h"
 
+extern int curFnType;
+
 typedef struct Tnode {
     int tnodeType;
     int type;
@@ -47,6 +49,8 @@ Tnode* createDerefNode(Tnode* idNode);
 
 Tnode* addArgToArgList(Tnode* list, Tnode* expr);
 Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode);
+Tnode* createReturnNode(Tnode* exprNode);
+
 void functionValidate(int retType, char* fnName, ParamListEntry* fnParams);
 void validateIdForExpr(Tnode* idNode);
 

@@ -6,16 +6,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int getStaticAddress(char* varName) {
-    GsTableEntry* found = findInGsTable(gsTableHead, varName);
-    if(!found) {
-        printf("Error: undeclared variable\n");
-        exit(1);
-    }
-
-    return found->binding;
-}
-
 int codeGen(Tnode* node, FILE* targetFile) {
     if(node == NULL)
         return E_INVALIDNODE;
@@ -80,6 +70,23 @@ int codeGen(Tnode* node, FILE* targetFile) {
             break;
         }
 
+        case NODE_RET : {
+            int freeReg;
+            if(node->left->type == INTEGER_TYPE)
+                freeReg = evaluateExpression(node->left, targetFile);
+            else
+                freeReg = movStrLtrlToReg(node->left, targetFile);
+
+            int addrReg = getFreeRegister();
+            fprintf(targetFile, "MOV R%d, BP\n", addrReg);
+            fprintf(targetFile, "ADD R%d, -2\n", addrReg);
+            fprintf(targetFile, "MOV [R%d], R%d\n", addrReg, freeReg);
+
+            releaseRegister(freeReg);
+            releaseRegister(addrReg);
+            break;
+        }
+
         default:
             break;
     }
@@ -88,44 +95,32 @@ int codeGen(Tnode* node, FILE* targetFile) {
 }
 
 void generateWriteCode(Tnode* node, FILE* targetFile) {
-    int freeReg;
 
-    if(node->tnodeType == NODE_ARR_IND) {
-        int indexReg = evaluateExpression(node->right, targetFile);
-        freeReg = getMemValue(node->left, indexReg, -1, -1, targetFile);
-        releaseRegister(indexReg);
-    }
-    else if(node->tnodeType == NODE_ARR_IND_2D) {
-        int rowReg = evaluateExpression(node->right->left, targetFile);
-        int colReg = evaluateExpression(node->right->right, targetFile);
-        freeReg = getMemValue(node->left, -1, rowReg, colReg, targetFile);
-        releaseRegister(rowReg);
-        releaseRegister(colReg);
-    }
-    else if(node->type == INTEGER_TYPE) {
-        freeReg = evaluateExpression(node, targetFile);   
+    int exprReg;
+    if(node->type == INTEGER_TYPE) {
+        exprReg = evaluateExpression(node, targetFile);
     }
     else {
-        freeReg = movStrLtrlToReg(node, targetFile);
+        exprReg = movStrLtrlToReg(node, targetFile);
     }
 
-    printToConsole(freeReg, targetFile);
-    releaseRegister(freeReg);
+    printToConsole(exprReg, targetFile);
+    releaseRegister(exprReg);
 }
 
 void generateReadCode(Tnode* node, FILE* targetFile) {
     if(node->tnodeType == NODE_ID) {
-        readFromConsole(node, -1, -1, -1, targetFile);
+        readFromConsole(node, _NA_, _NA_, _NA_, targetFile);
     }
     else if(node->tnodeType == NODE_ARR_IND) {
         int indexReg = evaluateExpression(node->right, targetFile);
-        readFromConsole(node->left, indexReg, -1, -1, targetFile);
+        readFromConsole(node->left, indexReg, _NA_, _NA_, targetFile);
         releaseRegister(indexReg);
     } 
     else {
         int rowReg = evaluateExpression(node->right->left, targetFile);
         int colReg = evaluateExpression(node->right->right, targetFile);
-        readFromConsole(node->left, -1, rowReg, colReg, targetFile);
+        readFromConsole(node->left, _NA_, rowReg, colReg, targetFile);
         releaseRegister(rowReg);
         releaseRegister(colReg);
     }
@@ -137,11 +132,12 @@ void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
     if(rhs->tnodeType == NODE_ADDR_TO) {
         int exprReg = getFreeRegister();
         fprintf(targetFile, "MOV R%d, %d\n", exprReg, rhs->left->gsTableEntry->binding);
-        setMemValue(lhs, exprReg, -1, -1, -1, targetFile);
+        setMemValue(lhs, exprReg, _NA_, _NA_, _NA_, targetFile);
         releaseRegister(exprReg);
 
         return;
     }
+    
 
     // calculate rhs
     int exprReg;
@@ -151,20 +147,21 @@ void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
     else {
         exprReg = movStrLtrlToReg(rhs, targetFile);
     }
+    
 
     // assign to lhs
     if(lhs->tnodeType == NODE_ID) {
-        setMemValue(lhs, exprReg, -1, -1, -1, targetFile);
+        setMemValue(lhs, exprReg, _NA_, _NA_, _NA_, targetFile);
     }
     else if(lhs->tnodeType == NODE_ARR_IND) {
         int indexReg = evaluateExpression(lhs->right, targetFile);
-        setMemValue(lhs->left, exprReg, indexReg, -1, -1, targetFile);
+        setMemValue(lhs->left, exprReg, indexReg, _NA_, _NA_, targetFile);
         releaseRegister(indexReg);
     }
     else if(lhs->tnodeType == NODE_ARR_IND_2D) {
         int rowReg = evaluateExpression(lhs->right->left, targetFile);
         int colReg = evaluateExpression(lhs->right->right, targetFile);
-        setMemValue(lhs->left, exprReg, -1, rowReg, colReg, targetFile);
+        setMemValue(lhs->left, exprReg, _NA_, rowReg, colReg, targetFile);
         releaseRegister(rowReg);
         releaseRegister(colReg);
     }
@@ -172,6 +169,7 @@ void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
         int addrReg = getFreeRegister();
         fprintf(targetFile, "MOV R%d, [%d]\n", addrReg, lhs->left->gsTableEntry->binding);
         fprintf(targetFile, "MOV [R%d], R%d\n", addrReg, exprReg);
+        releaseRegister(addrReg);
     }
 
     releaseRegister(exprReg);
@@ -282,7 +280,7 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
 
     if(node->tnodeType == NODE_ARR_IND) {
         int indexReg = evaluateExpression(node->right, targetFile);
-        int ret = getMemValue(node->left, indexReg, -1, -1, targetFile);
+        int ret = getMemValue(node->left, indexReg, _NA_, _NA_, targetFile);
         releaseRegister(indexReg);
         return ret;
     }
@@ -290,20 +288,24 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
     if(node->tnodeType == NODE_ARR_IND_2D) {
         int rowReg = evaluateExpression(node->right->left, targetFile);
         int colReg = evaluateExpression(node->right->right, targetFile);
-        int ret = getMemValue(node->left, -1, rowReg, colReg, targetFile);
+        int ret = getMemValue(node->left, _NA_, rowReg, colReg, targetFile);
         releaseRegister(rowReg);
         releaseRegister(colReg);
         return ret;
     }
 
     if(node->tnodeType == NODE_ID) {
-        return getMemValue(node, -1, -1, -1, targetFile);
+        return getMemValue(node, _NA_, _NA_, _NA_, targetFile);
     }
 
     if(node->tnodeType == NODE_INT) {
         int freeReg = getFreeRegister();
         getImmediateValue(freeReg, node->val, targetFile);
         return freeReg;
+    }
+
+    if(node->tnodeType == NODE_FN_CALL) {
+        return evaluateFunction(node, targetFile);
     }
 
     int leftReg = evaluateExpression(node->left, targetFile);
@@ -362,3 +364,52 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
     return leftReg;
 }
 
+int movStrLtrlToReg(Tnode* node, FILE* targetFile) {
+    int freeReg = getFreeRegister();
+
+    if(node->tnodeType == NODE_DEREF) {
+        int addrReg = getFreeRegister();
+        fprintf(targetFile, "MOV R%d, [%d]\n", addrReg, node->left->gsTableEntry->binding);
+        fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
+        return addrReg;
+    }
+    
+    if(node->tnodeType == NODE_ID) {
+        freeReg = getMemValue(node, _NA_, _NA_, _NA_, targetFile);
+    }
+    else if(node->tnodeType == NODE_STR_LTRL) {
+        fprintf(targetFile, "MOV R%d, %s\n", freeReg, node->strVal);
+    }
+    else if(node->tnodeType == NODE_FN_CALL) {
+        freeReg = evaluateFunction(node, targetFile);
+    }
+    
+    return freeReg;
+}
+
+int evaluateFunction(Tnode* fnNode, FILE* targetFile) {
+    int pushedRegisters[20];
+    int pushedRegCount = pushAllRegisters(pushedRegisters, targetFile);
+
+    int numArgs = pushAllArguments(fnNode->argList, targetFile);
+    
+    fprintf(targetFile, "PUSH R0\n");
+    fprintf(targetFile, "CALL F%d\n", fnNode->left->gsTableEntry->fLabel);
+
+    // temporary method to retreive return val
+    int freeReg = pushedRegCount == 0 ? 0 : pushedRegisters[pushedRegCount-1] + 1;
+    if(freeReg >= NUM_REGISTERS) {
+        printf("Out of registers\n");
+        exit(1);
+    }
+    fprintf(targetFile, "POP R%d\n", freeReg);
+
+    // temporary method to pop all args
+    int freeReg2 = freeReg + 1;
+    for(int i=0; i<numArgs; i++)
+        fprintf(targetFile, "POP R%d\n", freeReg2);
+
+    popAllRegisters(pushedRegisters, pushedRegCount, targetFile);
+    registerFree[freeReg] = 0;
+    return freeReg;
+}

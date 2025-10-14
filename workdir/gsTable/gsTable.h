@@ -79,6 +79,8 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
 
 LsTableEntry* setLsTableType(LsTableEntry* head, int type);
 
+void setLDeclBinding(LsTableEntry* head);
+
 void freeLsTable();
 void printLsTable();
 

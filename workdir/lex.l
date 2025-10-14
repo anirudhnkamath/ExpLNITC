@@ -64,6 +64,8 @@
 
 "main" { return MAIN; }
 
+"return" { return RETURN; }
+
 \"[^\"]+\" {
     yylval.astNode = createStrLtrlNode(strdup(yytext));
     return STR_LTRL;

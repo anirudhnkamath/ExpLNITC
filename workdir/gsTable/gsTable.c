@@ -45,7 +45,7 @@ GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int bind
     n->next = NULL;
     n->isPtr = isPtr;
     n->paramList = paramListHead;
-    n->fLabel = -1;
+    n->fLabel = _NA_;
 
     return n;
 }
@@ -85,15 +85,15 @@ GsTableEntry* concatGsTable(GsTableEntry* head1, GsTableEntry* head2) {
 }
 
 GsTableEntry* createIdEntryInGsTable(char* varName) {
-    return createGsTableEntry(varName, -1, 1, getNextBinding(1), 0, -1, -1, 0, NULL);
+    return createGsTableEntry(varName, _NA_, 1, getNextBinding(1), 0, _NA_, _NA_, 0, NULL);
 }
 
 GsTableEntry* createArrEntryInGsTable(char* varName, int size) {
-    return createGsTableEntry(varName, -1, size, getNextBinding(size), 1, -1, -1, 0, NULL);
+    return createGsTableEntry(varName, _NA_, size, getNextBinding(size), 1, _NA_, _NA_, _NA_, NULL);
 }
 
 GsTableEntry* createFnEntryInGsTable(char* varName, ParamListEntry* paramListHead) {
-    GsTableEntry * n = createGsTableEntry(varName, -1, -1, -1, -1, -1, -1, -1, paramListHead);
+    GsTableEntry * n = createGsTableEntry(varName, _NA_, _NA_, _NA_, _NA_, _NA_, _NA_, _NA_, paramListHead);
     n->fLabel = getNextFLabel();
     return n;
 }
@@ -192,6 +192,7 @@ void printParamList(ParamListEntry* paramListHead) {
 }
 
 
+
 LsTableEntry* findInLsTable(LsTableEntry* head, char* varName) {
     LsTableEntry* temp = head;
     while(temp) {
@@ -212,7 +213,7 @@ LsTableEntry* createLsTableEntry(char* varName, int dataType, int binding) {
 }
 
 LsTableEntry* createIdEntryInLsTable(char* varName) {
-    return createLsTableEntry(varName, -1, -1);
+    return createLsTableEntry(varName, _NA_, _NA_);
 }
 
 LsTableEntry* concatLsTable(LsTableEntry* head1, LsTableEntry* head2) {
@@ -238,11 +239,21 @@ LsTableEntry* concatLsTable(LsTableEntry* head1, LsTableEntry* head2) {
 }
 
 LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHead) {
+
     ParamListEntry* temp = paramListHead;
+    int paramCount = 0;
     while(temp) {
-        LsTableEntry* n = createLsTableEntry(temp->varName, temp->dataType, -1);
+        paramCount += 1;
+        temp = temp->next;
+    }
+
+    temp = paramListHead;
+    int bind = PARAMS_BINDING_START - paramCount + 1;
+    while(temp) {
+        LsTableEntry* n = createLsTableEntry(temp->varName, temp->dataType, bind);
         head = concatLsTable(head, n);
         temp = temp->next;
+        bind += 1;
     }
 
     return head;
@@ -255,6 +266,17 @@ LsTableEntry* setLsTableType(LsTableEntry* head, int type) {
         temp = temp->next;
     }
     return head;
+}
+
+void setLDeclBinding(LsTableEntry* head) {
+    int bind = LDECL_BINDING_START;
+
+    LsTableEntry* temp = head;
+    while(temp) {
+        temp->binding = bind;
+        bind += 1;
+        temp = temp->next;
+    }
 }
 
 void freeLsTable() {

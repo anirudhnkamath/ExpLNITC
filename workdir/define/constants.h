@@ -1,18 +1,25 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#define _NA_ -404
+
 #define NUM_REGISTERS 20
 
 #define STACK_START 4096
 #define STACK_END 4607
 
-#define INTEGER_TYPE 0
-#define BOOLEAN_TYPE 1
-#define STRING_TYPE 2
-#define NO_TYPE 3
+enum dataTypes {
+    INTEGER_TYPE = 0,
+    BOOLEAN_TYPE,
+    STRING_TYPE,
+    NO_TYPE,
+};
 
 #define YACC_DECL_INT 0
 #define YACC_DECL_STR 1
+
+#define LDECL_BINDING_START 1
+#define PARAMS_BINDING_START -3
 
 enum nodeTypes {
     NODE_CONNECTOR = 1000,
@@ -46,6 +53,7 @@ enum nodeTypes {
     NODE_ADDR_TO,
     NODE_DEREF,
     NODE_FN_CALL,
+    NODE_RET,
 };
 
 enum errorCodes {

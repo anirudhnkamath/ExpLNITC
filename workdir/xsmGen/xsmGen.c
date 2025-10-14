@@ -7,7 +7,13 @@
 #include <stdio.h>
 
 void setHeader(FILE* targetFile) {
-    fprintf(targetFile, "0\n2056\n0\n0\n0\n0\n0\n0\n");
+    fprintf(targetFile, "0\nMAIN\n0\n0\n0\n0\n0\n0\n");
+}
+
+void initialiseMainFn(FILE* targetFile) {
+    fprintf(targetFile, "MAIN:\n");
+    fprintf(targetFile, "MOV BP, 4098\n");
+    fprintf(targetFile, "MOV SP, 4098\n");
 }
 
 void printToConsole(int regIndex, FILE* targetFile) {
@@ -58,35 +64,22 @@ void updateStackPointer(int addr, FILE* targetFile) {
     fprintf(targetFile, "MOV SP, %d\n", addr);
 }
 
-int movStrLtrlToReg(Tnode* node, FILE* targetFile) {
-    int freeReg = getFreeRegister();
-
-    if(node->tnodeType == NODE_DEREF) {
-        int addrReg = getFreeRegister();
-        fprintf(targetFile, "MOV R%d, [%d]\n", addrReg, node->left->gsTableEntry->binding);
-        fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
-        return addrReg;
-    }
-    
-    if(node->tnodeType == NODE_ID) {
-        freeReg = getMemValue(node, -1, -1, -1, targetFile);
-    }
-    else {
-        fprintf(targetFile, "MOV R%d, %s\n", freeReg, node->strVal);
-    }
-    
-    return freeReg;
-}
-
 int getEffectiveAddr(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
 
     // offset is only used for 1d and rowreg and colreg are used for 2d
 
+    int dimension;
     int addrReg = getFreeRegister();
-    int baseAddr = idNode->gsTableEntry->binding;
-    int dimension = idNode->gsTableEntry->dimension;
 
-    fprintf(targetFile, "MOV R%d, %d\n", addrReg, baseAddr);
+    if(idNode->lsTableEntry) {
+        dimension = 0;
+        fprintf(targetFile, "MOV R%d, BP\n", addrReg);
+        fprintf(targetFile, "ADD R%d, %d\n", addrReg, idNode->lsTableEntry->binding);
+    }
+    else {
+        dimension = idNode->gsTableEntry->dimension;
+        fprintf(targetFile, "MOV R%d, %d\n", addrReg, idNode->gsTableEntry->binding);
+    }
 
     if(dimension == 0) {
         return addrReg;
@@ -111,7 +104,7 @@ int getEffectiveAddr(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE*
         exit(1);
     }
 
-    return -1;
+    return _NA_;
 }
 
 void setMemValue(Tnode* idNode, int exprReg, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
@@ -152,5 +145,77 @@ void readFromConsole(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE*
     releaseRegister(addrReg);
 }
 
+int pushAllRegisters(int pushedRegisters[], FILE* targetFile) {
+    int count = 0;
+    for(int i=0; i<NUM_REGISTERS; i++) {
+        if(!registerFree[i]) {
+            fprintf(targetFile, "PUSH R%d\n", i);
+            pushedRegisters[count] = i;
+
+            count += 1;
+        }
+    }
+
+    resetRegisters();
+    return count;
+}
+
+void popAllRegisters(int pushedRegisters[], int count, FILE* targetFile) {
+    for(int i=count-1; i>=0; i--) {
+        int r = pushedRegisters[i];
+        
+        fprintf(targetFile, "POP R%d\n", r);
+        registerFree[r] = 0;
+    }
+}
+
+int pushAllArguments(Tnode* argListHead, FILE* targetFile) {
+    Tnode* temp = argListHead;
+    int numArgs = 0;
+    while(temp) {
+        int argReg;
+        if(temp->type == INTEGER_TYPE)
+            argReg = evaluateExpression(temp, targetFile);
+        else
+            argReg = movStrLtrlToReg(temp, targetFile);
+            
+        fprintf(targetFile, "PUSH R%d\n", argReg);
+        releaseRegister(argReg);
+
+        numArgs += 1;
+        temp = temp->argList;
+    }
+
+    return numArgs;
+}
+
+void functionEntryCodeGen(Tnode* node, FILE* targetFile) {
+    fprintf(targetFile, "F%d:\n", node->gsTableEntry->fLabel);
+    fprintf(targetFile, "PUSH BP\n");
+    fprintf(targetFile, "MOV BP, SP\n");
+
+    pushLocalVariables(lsTableHead, targetFile);
+}
+
+void functionExitCodeGen(Tnode* node, FILE* targetFile) {
+    fprintf(targetFile, "MOV SP, BP\n");
+    fprintf(targetFile, "POP BP\n");
+    fprintf(targetFile, "RET\n");
+}
+
+int pushLocalVariables(LsTableEntry* lsTableHead, FILE* targetFile) {
+    LsTableEntry* temp = lsTableHead;
+    int freeReg = getFreeRegister();
+    int count = 0;
+
+    while(temp) {
+        fprintf(targetFile, "PUSH R%d\n", freeReg);
+        temp = temp->next;
+        count += 1;
+    }
+    
+    releaseRegister(freeReg);
+    return count;
+}
 
 

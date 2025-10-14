@@ -8,7 +8,9 @@
 int getStaticAddress(char* varName);
 
 int codeGen(Tnode* node, FILE* targetFile);
+
 int evaluateExpression(Tnode* node, FILE* targetFile);
+int movStrLtrlToReg(Tnode* node, FILE* targetFile);
 
 void generateWhileLoop(Tnode* node, FILE* targetFile);
 void generateIfThen(Tnode* node, FILE* targetFile);
@@ -20,5 +22,6 @@ void generateWriteCode(Tnode* node, FILE* targetFile);
 void generateReadCode(Tnode* node, FILE* targetFile);
 void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile);
 
+int evaluateFunction(Tnode* fnNode, FILE* targetFile);
 
 #endif

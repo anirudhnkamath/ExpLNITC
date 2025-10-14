@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+int curFnType = INTEGER_TYPE;
+
 Tnode* createEmptyNode() {
     Tnode* n = (Tnode*)malloc(sizeof(Tnode));
     n->tnodeType = NODE_EMPTY;
@@ -12,7 +14,7 @@ Tnode* createEmptyNode() {
     n->gsTableEntry = NULL;
     n->lsTableEntry = NULL;
     n->strVal = NULL;
-    n->val = -1;
+    n->val = _NA_;
     n->type = NO_TYPE;
     return n;
 }
@@ -281,7 +283,7 @@ Tnode* createDerefNode(Tnode* idNode) {
 Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
     Tnode* n = createEmptyNode();
 
-    if(idNode->gsTableEntry->fLabel == -1) {
+    if(idNode->gsTableEntry->fLabel == _NA_) {
         printf("Error : ID doesnt accept aruments\n");
         exit(1);
     }
@@ -306,6 +308,7 @@ Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
     n->tnodeType = NODE_FN_CALL;
     n->argList = argListNode;
     n->type = idNode->type;
+    n->left = idNode;
     return n;
 }
 
@@ -317,6 +320,19 @@ Tnode* addArgToArgList(Tnode* list, Tnode* expr) {
     n->argList = expr;
     return list;
 }
+
+Tnode* createReturnNode(Tnode* exprNode) {
+    if(exprNode->type != curFnType) {
+        printf("Error : invalid return type for function\n");
+        exit(1);
+    }
+
+    Tnode* n = createEmptyNode();
+    n->tnodeType = NODE_RET;
+    n->left = exprNode;
+    return n;
+}
+
 
 void setIdNodeType(Tnode* idNode) {
     LsTableEntry* lsEntry = findInLsTable(lsTableHead, idNode->varName);
@@ -373,7 +389,7 @@ void validateIdForExpr(Tnode* idNode) {
     if(idNode->lsTableEntry)
         return;
     
-    if(idNode->gsTableEntry && idNode->gsTableEntry->fLabel != -1)
+    if(idNode->gsTableEntry && idNode->gsTableEntry->fLabel == _NA_)
         return;
 
     printf("Error : invalid use of function\n");
@@ -387,6 +403,7 @@ void freeTree(Tnode* root) {
     freeTree(root->left);
     freeTree(root->right);
     freeTree(root->argList);
+    root->argList = NULL;
     
     if(root->strVal) free(root->strVal);
     free(root);
@@ -397,6 +414,7 @@ void inorder(Tnode* node) {
 
     inorder(node->left);
 
+    inorder(node->argList);
     switch (node->tnodeType) {
         case NODE_CONNECTOR:   printf("CONNECTOR\n"); break;
         case NODE_EMPTY:       printf("EMPTY\n"); break;
@@ -429,7 +447,8 @@ void inorder(Tnode* node) {
         case NODE_ADDR_TO:     printf("NODE_ADDR\n"); break;
         case NODE_DEREF:       printf("NODE_DEREF\n"); break;
         case NODE_FN_CALL:     printf("NODE_FN_CALL\n"); break;
-        default:               printf("UNKNOWN\n"); break;
+        case NODE_RET:         printf("NODE_RET\n"); break;
+        default:               printf("%d %d %d\n", node->tnodeType, node->type, node->val); break;
     }
 
     inorder(node->right);

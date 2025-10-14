@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+int registerFree[NUM_REGISTERS];
+
 void resetRegisters() {
     for(int i=0; i<NUM_REGISTERS; i++)
         registerFree[i] = 1;
