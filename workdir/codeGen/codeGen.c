@@ -112,18 +112,6 @@ void generateReadCode(Tnode* node, FILE* targetFile) {
     if(node->tnodeType == NODE_ID) {
         readFromConsole(node, _NA_, _NA_, _NA_, targetFile);
     }
-    else if(node->tnodeType == NODE_ARR_IND) {
-        int indexReg = evaluateExpression(node->right, targetFile);
-        readFromConsole(node->left, indexReg, _NA_, _NA_, targetFile);
-        releaseRegister(indexReg);
-    } 
-    else {
-        int rowReg = evaluateExpression(node->right->left, targetFile);
-        int colReg = evaluateExpression(node->right->right, targetFile);
-        readFromConsole(node->left, _NA_, rowReg, colReg, targetFile);
-        releaseRegister(rowReg);
-        releaseRegister(colReg);
-    }
 }
 
 void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
@@ -152,18 +140,6 @@ void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
     // assign to lhs
     if(lhs->tnodeType == NODE_ID) {
         setMemValue(lhs, exprReg, _NA_, _NA_, _NA_, targetFile);
-    }
-    else if(lhs->tnodeType == NODE_ARR_IND) {
-        int indexReg = evaluateExpression(lhs->right, targetFile);
-        setMemValue(lhs->left, exprReg, indexReg, _NA_, _NA_, targetFile);
-        releaseRegister(indexReg);
-    }
-    else if(lhs->tnodeType == NODE_ARR_IND_2D) {
-        int rowReg = evaluateExpression(lhs->right->left, targetFile);
-        int colReg = evaluateExpression(lhs->right->right, targetFile);
-        setMemValue(lhs->left, exprReg, _NA_, rowReg, colReg, targetFile);
-        releaseRegister(rowReg);
-        releaseRegister(colReg);
     }
     else if(lhs->tnodeType == NODE_DEREF) {
         int addrReg = getFreeRegister();
@@ -276,22 +252,6 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
         fprintf(targetFile, "MOV R%d, [%d]\n", addrReg, node->left->gsTableEntry->binding);
         fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
         return addrReg;
-    }
-
-    if(node->tnodeType == NODE_ARR_IND) {
-        int indexReg = evaluateExpression(node->right, targetFile);
-        int ret = getMemValue(node->left, indexReg, _NA_, _NA_, targetFile);
-        releaseRegister(indexReg);
-        return ret;
-    }
-
-    if(node->tnodeType == NODE_ARR_IND_2D) {
-        int rowReg = evaluateExpression(node->right->left, targetFile);
-        int colReg = evaluateExpression(node->right->right, targetFile);
-        int ret = getMemValue(node->left, _NA_, rowReg, colReg, targetFile);
-        releaseRegister(rowReg);
-        releaseRegister(colReg);
-        return ret;
     }
 
     if(node->tnodeType == NODE_ID) {

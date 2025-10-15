@@ -21,7 +21,7 @@ void getImmediateValue(int storeReg, int val, FILE* targetFile);
 
 void updateStackPointer(int addr, FILE* targetFile);
 
-int getEffectiveAddr(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile);
+int getEffectiveAddr(Tnode* idNode, FILE* targetFile);
 
 void setMemValue(Tnode* idNode, int exprReg, int offsetReg, int rowReg, int colReg, FILE* targetFile);
 int getMemValue(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile);

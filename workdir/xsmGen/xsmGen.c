@@ -12,8 +12,8 @@ void setHeader(FILE* targetFile) {
 
 void initialiseMainFn(FILE* targetFile) {
     fprintf(targetFile, "MAIN:\n");
-    fprintf(targetFile, "MOV BP, 4098\n");
-    fprintf(targetFile, "MOV SP, 4098\n");
+    fprintf(targetFile, "MOV BP, %d\n", nextBinding+2);
+    fprintf(targetFile, "MOV SP, %d\n", nextBinding+2);
 }
 
 void printToConsole(int regIndex, FILE* targetFile) {
@@ -64,58 +64,62 @@ void updateStackPointer(int addr, FILE* targetFile) {
     fprintf(targetFile, "MOV SP, %d\n", addr);
 }
 
-int getEffectiveAddr(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
-
-    // offset is only used for 1d and rowreg and colreg are used for 2d
-
-    int dimension;
+int getEffectiveAddr(Tnode* idNode, FILE* targetFile) {
     int addrReg = getFreeRegister();
 
-    if(idNode->lsTableEntry) {
-        dimension = 0;
+    if (idNode->lsTableEntry) {
         fprintf(targetFile, "MOV R%d, BP\n", addrReg);
         fprintf(targetFile, "ADD R%d, %d\n", addrReg, idNode->lsTableEntry->binding);
-    }
-    else {
-        dimension = idNode->gsTableEntry->dimension;
-        fprintf(targetFile, "MOV R%d, %d\n", addrReg, idNode->gsTableEntry->binding);
-    }
-
-    if(dimension == 0) {
         return addrReg;
     }
-    else if(dimension == 1) {
-        fprintf(targetFile, "ADD R%d, R%d\n", addrReg, offsetReg);
+
+    fprintf(targetFile, "MOV R%d, %d\n", addrReg, idNode->gsTableEntry->binding);
+
+    if (!idNode->gsTableEntry->dimensions) {
         return addrReg;
     }
-    else if(dimension == 2) {
-        int temp = getFreeRegister();
-        int numCols = idNode->gsTableEntry->numCols;
-        fprintf(targetFile, "MOV R%d, %d\n", temp, numCols);
-        fprintf(targetFile, "MUL R%d, R%d\n", rowReg, temp);
-        fprintf(targetFile, "ADD R%d, R%d\n", rowReg, colReg);
-        fprintf(targetFile, "ADD R%d, R%d\n", addrReg, rowReg);
 
-        releaseRegister(temp);
-        return addrReg;
-    }
-    else {
-        printf("Error : wrong dimension\n");
-        exit(1);
+    Tnode* dimNode = idNode->gsTableEntry->dimensions;
+    Tnode* indexNode = idNode->arrOffset;
+    int offsetReg = getFreeRegister();
+
+    fprintf(targetFile, "MOV R%d, 0\n", offsetReg);
+
+    while (dimNode && indexNode) {
+        // got index
+        int indexValReg = evaluateExpression(indexNode, targetFile);
+
+        int mult = 1;
+        Tnode* temp = dimNode->arrOffset;
+        while(temp) {
+            mult *= dimNode->val;
+            temp = temp->arrOffset;
+        }
+
+        fprintf(targetFile, "MUL R%d, %d\n", indexValReg, mult);
+        fprintf(targetFile, "ADD R%d, R%d\n", offsetReg, indexValReg);
+
+        releaseRegister(indexValReg);
+        dimNode = dimNode->arrOffset;
+        indexNode = indexNode->arrOffset;
     }
 
-    return _NA_;
+    fprintf(targetFile, "ADD R%d, R%d\n", addrReg, offsetReg);
+
+    releaseRegister(offsetReg);
+
+    return addrReg;
 }
 
 void setMemValue(Tnode* idNode, int exprReg, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
-    int addrReg = getEffectiveAddr(idNode, offsetReg, rowReg, colReg, targetFile);
+    int addrReg = getEffectiveAddr(idNode, targetFile);
     
     fprintf(targetFile, "MOV [R%d], R%d\n", addrReg, exprReg);
     releaseRegister(addrReg);
 }
 
 int getMemValue(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
-    int addrReg = getEffectiveAddr(idNode, offsetReg, rowReg, colReg, targetFile);
+    int addrReg = getEffectiveAddr(idNode, targetFile);
     int storeReg = getFreeRegister();
 
     fprintf(targetFile, "MOV R%d, [R%d]\n", storeReg, addrReg);
@@ -124,7 +128,7 @@ int getMemValue(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targ
 }
 
 void readFromConsole(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
-    int addrReg = getEffectiveAddr(idNode, offsetReg, rowReg, colReg, targetFile);
+    int addrReg = getEffectiveAddr(idNode, targetFile);
     int freeReg = getFreeRegister();
 
     fprintf(

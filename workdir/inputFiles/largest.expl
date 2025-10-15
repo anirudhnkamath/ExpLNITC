@@ -1,39 +1,14 @@
 decl
-    int fib(int n);
+    int arr[2][3][2][2];
 enddecl
 
-int fib(int n) {
-    decl
-        int ret;
-    enddecl
-
-    begin
-        if(n <= 1) then
-            if(n == 0) then
-                ret = 0;
-            else
-                ret = 1;
-            endif;
-        
-        else
-            ret = fib(n-1) + fib(n-2);
-        
-        endif;
-
-        return (ret);
-    end
-}
-
 int main() {
-
     decl
-       int n;
+        int i, j, k;
     enddecl
 
     begin
-        read(n);
-        write(fib(n));
-        return (1);
+        arr[0][1][1][1] = 1;
+        return arr[1][1][1];
     end
-    
 }

@@ -33,19 +33,18 @@ int getNextBinding(int size) {
 
 
 
-GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols, int isPtr, ParamListEntry* paramListHead) {
+GsTableEntry* createEmptyGsTableEntry() {
     GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
-    n->varName = strdup(varName);
-    n->dataType = dataType;
-    n->size = size;
-    n->binding = binding;
-    n->dimension = dimension;
-    n->numRows = rows;
-    n->numCols = cols;
+    n->varName = NULL;
+    n->dataType = _NA_;
+    n->size = _NA_;
+    n->binding = _NA_;
     n->next = NULL;
-    n->isPtr = isPtr;
-    n->paramList = paramListHead;
+    n->isPtr = _NA_;
+    n->paramList = NULL;
     n->fLabel = _NA_;
+    n->dimensions = NULL; 
+    n->size = _NA_;
 
     return n;
 }
@@ -85,16 +84,38 @@ GsTableEntry* concatGsTable(GsTableEntry* head1, GsTableEntry* head2) {
 }
 
 GsTableEntry* createIdEntryInGsTable(char* varName) {
-    return createGsTableEntry(varName, _NA_, 1, getNextBinding(1), 0, _NA_, _NA_, 0, NULL);
+    GsTableEntry* n = createEmptyGsTableEntry();
+    n->varName = strdup(varName);
+    n->size = 1;
+    n->binding = getNextBinding(1);
+    n->isPtr = 0;
+    return n;
 }
 
-GsTableEntry* createArrEntryInGsTable(char* varName, int size) {
-    return createGsTableEntry(varName, _NA_, size, getNextBinding(size), 1, _NA_, _NA_, _NA_, NULL);
+GsTableEntry* createArrEntryInGsTable(char* varName, Tnode* arrOffsetNode) {
+    GsTableEntry* n = createEmptyGsTableEntry();
+    n->varName = strdup(varName);
+
+    int size = 1;
+    Tnode* temp = arrOffsetNode;
+    while(temp) {
+        size *= temp->val;
+        temp = temp->arrOffset;
+    }
+
+    n->size = size;
+    n->binding = getNextBinding(size);
+    n->dimensions = arrOffsetNode;
+
+    return n;
 }
 
 GsTableEntry* createFnEntryInGsTable(char* varName, ParamListEntry* paramListHead) {
-    GsTableEntry * n = createGsTableEntry(varName, _NA_, _NA_, _NA_, _NA_, _NA_, _NA_, _NA_, paramListHead);
+    GsTableEntry* n = createEmptyGsTableEntry();
+    n->varName = strdup(varName);
+    n->paramList = paramListHead;
     n->fLabel = getNextFLabel();
+
     return n;
 }
 
@@ -120,9 +141,6 @@ void printGsTable() {
         printf("Size       : %d\n", temp->size);
         printf("Binding    : %d\n", temp->binding);
         printf("fLabel     : %d\n", temp->fLabel);
-        printf("Dimension  : %d\n", temp->dimension);
-        printf("Rows       : %d\n", temp->numRows);
-        printf("Cols       : %d\n", temp->numCols);
         printf("isPtr      : %d\n", temp->isPtr);
 
         if (temp->paramList) {

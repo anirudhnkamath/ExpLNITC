@@ -54,44 +54,6 @@ Tnode* createIdNode(char varName[]) {
     return n;
 }
 
-Tnode* createArrIndexNode(Tnode* idNode, Tnode* exprNode) {
-    Tnode* n = createEmptyNode();
-    n->tnodeType = NODE_ARR_IND;
-
-    if(idNode->gsTableEntry->dimension == 0) {
-        printf("Error : indexing not allowed\n");
-        exit(1);
-    }
-    if(exprNode->type != INTEGER_TYPE) {
-        printf("Error : type mismatch in array index\n");
-        exit(1);
-    }
-
-    n->type = idNode->gsTableEntry->dataType;
-    n->left = idNode;
-    n->right = exprNode;
-    return n;
-}
-
-Tnode* createArrIndex2DNode(Tnode* idNode, Tnode* expr1Node, Tnode* expr2Node) {
-    Tnode* n = createEmptyNode();
-    n->tnodeType = NODE_ARR_IND_2D;
-
-    if(idNode->gsTableEntry->dimension != 2) {
-        printf("Error : indexing not allowed\n");
-        exit(1);
-    }
-    if(expr1Node->type != INTEGER_TYPE || expr2Node->type != INTEGER_TYPE) {
-        printf("Error : type mismatch in array index\n");
-        exit(1);
-    }
-
-    n->type = idNode->gsTableEntry->dataType;
-    n->left = idNode;
-    n->right = createConnectorNode(expr1Node, expr2Node);
-    return n;
-}
-
 
 Tnode* createReadNode(Tnode* idNode) {
     Tnode* n = createEmptyNode();
@@ -251,7 +213,7 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
 
 
 Tnode* createAddrToNode(Tnode* idNode) {
-    if(idNode->gsTableEntry->dimension != 0) {
+    if(idNode->gsTableEntry->dimensions != NULL) {
         printf("Error : not pointer addressable\n");
         exit(1);
     }
@@ -389,11 +351,36 @@ void validateIdForExpr(Tnode* idNode) {
     if(idNode->lsTableEntry)
         return;
     
-    if(idNode->gsTableEntry && idNode->gsTableEntry->fLabel == _NA_)
+    // not fn and not array
+    if(idNode->gsTableEntry && idNode->gsTableEntry->fLabel == _NA_ && idNode->gsTableEntry->dimensions == NULL)
         return;
 
-    printf("Error : invalid use of function\n");
+    printf("Error : invalid use of ID\n");
     exit(1);
+}
+
+void validateArrOffset(Tnode* idNode, Tnode* indexExprNode) {
+    if(idNode->lsTableEntry) {
+        printf("Error : non-array can't be indexed\n");
+        exit(1);
+    }
+
+    if(idNode->gsTableEntry && idNode->gsTableEntry->fLabel != _NA_) {
+        printf("Error : functions can't be indexed\n");
+        exit(1);
+    }
+
+    Tnode* temp1 = idNode->gsTableEntry->dimensions;
+    Tnode* temp2 = indexExprNode;
+    while(temp1 && temp2) {
+        temp1 = temp1->arrOffset;
+        temp2 = temp2->arrOffset;
+    }
+
+    if(temp1 || temp2) {
+        printf("Error : invalid indexing\n");
+        exit(1);
+    }
 }
 
 void freeTree(Tnode* root) {
@@ -452,4 +439,17 @@ void inorder(Tnode* node) {
     }
 
     inorder(node->right);
+}
+
+Tnode* insertToArrDimn(Tnode* root, Tnode* node) {
+    Tnode* temp = root;
+
+    if(!temp)
+        return node;
+
+    while(temp->arrOffset)
+        temp = temp->arrOffset;
+
+    temp->arrOffset = node;
+    return root;
 }

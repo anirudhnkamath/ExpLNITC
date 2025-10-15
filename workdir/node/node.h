@@ -16,6 +16,7 @@ typedef struct Tnode {
     struct Tnode* argList;
     struct Tnode* left;
     struct Tnode* right;
+    struct Tnode* arrOffset;
 } Tnode;
 
 Tnode* createConnectorNode(Tnode* left, Tnode* right);
@@ -23,9 +24,6 @@ Tnode* createConnectorNode(Tnode* left, Tnode* right);
 Tnode* createIntNode(int val);
 Tnode* createStrLtrlNode(char* str);
 Tnode* createIdNode(char varName[]);
-
-Tnode* createArrIndexNode(Tnode* idNode, Tnode* exprNode);
-Tnode* createArrIndex2DNode(Tnode* idNode, Tnode* expr1Node, Tnode* expr2Node);
 
 Tnode* createReadNode(Tnode* idNode);
 Tnode* createWriteNode(Tnode* exprNode);
@@ -58,5 +56,8 @@ void setIdNodeType(Tnode* idNode);
 
 void freeTree(Tnode* root);
 void inorder(Tnode* root);
+
+Tnode* insertToArrDimn(Tnode* root, Tnode* node);
+void validateArrOffset(Tnode* idNode, Tnode* indexExprNode);
 
 #endif

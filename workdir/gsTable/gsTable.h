@@ -1,6 +1,8 @@
 #ifndef GSTABLE_H
 #define GSTABLE_H
 
+typedef struct Tnode Tnode;
+
 /* BINDS */
 
 extern int nextBinding;
@@ -35,10 +37,7 @@ typedef struct GsTableEntry {
     int fLabel;
     struct ParamListEntry* paramList;
     struct GsTableEntry * next;
-
-    int dimension;
-    int numRows;
-    int numCols;
+    struct Tnode* dimensions;
     int isPtr;
     
 } GsTableEntry;
@@ -48,9 +47,9 @@ extern GsTableEntry* gsTableHead;
 GsTableEntry* findInGsTable(GsTableEntry* head, char* varName);
 GsTableEntry* concatGsTable(GsTableEntry* head1, GsTableEntry* head2);
 
-GsTableEntry* createGsTableEntry(char* varName, int dataType, int size, int binding, int dimension, int rows, int cols, int isPtr, ParamListEntry* paramListHead);
+GsTableEntry* createEmptyGsTableEntry();
 GsTableEntry* createIdEntryInGsTable(char* varName);
-GsTableEntry* createArrEntryInGsTable(char* varName, int size);
+GsTableEntry* createArrEntryInGsTable(char* varName, Tnode* arrOffsetNode);
 GsTableEntry* createFnEntryInGsTable(char* varName, ParamListEntry* paramListHead);
 
 GsTableEntry* setGsTableType(GsTableEntry* head, int type);

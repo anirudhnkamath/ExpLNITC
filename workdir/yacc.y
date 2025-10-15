@@ -6,7 +6,6 @@
     #include "./registers/registers.h"
     #include "./gsTable/gsTable.h"
     #include "./node/node.h"
-    #include "./gsTable/gsTable.h"
     #include "./xsmGen/xsmGen.h"
 
     FILE* yyin;
@@ -37,8 +36,7 @@
 %type <astNode> inputStmt outputStmt assignStmt 
 %type <astNode> ifStmt whileStmt doWhileStmt rptUntStmt
 %type <astNode> expr
-%type <astNode> arrIndex
-%type <astNode> body fDef argList mainBlock retStmt
+%type <astNode> body fDef argList mainBlock retStmt arrDimn arrIndex
 
 %type <gsTableEntry> gDeclBlock gDeclList gDecl gidList gid
 %type <lsTableEntry> idList lDecl lDeclList
@@ -81,12 +79,16 @@ gidList     :   gidList COMMA gid   { $$ = concatGsTable($1, $3); }
             ;
 
 gid         :   ID                          { $$ = createIdEntryInGsTable($1->varName); }
-            |   ID LBRACK NUMBER RBRACK     { $$ = createArrEntryInGsTable($1->varName, $3->val); }
             |   ID LPAR paramList RPAR      { $$ = createFnEntryInGsTable($1->varName, $3); }
+            |   ID arrDimn                  { $$ = createArrEntryInGsTable($1->varName, $2); }
             ;
 
 type        :   INT     { $$ = INTEGER_TYPE; }
             |   STR     { $$ = STRING_TYPE; }
+            ;
+
+arrDimn     :   arrDimn LBRACK NUMBER RBRACK    { $$ = insertToArrDimn($1, $3); }
+            |   LBRACK NUMBER RBRACK            { $$ = $2; }
             ;
 
 
@@ -181,15 +183,32 @@ stmt        :   inputStmt                       { $$ = $1; }
             |   CONTINUE EOL                    { $$ = createContinueNode(); }
             ;
 
-inputStmt   :   READ LPAR ID RPAR EOL           { setIdNodeType($3); validateIdForExpr($3); $$ = createReadNode($3); }
-            |   READ LPAR arrIndex RPAR EOL     { $$ = createReadNode($3); }
+inputStmt   :   READ LPAR ID RPAR EOL           {   
+                                                    setIdNodeType($3); 
+                                                    validateIdForExpr($3); 
+                                                    $$ = createReadNode($3); 
+                                                }
+            |   READ LPAR ID arrIndex RPAR EOL  {   
+                                                    setIdNodeType($3);
+                                                    validateArrOffset($3, $4);
+                                                    $3->arrOffset = $4;
+                                                    $$ = createReadNode($3); 
+                                                }    
             ;
 
 outputStmt  :   WRITE LPAR expr RPAR EOL        { $$ = createWriteNode($3); }
             ;
 
-assignStmt  :   ID ASSG expr EOL                { setIdNodeType($1); validateIdForExpr($1); $$ = createAssignNode($1, $3); }
-            |   arrIndex ASSG expr EOL          { $$ = createAssignNode($1, $3); }
+assignStmt  :   ID ASSG expr EOL                {   setIdNodeType($1); 
+                                                    validateIdForExpr($1); 
+                                                    $$ = createAssignNode($1, $3); 
+                                                }
+            |   ID arrIndex ASSG expr EOL       {   
+                                                    setIdNodeType($1); 
+                                                    validateArrOffset($1, $2);
+                                                    $1->arrOffset = $2;
+                                                    $$ = createAssignNode($1, $4); 
+                                                }
             ;
 
 ifStmt      :   IF LPAR expr RPAR THEN stmtList ELSE stmtList ENDIF EOL         { $$ = createIfElseNode($3, $6, $8); }
@@ -203,9 +222,7 @@ doWhileStmt :   DO stmtList WHILE LPAR expr RPAR EOL                            
 rptUntStmt  :   REPEAT stmtList UNTIL LPAR expr RPAR EOL                        { $$ = createRepeatUntilNode($2, $5); }
             ;
 
-retStmt     :   RETURN LPAR expr RPAR EOL       { $$ = createReturnNode($3); }
-
-arrIndex    :   ID LBRACK expr RBRACK           { setIdNodeType($1); $$ = createArrIndexNode($1, $3); }
+retStmt     :   RETURN expr EOL       { $$ = createReturnNode($2); }
             ;
 
 expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $3); }
@@ -221,11 +238,15 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   expr LT expr            { $$ = createRelOpNode(NODE_LT, $1, $3);}
             |   LPAR expr RPAR          { $$ = $2; }
             |   ID                      { setIdNodeType($1); validateIdForExpr($1); $$ = $1; }
-            |   arrIndex                { $$ = $1; }
             |   NUMBER                  { $$ = $1; }
+            |   ID arrIndex             { setIdNodeType($1); validateArrOffset($1, $2); $1->arrOffset = $2; $$ = $1; }
             |   STR_LTRL                { $$ = $1; }
             |   ID LPAR RPAR            { setIdNodeType($1); $$ = createFnCallNode($1, NULL); }
             |   ID LPAR argList RPAR    { setIdNodeType($1); $$ = createFnCallNode($1, $3); }
+            ;
+
+arrIndex    :   arrIndex LBRACK expr RBRACK { $$ = insertToArrDimn($1, $3); }
+            |   LBRACK expr RBRACK          { $$ = $2; }
             ;
 
 argList     :   argList COMMA expr      { $$ = addArgToArgList($1, $3); }
