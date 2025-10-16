@@ -1,14 +1,23 @@
 decl
-    int arr[2][3][2][2];
+    int add(int a, int b);
 enddecl
+
+int add(int a, int b) {
+    decl
+    enddecl
+    begin
+        return a+b;
+    end
+}
 
 int main() {
     decl
-        int i, j, k;
+        int temp;
     enddecl
 
     begin
-        arr[0][1][1][1] = 1;
-        return arr[1][1][1];
+        temp = add(add(1,1), add(1,1));
+        write(temp);
+        return 1;
     end
 }

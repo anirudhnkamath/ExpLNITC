@@ -351,7 +351,7 @@ int evaluateFunction(Tnode* fnNode, FILE* targetFile) {
     int pushedRegisters[20];
     int pushedRegCount = pushAllRegisters(pushedRegisters, targetFile);
 
-    int numArgs = pushAllArguments(fnNode->argList, targetFile);
+    int numArgs = pushAllArguments(fnNode->left->argList, targetFile);
     
     fprintf(targetFile, "PUSH R0\n");
     fprintf(targetFile, "CALL F%d\n", fnNode->left->gsTableEntry->fLabel);

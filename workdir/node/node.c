@@ -268,9 +268,9 @@ Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
     }
 
     n->tnodeType = NODE_FN_CALL;
-    n->argList = argListNode;
     n->type = idNode->type;
     n->left = idNode;
+    n->left->argList = argListNode;
     return n;
 }
 
