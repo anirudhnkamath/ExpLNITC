@@ -268,6 +268,50 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
         return evaluateFunction(node, targetFile);
     }
 
+    if (node->tnodeType == NODE_OR) {
+        int leftReg = evaluateExpression(node->left, targetFile);
+
+        int label1 = getNewLabel();
+        int label2 = getNewLabel();
+
+        fprintf(targetFile, "JZ R%d, L%d\n", leftReg, label1);
+
+        fprintf(targetFile, "MOV R%d, 1\n", leftReg);
+        fprintf(targetFile, "JMP L%d\n", label2);
+
+        fprintf(targetFile, "L%d:\n", label1);
+
+        int rightReg = evaluateExpression(node->right, targetFile);
+        fprintf(targetFile, "MOV R%d, R%d\n", leftReg, rightReg);
+        releaseRegister(rightReg);
+
+        fprintf(targetFile, "L%d:\n", label2);
+
+        return leftReg;
+    }
+
+    if (node->tnodeType == NODE_AND) {
+        int leftReg = evaluateExpression(node->left, targetFile);
+
+        int label1 = getNewLabel();
+        int label2 = getNewLabel();
+
+        fprintf(targetFile, "JNZ R%d, L%d\n", leftReg, label1);
+
+        fprintf(targetFile, "MOV R%d, 0\n", leftReg);
+        fprintf(targetFile, "JMP L%d\n", label2);
+
+        fprintf(targetFile, "L%d:\n", label1);
+
+        int rightReg = evaluateExpression(node->right, targetFile);
+        fprintf(targetFile, "MOV R%d, R%d\n", leftReg, rightReg);
+        releaseRegister(rightReg);
+
+        fprintf(targetFile, "L%d:\n", label2);
+        
+        return leftReg;
+    }
+
     int leftReg = evaluateExpression(node->left, targetFile);
     int rightReg = evaluateExpression(node->right, targetFile);
 

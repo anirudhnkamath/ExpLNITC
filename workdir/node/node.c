@@ -211,6 +211,20 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
     return n;
 }
 
+Tnode* createLogOpNode(int tNodeType, Tnode* left, Tnode* right) {
+    if(left->type != BOOLEAN_TYPE || right->type != BOOLEAN_TYPE) {
+        printf("Error : operands of log op is not boolean\n");
+        exit(1);
+    }
+
+    Tnode* n = createEmptyNode();
+    n->tnodeType = tNodeType;
+    n->left = left;
+    n->right = right;
+    n->type = BOOLEAN_TYPE;
+    return n;
+}
+
 
 Tnode* createAddrToNode(Tnode* idNode) {
     if(idNode->gsTableEntry->dimensions != NULL) {

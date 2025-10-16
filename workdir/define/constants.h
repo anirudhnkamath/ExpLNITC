@@ -54,6 +54,8 @@ enum nodeTypes {
     NODE_DEREF,
     NODE_FN_CALL,
     NODE_RET,
+    NODE_OR,
+    NODE_AND,
 };
 
 enum errorCodes {

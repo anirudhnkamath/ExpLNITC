@@ -26,7 +26,7 @@
 %token <astNode> ID NUMBER STR_LTRL
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE
 %token ASSG
-%token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD
+%token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
@@ -46,7 +46,8 @@
 %type <paramListEntry> paramList param
 
 
-
+%left OR
+%left AND
 %nonassoc EQ NEQ GT GTE LT LTE
 %left PLUS MIN
 %left MULT DIV MOD
@@ -231,11 +232,13 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   expr DIV expr           { $$ = createArithOpNode(NODE_DIV, $1, $3); }
             |   expr MOD expr           { $$ = createArithOpNode(NODE_MOD, $1, $3); }
             |   expr EQ expr            { $$ = createRelOpNode(NODE_EQ, $1, $3); }
-            |   expr NEQ expr           { $$ = createRelOpNode(NODE_NEQ, $1, $3);}
-            |   expr GTE expr           { $$ = createRelOpNode(NODE_GTE, $1, $3);}
-            |   expr GT expr            { $$ = createRelOpNode(NODE_GT, $1, $3);}
-            |   expr LTE expr           { $$ = createRelOpNode(NODE_LTE, $1, $3);}
-            |   expr LT expr            { $$ = createRelOpNode(NODE_LT, $1, $3);}
+            |   expr NEQ expr           { $$ = createRelOpNode(NODE_NEQ, $1, $3); }
+            |   expr GTE expr           { $$ = createRelOpNode(NODE_GTE, $1, $3); }
+            |   expr GT expr            { $$ = createRelOpNode(NODE_GT, $1, $3); }
+            |   expr LTE expr           { $$ = createRelOpNode(NODE_LTE, $1, $3); }
+            |   expr LT expr            { $$ = createRelOpNode(NODE_LT, $1, $3); }
+            |   expr AND expr           { $$ = createLogOpNode(NODE_AND, $1, $3); }
+            |   expr OR expr            { $$ = createLogOpNode(NODE_OR, $1, $3); }
             |   LPAR expr RPAR          { $$ = $2; }
             |   ID                      { setIdNodeType($1); validateIdForExpr($1); $$ = $1; }
             |   NUMBER                  { $$ = $1; }

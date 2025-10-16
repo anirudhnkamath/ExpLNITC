@@ -53,6 +53,9 @@
 "do" { return DO; }
 "endwhile" { return ENDWHILE; }
 
+"AND" { return AND; }
+"OR"  { return OR; }
+
 "repeat" { return REPEAT; }
 "until" { return UNTIL; }
 

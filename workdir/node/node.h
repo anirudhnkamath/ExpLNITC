@@ -41,6 +41,7 @@ Tnode* createContinueNode();
 
 Tnode* createArithOpNode(int tNodeType, Tnode* left, Tnode* right);
 Tnode* createRelOpNode(int tNodeType, Tnode* left, Tnode* right);
+Tnode* createLogOpNode(int tNodeType, Tnode* left, Tnode* right); 
 
 Tnode* createAddrToNode(Tnode* idNode);
 Tnode* createDerefNode(Tnode* idNode);

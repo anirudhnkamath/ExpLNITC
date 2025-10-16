@@ -1,38 +1,26 @@
 decl
-    int fib(int n);
+
 enddecl
-
-int fib(int n) {
-    decl
-        int ret;
-    enddecl
-
-    begin
-        if(n <= 1) then
-            if(n == 0) then
-                ret = 0;
-            else
-                ret = 1;
-            endif;
-        
-        else
-            ret = fib(n-1) + fib(n-2);
-        
-        endif;
-    end
-
-    return(ret);
-}
 
 int main() {
 
     decl
-       int n;
+        int a, b, c, d;
     enddecl
 
     begin
-        read(n);
-        write(fib(n));
+        read(a);
+        read(b);
+        read(c);
+        read(d);
+
+        if(a > 1 AND b > 1 OR c > 1 AND d > 1) then
+            write("large");
+        else
+            write("small");
+        endif;
+
+        return 1;
     end
     
 }
