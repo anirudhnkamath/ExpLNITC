@@ -31,13 +31,8 @@ Tnode* createAssignNode(Tnode* idNode, Tnode* exprNode);
 
 Tnode* createIfElseNode(Tnode* condNode, Tnode* ifNode, Tnode* elseNode);
 Tnode* createIfNode(Tnode* condNode, Tnode* stmtNode);
-
-Tnode* createWhileNode(Tnode* condNode, Tnode* stmtNode);
-Tnode* createDoWhileNode(Tnode* condNode, Tnode* stmtNode);
-Tnode* createRepeatUntilNode(Tnode* condNode, Tnode* stmtNode);
-
-Tnode* createBreakNode();
-Tnode* createContinueNode();
+Tnode* createLoopNode(int tnodeType, Tnode* condNode, Tnode* stmtNode);
+Tnode* createLoopJumpNode(int tnodeType);
 
 Tnode* createArithOpNode(int tNodeType, Tnode* left, Tnode* right);
 Tnode* createRelOpNode(int tNodeType, Tnode* left, Tnode* right);
@@ -50,8 +45,9 @@ Tnode* addArgToArgList(Tnode* list, Tnode* expr);
 Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode);
 Tnode* createReturnNode(Tnode* exprNode);
 
-void functionValidate(int retType, char* fnName, ParamListEntry* fnParams);
-void validateIdForExpr(Tnode* idNode);
+void validateFunction(int retType, char* fnName, ParamListEntry* fnParams);
+void validateProperId(Tnode* idNode);
+void validatePointer(Tnode* idNode);
 
 void setIdNodeType(Tnode* idNode);
 

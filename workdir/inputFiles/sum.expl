@@ -1,8 +1,0 @@
-decl
-    str x, *p;
-    int y, *q;
-enddecl;
-
-begin
-    q = &x;
-end;

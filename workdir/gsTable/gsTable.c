@@ -40,7 +40,6 @@ GsTableEntry* createEmptyGsTableEntry() {
     n->size = _NA_;
     n->binding = _NA_;
     n->next = NULL;
-    n->isPtr = _NA_;
     n->paramList = NULL;
     n->fLabel = _NA_;
     n->dimensions = NULL; 
@@ -88,7 +87,6 @@ GsTableEntry* createIdEntryInGsTable(char* varName) {
     n->varName = strdup(varName);
     n->size = 1;
     n->binding = getNextBinding(1);
-    n->isPtr = 0;
     return n;
 }
 
@@ -119,10 +117,28 @@ GsTableEntry* createFnEntryInGsTable(char* varName, ParamListEntry* paramListHea
     return n;
 }
 
+GsTableEntry* createPtrEntryInGsTable(char* varName) {
+    GsTableEntry* n = createEmptyGsTableEntry();
+    n->varName = strdup(varName);
+    n->size = 1;
+    n->binding = getNextBinding(1);
+    n->dataType = PTR_TYPE;
+    return n;
+}
+
 GsTableEntry* setGsTableType(GsTableEntry* head, int type) {
     GsTableEntry* temp = head;
     while(temp) {
-        temp->dataType = type;
+
+        if(temp->dataType == PTR_TYPE) {
+            if(type == INTEGER_TYPE)
+                temp->dataType = INT_PTR_TYPE;
+            else
+                temp->dataType = STR_PTR_TYPE;
+        }
+        else 
+            temp->dataType = type;
+            
         temp = temp->next;
     }
     return head;
@@ -141,7 +157,6 @@ void printGsTable() {
         printf("Size       : %d\n", temp->size);
         printf("Binding    : %d\n", temp->binding);
         printf("fLabel     : %d\n", temp->fLabel);
-        printf("isPtr      : %d\n", temp->isPtr);
 
         if (temp->paramList) {
             printf("Parameters :\n");
@@ -234,6 +249,10 @@ LsTableEntry* createIdEntryInLsTable(char* varName) {
     return createLsTableEntry(varName, _NA_, _NA_);
 }
 
+LsTableEntry* createPtrEntryInLsTable(char* varName) {
+    return createLsTableEntry(varName, PTR_TYPE, _NA_);
+}
+
 LsTableEntry* concatLsTable(LsTableEntry* head1, LsTableEntry* head2) {
     LsTableEntry* temp = head2;
     while(temp) {
@@ -280,7 +299,15 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
 LsTableEntry* setLsTableType(LsTableEntry* head, int type) {
     LsTableEntry* temp = head;
     while(temp) {
-        temp->dataType = type;
+        if(temp->dataType == PTR_TYPE) {
+            if(type == INTEGER_TYPE)
+                temp->dataType = INT_PTR_TYPE;
+            else
+                temp->dataType = STR_PTR_TYPE;
+        }
+        else 
+            temp->dataType = type;
+            
         temp = temp->next;
     }
     return head;

@@ -17,10 +17,6 @@ void readFromConsole(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE*
 void printToConsole(int regIndex, FILE* targetFile);
 void exitProgram(FILE* targetFile);
 
-void getImmediateValue(int storeReg, int val, FILE* targetFile);
-
-void updateStackPointer(int addr, FILE* targetFile);
-
 int getEffectiveAddr(Tnode* idNode, FILE* targetFile);
 
 void setMemValue(Tnode* idNode, int exprReg, int offsetReg, int rowReg, int colReg, FILE* targetFile);

@@ -56,14 +56,6 @@ void exitProgram(FILE* targetFile) {
     releaseRegister(freeReg);
 }
 
-void getImmediateValue(int storeReg, int val, FILE* targetFile) {
-    fprintf(targetFile, "MOV R%d, %d\n", storeReg, val);
-}
-
-void updateStackPointer(int addr, FILE* targetFile) {
-    fprintf(targetFile, "MOV SP, %d\n", addr);
-}
-
 int getEffectiveAddr(Tnode* idNode, FILE* targetFile) {
     int addrReg = getFreeRegister();
 
@@ -177,12 +169,8 @@ int pushAllArguments(Tnode* argListHead, FILE* targetFile) {
     Tnode* temp = argListHead;
     int numArgs = 0;
     while(temp) {
-        int argReg;
-        if(temp->type == INTEGER_TYPE)
-            argReg = evaluateExpression(temp, targetFile);
-        else
-            argReg = movStrLtrlToReg(temp, targetFile);
-            
+        int argReg =  evaluateExpression(temp, targetFile);
+
         fprintf(targetFile, "PUSH R%d\n", argReg);
         releaseRegister(argReg);
 

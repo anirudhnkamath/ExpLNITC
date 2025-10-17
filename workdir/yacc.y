@@ -26,7 +26,7 @@
 %token <astNode> ID NUMBER STR_LTRL
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE
 %token ASSG
-%token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR
+%token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR AMPSAND
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
@@ -82,6 +82,7 @@ gidList     :   gidList COMMA gid   { $$ = concatGsTable($1, $3); }
 gid         :   ID                          { $$ = createIdEntryInGsTable($1->varName); }
             |   ID LPAR paramList RPAR      { $$ = createFnEntryInGsTable($1->varName, $3); }
             |   ID arrDimn                  { $$ = createArrEntryInGsTable($1->varName, $2); }
+            |   MULT ID                     { $$ = createPtrEntryInGsTable($2->varName); }
             ;
 
 type        :   INT     { $$ = INTEGER_TYPE; }
@@ -103,7 +104,7 @@ fDefBlock   :   fDefBlock fDef      { }
 fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
                                                                     curFnType = $1;
                                                                     setIdNodeType($2);
-                                                                    functionValidate($1, $2->varName, $4);
+                                                                    validateFunction($1, $2->varName, $4);
                                                                     
                                                                     setLDeclBinding(lsTableHead);
                                                                     functionEntryCodeGen($2, targetFile);
@@ -111,7 +112,6 @@ fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
                                                                 } 
                 /* mid-rule action */               body RCURL  {   
                                                                     $$ = $9;
-
                                                                     codeGen($$, targetFile);
                                                                     functionExitCodeGen($2, targetFile);
 
@@ -125,7 +125,8 @@ paramList   :   paramList COMMA param   { $$ = concatParamList($1, $3); }
             |                           { $$ = NULL; }
             ;
 
-param       :   type ID     { $$ = createParamListEntry($2->varName, $1); }
+param       :   type ID         { $$ = createParamListEntry($2->varName, $1); }
+            |   type MULT ID    { $$ = createParamListEntry($3->varName, $1 == INTEGER_TYPE ? INT_PTR_TYPE : STR_PTR_TYPE); }
             ;
 
 
@@ -143,8 +144,10 @@ lDeclList   :   lDeclList lDecl     { $$ = concatLsTable($1, $2); }
 lDecl       :   type idList EOL     { $$ = setLsTableType($2, $1); }
             ;
 
-idList      :   idList COMMA ID     { $$ = concatLsTable($1, createIdEntryInLsTable($3->varName)); }
-            |   ID                  { $$ = createIdEntryInLsTable($1->varName); } 
+idList      :   idList COMMA ID         { $$ = concatLsTable($1, createIdEntryInLsTable($3->varName)); }
+            |   ID                      { $$ = createIdEntryInLsTable($1->varName); } 
+            |   idList COMMA MULT ID    { $$ = concatLsTable($1, createPtrEntryInLsTable($4->varName)); }
+            |   MULT ID                 { $$ = createPtrEntryInLsTable($2->varName); } 
             ;
 
 
@@ -180,13 +183,13 @@ stmt        :   inputStmt                       { $$ = $1; }
             |   whileStmt                       { $$ = $1; }
             |   doWhileStmt                     { $$ = $1; }
             |   rptUntStmt                      { $$ = $1; }
-            |   BREAK EOL                       { $$ = createBreakNode(); }
-            |   CONTINUE EOL                    { $$ = createContinueNode(); }
+            |   BREAK EOL                       { $$ = createLoopJumpNode(NODE_BREAK); }
+            |   CONTINUE EOL                    { $$ = createLoopJumpNode(NODE_CONTINUE); }
             ;
 
 inputStmt   :   READ LPAR ID RPAR EOL           {   
                                                     setIdNodeType($3); 
-                                                    validateIdForExpr($3); 
+                                                    validateProperId($3); 
                                                     $$ = createReadNode($3); 
                                                 }
             |   READ LPAR ID arrIndex RPAR EOL  {   
@@ -200,15 +203,17 @@ inputStmt   :   READ LPAR ID RPAR EOL           {
 outputStmt  :   WRITE LPAR expr RPAR EOL        { $$ = createWriteNode($3); }
             ;
 
-assignStmt  :   ID ASSG expr EOL                {   setIdNodeType($1); 
-                                                    validateIdForExpr($1); 
+assignStmt  :   ID ASSG expr EOL                {   setIdNodeType($1);
                                                     $$ = createAssignNode($1, $3); 
                                                 }
             |   ID arrIndex ASSG expr EOL       {   
-                                                    setIdNodeType($1); 
-                                                    validateArrOffset($1, $2);
+                                                    setIdNodeType($1);
                                                     $1->arrOffset = $2;
                                                     $$ = createAssignNode($1, $4); 
+                                                }
+            |   MULT ID ASSG expr EOL           {
+                                                    setIdNodeType($2);
+                                                    $$ = createAssignNode(createDerefNode($2), $4);
                                                 }
             ;
 
@@ -216,11 +221,11 @@ ifStmt      :   IF LPAR expr RPAR THEN stmtList ELSE stmtList ENDIF EOL         
             |   IF LPAR expr RPAR THEN stmtList ENDIF EOL                       { $$ = createIfNode($3, $6); }
             ;
 
-whileStmt   :   WHILE LPAR expr RPAR DO stmtList ENDWHILE EOL                   { $$ = createWhileNode($3, $6); }
+whileStmt   :   WHILE LPAR expr RPAR DO stmtList ENDWHILE EOL                   { $$ = createLoopNode(NODE_WHILE, $3, $6); }
             ;
-doWhileStmt :   DO stmtList WHILE LPAR expr RPAR EOL                            { $$ = createDoWhileNode($2, $5); }
+doWhileStmt :   DO stmtList WHILE LPAR expr RPAR EOL                            { $$ = createLoopNode(NODE_DOWHILE, $2, $5); }
             ;
-rptUntStmt  :   REPEAT stmtList UNTIL LPAR expr RPAR EOL                        { $$ = createRepeatUntilNode($2, $5); }
+rptUntStmt  :   REPEAT stmtList UNTIL LPAR expr RPAR EOL                        { $$ = createLoopNode(NODE_REPEATUNTIL, $2, $5); }
             ;
 
 retStmt     :   RETURN expr EOL       { $$ = createReturnNode($2); }
@@ -240,12 +245,17 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   expr AND expr           { $$ = createLogOpNode(NODE_AND, $1, $3); }
             |   expr OR expr            { $$ = createLogOpNode(NODE_OR, $1, $3); }
             |   LPAR expr RPAR          { $$ = $2; }
-            |   ID                      { setIdNodeType($1); validateIdForExpr($1); $$ = $1; }
+
+            |   ID                      { setIdNodeType($1); validateProperId($1); $$ = $1; }
             |   NUMBER                  { $$ = $1; }
             |   ID arrIndex             { setIdNodeType($1); validateArrOffset($1, $2); $1->arrOffset = $2; $$ = $1; }
             |   STR_LTRL                { $$ = $1; }
+
             |   ID LPAR RPAR            { setIdNodeType($1); $$ = createFnCallNode($1, NULL); }
             |   ID LPAR argList RPAR    { setIdNodeType($1); $$ = createFnCallNode($1, $3); }
+
+            |   MULT ID                 { setIdNodeType($2); $$ = createDerefNode($2); }
+            |   AMPSAND ID              { setIdNodeType($2); $$ = createAddrToNode($2); }
             ;
 
 arrIndex    :   arrIndex LBRACK expr RBRACK { $$ = insertToArrDimn($1, $3); }

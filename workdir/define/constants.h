@@ -12,6 +12,9 @@ enum dataTypes {
     INTEGER_TYPE = 0,
     BOOLEAN_TYPE,
     STRING_TYPE,
+    INT_PTR_TYPE,
+    STR_PTR_TYPE,
+    PTR_TYPE,
     NO_TYPE,
 };
 

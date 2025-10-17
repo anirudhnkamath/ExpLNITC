@@ -59,6 +59,8 @@
 "repeat" { return REPEAT; }
 "until" { return UNTIL; }
 
+"&" { return AMPSAND; }
+
 "break" { return BREAK; }
 "continue" { return CONTINUE; }
 

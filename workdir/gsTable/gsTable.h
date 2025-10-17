@@ -38,7 +38,6 @@ typedef struct GsTableEntry {
     struct ParamListEntry* paramList;
     struct GsTableEntry * next;
     struct Tnode* dimensions;
-    int isPtr;
     
 } GsTableEntry;
 
@@ -51,6 +50,8 @@ GsTableEntry* createEmptyGsTableEntry();
 GsTableEntry* createIdEntryInGsTable(char* varName);
 GsTableEntry* createArrEntryInGsTable(char* varName, Tnode* arrOffsetNode);
 GsTableEntry* createFnEntryInGsTable(char* varName, ParamListEntry* paramListHead);
+GsTableEntry* createPtrEntryInGsTable(char* varName);
+
 
 GsTableEntry* setGsTableType(GsTableEntry* head, int type);
 
@@ -72,6 +73,7 @@ LsTableEntry* findInLsTable(LsTableEntry* head, char* varName);
 
 LsTableEntry* createLsTableEntry(char* varName, int dataType, int binding);
 LsTableEntry* createIdEntryInLsTable(char* varName);
+LsTableEntry* createPtrEntryInLsTable(char* varName);
 
 LsTableEntry* concatLsTable(LsTableEntry* head1, LsTableEntry* head2);
 LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHead);
