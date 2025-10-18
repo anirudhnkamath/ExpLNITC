@@ -7,6 +7,7 @@
     #include "./gsTable/gsTable.h"
     #include "./node/node.h"
     #include "./xsmGen/xsmGen.h"
+    #include "./typeTable/typeTable.h"
 
     FILE* yyin;
     FILE* targetFile;
@@ -102,8 +103,8 @@ fDefBlock   :   fDefBlock fDef      { }
             ;
 
 fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
-                                                                    curFnType = $1;
                                                                     setIdNodeType($2);
+                                                                    curFnType = $2->type;
                                                                     validateFunction($1, $2->varName, $4);
                                                                     
                                                                     setLDeclBinding(lsTableHead);
@@ -115,8 +116,9 @@ fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
                                                                     codeGen($$, targetFile);
                                                                     functionExitCodeGen($2, targetFile);
 
-                                                                    freeLsTable();
-                                                                    freeTree($$);
+                                                                    // freeLsTable();
+                                                                    // freeTree($$);
+                                                                    lsTableHead = NULL; 
                                                                 } 
             ;
 
@@ -154,7 +156,8 @@ idList      :   idList COMMA ID         { $$ = concatLsTable($1, createIdEntryIn
 
 /*  MAIN BLOCK  */
 
-mainBlock   :   type {curFnType = $1; } MAIN LPAR RPAR LCURL lDeclBlock body RCURL     {
+mainBlock   :   INT {curFnType = searchInTypeTable("int"); } MAIN
+                                         LPAR RPAR LCURL lDeclBlock body RCURL     {
                                                                                         $$ = $8; 
                                                                                         setLDeclBinding(lsTableHead);
 
@@ -203,7 +206,8 @@ inputStmt   :   READ LPAR ID RPAR EOL           {
 outputStmt  :   WRITE LPAR expr RPAR EOL        { $$ = createWriteNode($3); }
             ;
 
-assignStmt  :   ID ASSG expr EOL                {   setIdNodeType($1);
+assignStmt  :   ID ASSG expr EOL                {   
+                                                    setIdNodeType($1);
                                                     $$ = createAssignNode($1, $3); 
                                                 }
             |   ID arrIndex ASSG expr EOL       {   
@@ -283,6 +287,7 @@ int main(int argc, char *argv[]) {
     
     setHeader(targetFile);
     resetRegisters();
+    createTypeTable();
 
     yyparse();
 

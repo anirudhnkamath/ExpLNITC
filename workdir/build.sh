@@ -1,3 +1,4 @@
+set -e
 
 if [ $# -ne 1 ]; then
     echo "Enter file"
@@ -16,6 +17,7 @@ gcc -o main_compiler \
     registers/registers.c \
     gsTable/gsTable.c \
     label/label.c \
+    typeTable/typeTable.c \
     xsmGen/xsmGen.c
 
 # compiler to generate labelled code

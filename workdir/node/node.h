@@ -2,12 +2,13 @@
 #define NODE_H
 
 #include "../gsTable/gsTable.h"
+#include "../typeTable/typeTable.h"
 
-extern int curFnType;
+extern TypeTable* curFnType;
 
 typedef struct Tnode {
     int tnodeType;
-    int type;
+    TypeTable* type;
     int val;
     char* strVal;
     char* varName;

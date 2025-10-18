@@ -1,11 +1,12 @@
 #include "./node.h"
 #include "../define/constants.h"
 #include "../gsTable/gsTable.h"
+#include "../typeTable/typeTable.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int curFnType = INTEGER_TYPE;
+TypeTable* curFnType = NULL;
 
 Tnode* createEmptyNode() {
     Tnode* n = (Tnode*)malloc(sizeof(Tnode));
@@ -15,7 +16,7 @@ Tnode* createEmptyNode() {
     n->lsTableEntry = NULL;
     n->strVal = NULL;
     n->val = _NA_;
-    n->type = NO_TYPE;
+    n->type = NULL;
     return n;
 }
 
@@ -33,7 +34,7 @@ Tnode* createIntNode(int val) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_INT;
     n->val = val;
-    n->type = INTEGER_TYPE;
+    n->type = searchInTypeTable("int");
     n->argList = NULL;
     
     return n;
@@ -43,7 +44,7 @@ Tnode* createStrLtrlNode(char* str) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_STR_LTRL;
     n->strVal = strdup(str);
-    n->type = STRING_TYPE;
+    n->type = searchInTypeTable("str");
     return n;
 }
 
@@ -66,7 +67,7 @@ Tnode* createWriteNode(Tnode* exprNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_WRITE;
 
-    if(exprNode->type == BOOLEAN_TYPE) {
+    if(strcmp(exprNode->type->name, "bool") == 0) {
         printf("Error: Mismatched type\n");
         exit(1);
     }
@@ -76,7 +77,7 @@ Tnode* createWriteNode(Tnode* exprNode) {
 }
 
 Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
-    if(leftNode->type != exprNode->type) {
+    if(strcmp(leftNode->type->name, exprNode->type->name) != 0) {
         printf("Error : type mismatch\n");
         exit(1);
     }
@@ -88,7 +89,7 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
             validateArrOffset(leftNode, leftNode->arrOffset);
         }
 
-        else if(leftNode->type == INT_PTR_TYPE || leftNode->type == STR_PTR_TYPE) {
+        else if(strcmp(leftNode->type->name, "intPtr") == 0 || strcmp(leftNode->type->name, "strPtr") == 0) {
             // do nothing
         }
 
@@ -109,7 +110,7 @@ Tnode* createIfElseNode(Tnode* condNode, Tnode* ifNode, Tnode* elseNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_IF_ELSE;
     
-    if(condNode->type != BOOLEAN_TYPE) {
+    if(strcmp(condNode->type->name, "bool") != 0) {
         printf("Error: Mistmatch type\n");
         exit(1);
     }
@@ -124,7 +125,7 @@ Tnode* createIfNode(Tnode* condNode, Tnode* stmtNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_IF;
     
-    if(condNode->type != BOOLEAN_TYPE) {
+    if(strcmp(condNode->type->name, "bool") != 0) {
         printf("Error: Mistmatch type\n");
         exit(1);
     }
@@ -139,13 +140,14 @@ Tnode* createLoopNode(int tnodeType, Tnode* condNode, Tnode* stmtNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = tnodeType;
 
-    if(condNode->type != BOOLEAN_TYPE) {
+    if(strcmp(condNode->type->name, "bool") != 0) {
         printf("Error: Mistmatch type\n");
         exit(1);
     }
 
     n->left = condNode;
     n->right = stmtNode;
+
 
     return n;
 }
@@ -161,14 +163,14 @@ Tnode* createArithOpNode(int tnodeType, Tnode* left, Tnode* right) {
     Tnode* n = createEmptyNode();
     n->tnodeType = tnodeType;
 
-    if(left->type != INTEGER_TYPE || right->type != INTEGER_TYPE) {
+    if(strcmp(left->type->name, "int") != 0 || strcmp(right->type->name, "int") != 0) {
         printf("Error: mistmatch type\n");
         exit(1);
     }
 
     n->left = left;
     n->right = right;
-    n->type = INTEGER_TYPE;
+    n->type = searchInTypeTable("int");
     n->argList = NULL;
     return n;
 }
@@ -177,21 +179,21 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
     Tnode* n = createEmptyNode();
     n->tnodeType = tnodeType;
 
-    if(left->type != INTEGER_TYPE || right->type != INTEGER_TYPE) {
+    if(strcmp(left->type->name, "int") != 0 || strcmp(right->type->name, "int") != 0) {
         printf("Error: mistmatch type\n");
         exit(1);
     }
 
     n->left = left;
     n->right = right;
-    n->type = BOOLEAN_TYPE;
+    n->type = searchInTypeTable("bool");
     n->argList = NULL;
     return n;
 }
 
 Tnode* createLogOpNode(int tNodeType, Tnode* left, Tnode* right) {
-    if(left->type != BOOLEAN_TYPE || right->type != BOOLEAN_TYPE) {
-        printf("Error : operands of log op is not boolean\n");
+    if(strcmp(left->type->name, "bool") != 0 || strcmp(right->type->name, "bool") != 0) {
+        printf("Error: mistmatch type\n");
         exit(1);
     }
 
@@ -199,7 +201,7 @@ Tnode* createLogOpNode(int tNodeType, Tnode* left, Tnode* right) {
     n->tnodeType = tNodeType;
     n->left = left;
     n->right = right;
-    n->type = BOOLEAN_TYPE;
+    n->type = searchInTypeTable("bool");
     return n;
 }
 
@@ -210,31 +212,41 @@ Tnode* createAddrToNode(Tnode* idNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_ADDR_TO;
     n->left = idNode;
-    n->type = idNode->type == INTEGER_TYPE ? INT_PTR_TYPE : STR_PTR_TYPE;
+
+    if(strcmp(idNode->type->name, "int") == 0)
+        n->type = searchInTypeTable("intPtr");
+    else
+        n->type = searchInTypeTable("strPtr");
+        
     return n;
 }
 
 Tnode* createDerefNode(Tnode* idNode) {
 
-    int curType; 
+    TypeTable* curType; 
     if(idNode->lsTableEntry) {
-        if(idNode->lsTableEntry->dataType != INT_PTR_TYPE && idNode->lsTableEntry->dataType != STR_PTR_TYPE) {
+        if(strcmp(idNode->lsTableEntry->type->name, "intPtr") != 0 && strcmp(idNode->lsTableEntry->type->name, "strPtr") != 0) {
             printf("Error : invalid address access\n");
             exit(1);
         }
-        else curType = idNode->lsTableEntry->dataType;
+        else curType = idNode->lsTableEntry->type;
     }
     else if(idNode->gsTableEntry) {
-        if(idNode->gsTableEntry->dataType != INT_PTR_TYPE && idNode->gsTableEntry->dataType != STR_PTR_TYPE) {
+        if(strcmp(idNode->gsTableEntry->type->name, "intPtr") != 0 && strcmp(idNode->gsTableEntry->type->name, "strPtr") != 0) {
             printf("Error : invalid address access\n");
             exit(1);
         }
-        else curType = idNode->gsTableEntry->dataType;
+        else curType = idNode->gsTableEntry->type;
     }
 
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_DEREF;
-    n->type = curType == INT_PTR_TYPE ? INTEGER_TYPE : STRING_TYPE;
+
+    if(strcmp(curType->name, "intPtr") == 0)
+        n->type = searchInTypeTable("int");
+    else
+        n->type = searchInTypeTable("str");
+
     n->left = idNode;
 
     return n;
@@ -254,7 +266,7 @@ Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
     ParamListEntry *temp1 = declParams;
     Tnode* temp2 = argListNode;
     while(temp1 && temp2) {
-        if(temp1->dataType != temp2->type) {
+        if(strcmp(temp1->type->name, temp2->type->name) != 0) {
             printf("Error : type mismatch in function call\n");
             exit(1);
         }
@@ -283,7 +295,7 @@ Tnode* addArgToArgList(Tnode* list, Tnode* expr) {
 }
 
 Tnode* createReturnNode(Tnode* exprNode) {
-    if(exprNode->type != curFnType) {
+    if(strcmp(exprNode->type->name, curFnType->name) != 0) {
         printf("Error : invalid return type for function\n");
         exit(1);
     }
@@ -300,14 +312,14 @@ void setIdNodeType(Tnode* idNode) {
     LsTableEntry* lsEntry = findInLsTable(lsTableHead, idNode->varName);
     if(lsEntry) {
         idNode->lsTableEntry = lsEntry;
-        idNode->type = lsEntry->dataType;
+        idNode->type = lsEntry->type;
         return;
     }
 
     GsTableEntry* gsEntry = findInGsTable(gsTableHead, idNode->varName);
     if(gsEntry) {
         idNode->gsTableEntry = gsEntry;
-        idNode->type = gsEntry->dataType;
+        idNode->type = gsEntry->type;
         return;
     }
 
@@ -323,7 +335,9 @@ void validateFunction(int retType, char* fnName, ParamListEntry* fnParams) {
         exit(1);
     }
 
-    if(found->dataType != retType) {
+    if(retType == INTEGER_TYPE && strcmp(found->type->name, "int") != 0 ||
+       retType == STRING_TYPE && strcmp(found->type->name, "str") != 0
+    ) {
         printf("Error : invalid ret type in fn definition\n");
         exit(1);
     }
@@ -336,7 +350,7 @@ void validateFunction(int retType, char* fnName, ParamListEntry* fnParams) {
     ParamListEntry* declParams = found->paramList;
     ParamListEntry *temp1 = fnParams, *temp2 = declParams;
     while(temp1 && temp2) {
-        if(temp1->dataType != temp2->dataType || strcmp(temp1->varName, temp2->varName) != 0) {
+        if(strcmp(temp1->type->name, temp2->type->name) != 0 || strcmp(temp1->varName, temp2->varName) != 0) {
             printf("Error : definition doesnt match declaration\n");
             exit(1);
         }
@@ -353,10 +367,10 @@ void validateFunction(int retType, char* fnName, ParamListEntry* fnParams) {
 }
 
 void validatePointer(Tnode* idNode) {
-    if(idNode->lsTableEntry && (idNode->lsTableEntry->dataType == INT_PTR_TYPE || idNode->lsTableEntry->dataType == STR_PTR_TYPE))
+    if(idNode->lsTableEntry && (strcmp(idNode->lsTableEntry->type->name, "intPtr") == 0 || strcmp(idNode->lsTableEntry->type->name, "strPtr") == 0))
         return;
 
-    if(idNode->gsTableEntry && (idNode->gsTableEntry->dataType == INT_PTR_TYPE || idNode->gsTableEntry->dataType == STR_PTR_TYPE))
+    if(idNode->gsTableEntry && (strcmp(idNode->gsTableEntry->type->name, "intPtr") == 0 || strcmp(idNode->gsTableEntry->type->name, "strPtr") == 0))
         return;
 
     printf("Error : invalid pointer\n");
@@ -365,14 +379,14 @@ void validatePointer(Tnode* idNode) {
 
 void validateProperId(Tnode* idNode) {
     if( idNode->lsTableEntry && 
-        (idNode->lsTableEntry->dataType == INTEGER_TYPE || idNode->lsTableEntry->dataType == STRING_TYPE)
+        (strcmp(idNode->lsTableEntry->type->name, "int") == 0 || strcmp(idNode->lsTableEntry->type->name, "str") == 0)
     ) return;
     
     // not fn and not array
     if( idNode->gsTableEntry && 
         idNode->gsTableEntry->fLabel == _NA_ && 
         idNode->gsTableEntry->dimensions == NULL &&
-        (idNode->gsTableEntry->dataType != INTEGER_TYPE || idNode->gsTableEntry->dataType != STRING_TYPE)
+        (strcmp(idNode->gsTableEntry->type->name, "int") == 0 || strcmp(idNode->gsTableEntry->type->name, "str") == 0)
     ) return;
 
     printf("Error : invalid use of ID\n");
@@ -392,6 +406,7 @@ void validateArrOffset(Tnode* idNode, Tnode* indexExprNode) {
 
     Tnode* temp1 = idNode->gsTableEntry->dimensions;
     Tnode* temp2 = indexExprNode;
+
     while(temp1 && temp2) {
         temp1 = temp1->arrOffset;
         temp2 = temp2->arrOffset;
@@ -455,7 +470,7 @@ void inorder(Tnode* node) {
         case NODE_DEREF:       printf("NODE_DEREF\n"); break;
         case NODE_FN_CALL:     printf("NODE_FN_CALL\n"); break;
         case NODE_RET:         printf("NODE_RET\n"); break;
-        default:               printf("%d %d %d\n", node->tnodeType, node->type, node->val); break;
+        default:               printf("NOIDEA\n"); break;
     }
 
     inorder(node->right);

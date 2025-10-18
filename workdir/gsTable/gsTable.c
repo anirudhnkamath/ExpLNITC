@@ -36,7 +36,7 @@ int getNextBinding(int size) {
 GsTableEntry* createEmptyGsTableEntry() {
     GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
     n->varName = NULL;
-    n->dataType = _NA_;
+    n->type = NULL;
     n->size = _NA_;
     n->binding = _NA_;
     n->next = NULL;
@@ -122,7 +122,7 @@ GsTableEntry* createPtrEntryInGsTable(char* varName) {
     n->varName = strdup(varName);
     n->size = 1;
     n->binding = getNextBinding(1);
-    n->dataType = PTR_TYPE;
+    n->type = searchInTypeTable("intPtr");
     return n;
 }
 
@@ -130,15 +130,26 @@ GsTableEntry* setGsTableType(GsTableEntry* head, int type) {
     GsTableEntry* temp = head;
     while(temp) {
 
-        if(temp->dataType == PTR_TYPE) {
-            if(type == INTEGER_TYPE)
-                temp->dataType = INT_PTR_TYPE;
-            else
-                temp->dataType = STR_PTR_TYPE;
+        // some kind of ptr
+        if(temp->type != NULL) {
+            if(type == INTEGER_TYPE) {
+                // nothing
+            }
+            else {
+                temp->type = searchInTypeTable("strPtr");
+            }
         }
-        else 
-            temp->dataType = type;
-            
+
+        // else
+        else {
+            if(type == INTEGER_TYPE) {
+                temp->type = searchInTypeTable("int");
+            }
+            else {
+                temp->type = searchInTypeTable("str");
+            }
+        }
+
         temp = temp->next;
     }
     return head;
@@ -150,10 +161,9 @@ void printGsTable() {
     printf("\n--- Global Symbol Table ---\n\n");
 
     while (temp) {
-        const char* dtype = (temp->dataType == INTEGER_TYPE) ? "INT" : "STR";
-
+        
         printf("Name       : %s\n", temp->varName);
-        printf("Type       : %s\n", dtype);
+        printf("Type       : %s\n", temp->type->name);
         printf("Size       : %d\n", temp->size);
         printf("Binding    : %d\n", temp->binding);
         printf("fLabel     : %d\n", temp->fLabel);
@@ -161,10 +171,8 @@ void printGsTable() {
         if (temp->paramList) {
             printf("Parameters :\n");
             printParamList(temp->paramList);
-        } else {
-            printf("Parameters : None\n");
         }
-
+        
         printf("\n----------------------------\n");
         temp = temp->next;
     }
@@ -177,7 +185,16 @@ void printGsTable() {
 ParamListEntry* createParamListEntry(char* varName, int dataType) {
     ParamListEntry* n = (ParamListEntry*)malloc(sizeof(ParamListEntry));
     n->varName = strdup(varName);
-    n->dataType = dataType;
+    
+    if(dataType == INTEGER_TYPE)
+        n->type = searchInTypeTable("int");
+    else if(dataType == STRING_TYPE)
+        n->type = searchInTypeTable("str");
+    else if(dataType == INT_PTR_TYPE)
+        n->type = searchInTypeTable("intPtr");
+    else if(dataType == STR_PTR_TYPE)
+        n->type = searchInTypeTable("strPtr");
+
     n->next = NULL;
     return n;
 }
@@ -218,7 +235,7 @@ void printParamList(ParamListEntry* paramListHead) {
     ParamListEntry* temp = paramListHead;
     printf("Params: ");
     while(temp) {
-        printf("%s(%s) ", temp->varName, temp->dataType == INTEGER_TYPE ? "INT" : "STR");
+        printf("%s(%s) ", temp->varName, temp->type->name);
         temp = temp->next;
     }
     printf("\n");
@@ -236,21 +253,27 @@ LsTableEntry* findInLsTable(LsTableEntry* head, char* varName) {
     return NULL;
 }
 
-LsTableEntry* createLsTableEntry(char* varName, int dataType, int binding) {
+LsTableEntry* createLsTableEntry() {
     LsTableEntry* n = (LsTableEntry*)malloc(sizeof(LsTableEntry));
-    n->varName = strdup(varName);
-    n->dataType = dataType;
-    n->binding = binding;
+    n->varName = NULL;
+    n->binding = _NA_;
+    n->type = NULL;
     n->next = NULL;
+
     return n;
 }
 
 LsTableEntry* createIdEntryInLsTable(char* varName) {
-    return createLsTableEntry(varName, _NA_, _NA_);
+    LsTableEntry* n =  createLsTableEntry();
+    n->varName = strdup(varName);
+    return n;
 }
 
 LsTableEntry* createPtrEntryInLsTable(char* varName) {
-    return createLsTableEntry(varName, PTR_TYPE, _NA_);
+    LsTableEntry* n =  createLsTableEntry();
+    n->varName = strdup(varName);
+    n->type = searchInTypeTable("intPtr");
+    return n;
 }
 
 LsTableEntry* concatLsTable(LsTableEntry* head1, LsTableEntry* head2) {
@@ -287,7 +310,11 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
     temp = paramListHead;
     int bind = PARAMS_BINDING_START - paramCount + 1;
     while(temp) {
-        LsTableEntry* n = createLsTableEntry(temp->varName, temp->dataType, bind);
+        LsTableEntry* n = createLsTableEntry();
+        n->varName = strdup(temp->varName);
+        n->type = temp->type;
+        n->binding = bind;
+
         head = concatLsTable(head, n);
         temp = temp->next;
         bind += 1;
@@ -299,15 +326,27 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
 LsTableEntry* setLsTableType(LsTableEntry* head, int type) {
     LsTableEntry* temp = head;
     while(temp) {
-        if(temp->dataType == PTR_TYPE) {
-            if(type == INTEGER_TYPE)
-                temp->dataType = INT_PTR_TYPE;
-            else
-                temp->dataType = STR_PTR_TYPE;
+
+        // some kind of ptr
+        if(temp->type != NULL) {
+            if(type == INTEGER_TYPE) {
+                // nothing
+            }
+            else {
+                temp->type = searchInTypeTable("strPtr");
+            }
         }
-        else 
-            temp->dataType = type;
-            
+
+        // else
+        else {
+            if(type == INTEGER_TYPE) {
+                temp->type = searchInTypeTable("int");
+            }
+            else {
+                temp->type = searchInTypeTable("str");
+            }
+        }
+
         temp = temp->next;
     }
     return head;
@@ -338,7 +377,7 @@ void printLsTable() {
     LsTableEntry* temp = lsTableHead;
     printf("\nLocal symbol table : \n\n");
     while(temp) {
-        printf("Name : %s\nType : %s\nBind : %d\n\n", temp->varName, temp->dataType == INTEGER_TYPE ? "INT" : "STR", temp->binding);
+        printf("Name : %s\nType : %s\nBind : %d\n\n", temp->varName, temp->type->name, temp->binding);
         temp = temp->next;
     }
 }

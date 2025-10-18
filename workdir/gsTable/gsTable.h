@@ -1,6 +1,8 @@
 #ifndef GSTABLE_H
 #define GSTABLE_H
 
+#include "../typeTable/typeTable.h"
+
 typedef struct Tnode Tnode;
 
 /* BINDS */
@@ -13,7 +15,7 @@ int getNextBinding(int size);
 
 typedef struct ParamListEntry {
     char* varName;
-    int dataType;
+    TypeTable* type;
     struct ParamListEntry* next;
 } ParamListEntry;
 
@@ -31,7 +33,7 @@ int getNextFLabel();
 
 typedef struct GsTableEntry {
     char* varName;
-    int dataType;
+    TypeTable* type;
     int size;
     int binding;
     int fLabel;
@@ -62,7 +64,7 @@ void printGsTable();
 
 typedef struct LsTableEntry {
     char* varName;
-    int dataType;
+    TypeTable* type;
     int binding;
     struct LsTableEntry* next;
 } LsTableEntry;
@@ -71,7 +73,7 @@ extern LsTableEntry* lsTableHead;
 
 LsTableEntry* findInLsTable(LsTableEntry* head, char* varName);
 
-LsTableEntry* createLsTableEntry(char* varName, int dataType, int binding);
+LsTableEntry* createLsTableEntry();
 LsTableEntry* createIdEntryInLsTable(char* varName);
 LsTableEntry* createPtrEntryInLsTable(char* varName);
 
