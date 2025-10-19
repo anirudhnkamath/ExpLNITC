@@ -31,7 +31,7 @@
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR AMPSAND
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
-%token INT STR
+%token INT STR TUPLE
 %token EOL COMMA
 
 %type <astNode> stmtList stmt
@@ -66,7 +66,7 @@ program     :   gDeclBlock fDefBlock mainBlock  { }
 
 /*  GLOBAL DECLARATIONS  */
 
-gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; }
+gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; printGsTable(); printTypeTable(); }
             |   BEGIN_DECL END_DECL                 { gsTableHead = NULL; }
             ;
 
@@ -74,7 +74,11 @@ gDeclList   :   gDeclList gDecl     { $$ = concatGsTable($1, $2); }
             |   gDecl               { $$ = $1; }
             ;
 
-gDecl       :   type gidList EOL    { $$ = setGsTableType($2, $1); }
+gDecl       :   type gidList EOL                            { $$ = setGsTableType($2, $1); }
+            |   TUPLE ID LPAR paramList RPAR idList EOL     { 
+                                                                insertToTypeTable($2->varName, $4);
+                                                                $$ = insertTuplesToGsTable($6, searchInTypeTable($2->varName));
+                                                            }
             ;
 
 gidList     :   gidList COMMA gid   { $$ = concatGsTable($1, $3); }
@@ -93,7 +97,7 @@ type        :   INT     { $$ = searchInTypeTable("int"); }
 
 arrDimn     :   arrDimn LBRACK NUMBER RBRACK    { $$ = insertToArrDimn($1, $3); }
             |   LBRACK NUMBER RBRACK            { $$ = $2; }
-            ;
+            ;      
 
 
 

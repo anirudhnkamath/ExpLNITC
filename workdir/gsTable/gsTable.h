@@ -4,6 +4,9 @@
 #include "../typeTable/typeTable.h"
 
 typedef struct Tnode Tnode;
+typedef struct ParamListEntry ParamListEntry;
+typedef struct LsTableEntry LsTableEntry;
+
 
 /* BINDS */
 
@@ -53,6 +56,7 @@ GsTableEntry* createIdEntryInGsTable(char* varName);
 GsTableEntry* createArrEntryInGsTable(char* varName, Tnode* arrOffsetNode);
 GsTableEntry* createFnEntryInGsTable(char* varName, ParamListEntry* paramListHead);
 GsTableEntry* createPtrEntryInGsTable(char* varName);
+GsTableEntry* insertTuplesToGsTable(LsTableEntry* entries, TypeTable* type);
 
 
 GsTableEntry* setGsTableType(GsTableEntry* head, TypeTable* type);

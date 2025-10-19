@@ -1,6 +1,12 @@
 #ifndef TYPETABLE_H
 #define TYPETABLE_H
 
+#include "../gsTable/gsTable.h"
+
+typedef struct ParamListEntry ParamListEntry;
+typedef struct LsTableEntry LsTableEntry;
+
+
 typedef struct FieldList {
     char *name;
     int fieldIndex;
@@ -18,13 +24,13 @@ typedef struct TypeTable {
 extern TypeTable *typeTableHead;
 
 void createTypeTable();
-TypeTable* searchInTypeTable(char *name);
-TypeTable* insertToTypeTable(char *name, int size, FieldList *fields);
-int getSizeOfType(TypeTable *type);
+TypeTable* searchInTypeTable(char *name) ;
+TypeTable* insertToTypeTable(char *name, ParamListEntry* paramListHead);
 void printTypeTable();
 
+FieldList* searchInFieldList(FieldList* head, char* name);
 FieldList* createField(char *name, TypeTable *type, int index);
 FieldList* insertField(FieldList *head, FieldList *newField);
-FieldList* searchField(TypeTable *type, char *name);
+
 
 #endif

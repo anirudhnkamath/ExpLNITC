@@ -126,6 +126,28 @@ GsTableEntry* createPtrEntryInGsTable(char* varName) {
     return n;
 }
 
+GsTableEntry* insertTuplesToGsTable(LsTableEntry* entries, TypeTable* type) {
+    LsTableEntry* temp = entries;
+    while(temp) {
+        if(temp->type) {
+            printf("Error : tuples dont support pointers\n");
+            exit(1);
+        }
+
+        GsTableEntry* n = createEmptyGsTableEntry();
+        n->binding = getNextBinding(type->size);
+        n->size = type->size;
+        n->type = type;
+        n->varName = strdup(temp->varName);
+
+        gsTableHead = concatGsTable(gsTableHead, n);
+
+        temp = temp->next;
+    }
+
+    return gsTableHead;
+}
+
 GsTableEntry* setGsTableType(GsTableEntry* head, TypeTable* type) {
     GsTableEntry* temp = head;
     while(temp) {
@@ -154,26 +176,40 @@ void printGsTable() {
 
     printf("\n--- Global Symbol Table ---\n\n");
 
-    while (temp) {
-        
+    if(temp == NULL) {
+        printf("(Empty)\n");
+        printf("--- End of Table ---\n\n");
+        return;
+    }
+
+    while(temp) {
         printf("Name       : %s\n", temp->varName);
-        printf("Type       : %s\n", temp->type->name);
+        printf("Type       : %s\n", temp->type != NULL ? temp->type->name : "N/A");
         printf("Size       : %d\n", temp->size);
         printf("Binding    : %d\n", temp->binding);
-        printf("fLabel     : %d\n", temp->fLabel);
+        printf("FLabel     : %d\n", temp->fLabel);
 
-        if (temp->paramList) {
-            printf("Parameters :\n");
+        if(temp->dimensions) {
+            printf("Dimensions : [");
+            Tnode* dim = temp->dimensions;
+            while(dim) {
+                printf("%d", dim->val);
+                if(dim->arrOffset) printf("][");
+                dim = dim->arrOffset;
+            }
+            printf("]\n");
+        }
+
+        if(temp->paramList) {
             printParamList(temp->paramList);
         }
-        
-        printf("\n----------------------------\n");
+
+        printf("\n");
         temp = temp->next;
     }
 
-    printf("\n--- End of Table ---\n");
+    printf("--- End of Table ---\n\n");
 }
-
 
 
 ParamListEntry* createParamListEntry(char* varName, TypeTable* dataType) {
@@ -217,15 +253,21 @@ ParamListEntry* concatParamList(ParamListEntry* head1, ParamListEntry* head2) {
 }
 
 void printParamList(ParamListEntry* paramListHead) {
+    if(paramListHead == NULL) {
+        printf("Parameters : (none)\n");
+        return;
+    }
+
+    printf("Parameters : ");
     ParamListEntry* temp = paramListHead;
-    printf("Params: ");
+    
     while(temp) {
-        printf("%s(%s) ", temp->varName, temp->type->name);
+        printf("%s(%s)", temp->varName, temp->type->name);
+        if(temp->next) printf(", ");
         temp = temp->next;
     }
     printf("\n");
 }
-
 
 
 LsTableEntry* findInLsTable(LsTableEntry* head, char* varName) {
@@ -355,9 +397,22 @@ void freeLsTable() {
 
 void printLsTable() {
     LsTableEntry* temp = lsTableHead;
-    printf("\nLocal symbol table : \n\n");
+    
+    printf("\n--- Local Symbol Table ---\n\n");
+
+    if(temp == NULL) {
+        printf("(Empty)\n");
+        printf("--- End of Table ---\n\n");
+        return;
+    }
+
     while(temp) {
-        printf("Name : %s\nType : %s\nBind : %d\n\n", temp->varName, temp->type->name, temp->binding);
+        printf("Name    : %s\n", temp->varName);
+        printf("Type    : %s\n", temp->type != NULL ? temp->type->name : "N/A");
+        printf("Binding : %d\n", temp->binding);
+        printf("\n");
         temp = temp->next;
     }
+
+    printf("--- End of Table ---\n\n");
 }

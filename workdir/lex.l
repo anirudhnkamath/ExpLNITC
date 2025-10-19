@@ -66,6 +66,7 @@
 
 "int" { return INT; }
 "str" { return STR; }
+"tuple" { return TUPLE; }
 
 "main" { return MAIN; }
 

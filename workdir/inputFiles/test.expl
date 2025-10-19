@@ -1,34 +1,14 @@
 decl
-  str swap(str*a, str*b);
+  int hi;
+  tuple stud(str name, int age) s1, s2, s3;
 enddecl
-
-str swap(str*a, str*b) {
-    decl 
-        str temp;
-    enddecl
-
-    begin
-        temp = *a;
-        *a = *b;
-        *b = temp;
-
-        return ("a");
-    end
-}
 
 int main()
 {
   decl
-    str temp,a ,b;
   enddecl
 
   begin
-    read(a);
-    read(b);
-    temp = swap(&a, &b);
-    write(a);
-    write(b);
-
     return 1;
   end
 }
