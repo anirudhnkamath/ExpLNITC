@@ -19,7 +19,7 @@ typedef struct ParamListEntry {
     struct ParamListEntry* next;
 } ParamListEntry;
 
-ParamListEntry* createParamListEntry(char* varName, int dataType);
+ParamListEntry* createParamListEntry(char* varName, TypeTable* dataType);
 ParamListEntry* findInParamList(ParamListEntry* head, char* varName);
 ParamListEntry* concatParamList(ParamListEntry* head1, ParamListEntry* head2);
 
@@ -55,7 +55,7 @@ GsTableEntry* createFnEntryInGsTable(char* varName, ParamListEntry* paramListHea
 GsTableEntry* createPtrEntryInGsTable(char* varName);
 
 
-GsTableEntry* setGsTableType(GsTableEntry* head, int type);
+GsTableEntry* setGsTableType(GsTableEntry* head, TypeTable* type);
 
 void printGsTable();
 
@@ -80,7 +80,7 @@ LsTableEntry* createPtrEntryInLsTable(char* varName);
 LsTableEntry* concatLsTable(LsTableEntry* head1, LsTableEntry* head2);
 LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHead);
 
-LsTableEntry* setLsTableType(LsTableEntry* head, int type);
+LsTableEntry* setLsTableType(LsTableEntry* head, TypeTable* type);
 
 void setLDeclBinding(LsTableEntry* head);
 

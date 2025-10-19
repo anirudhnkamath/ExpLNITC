@@ -1,53 +1,34 @@
 decl
-  int n,arr[10],i,j,dup, bubblesort(int first, int last);
+  str swap(str*a, str*b);
 enddecl
 
-int bubblesort(int first, int last)
-{
-  decl
-    int temp;
-  enddecl
+str swap(str*a, str*b) {
+    decl 
+        str temp;
+    enddecl
 
-  begin
-    if((first < last) AND (last > 0)) then
+    begin
+        temp = *a;
+        *a = *b;
+        *b = temp;
 
-      if(arr[first] > arr[first+1]) then
-        temp = arr[first];
-        arr[first] = arr[first+1];
-        arr[first+1] = temp;
-      endif;
-
-      dup = bubblesort(first+1, last);
-      dup = bubblesort(first, last-1);
-    endif;
-
-    return 0;
-  end
+        return ("a");
+    end
 }
 
 int main()
 {
   decl
-    int r;
+    str temp,a ,b;
   enddecl
 
   begin
-    read(n);
+    read(a);
+    read(b);
+    temp = swap(&a, &b);
+    write(a);
+    write(b);
 
-    i=0;
-    while(i<n) do
-      read(arr[i]);
-      i = i+1;
-    endwhile;
-
-    r = bubblesort(0,n-1);
-
-    i = 0;
-    while(i<n) do
-      write(arr[i]);
-      i = i + 1;
-    endwhile;
-
-    return 0;
+    return 1;
   end
 }

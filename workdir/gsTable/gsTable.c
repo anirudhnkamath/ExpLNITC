@@ -126,13 +126,13 @@ GsTableEntry* createPtrEntryInGsTable(char* varName) {
     return n;
 }
 
-GsTableEntry* setGsTableType(GsTableEntry* head, int type) {
+GsTableEntry* setGsTableType(GsTableEntry* head, TypeTable* type) {
     GsTableEntry* temp = head;
     while(temp) {
 
         // some kind of ptr
         if(temp->type != NULL) {
-            if(type == INTEGER_TYPE) {
+            if(strcmp(type->name, "int") == 0) {
                 // nothing
             }
             else {
@@ -140,16 +140,10 @@ GsTableEntry* setGsTableType(GsTableEntry* head, int type) {
             }
         }
 
-        // else
         else {
-            if(type == INTEGER_TYPE) {
-                temp->type = searchInTypeTable("int");
-            }
-            else {
-                temp->type = searchInTypeTable("str");
-            }
+            temp->type = type;
         }
-
+        
         temp = temp->next;
     }
     return head;
@@ -182,19 +176,10 @@ void printGsTable() {
 
 
 
-ParamListEntry* createParamListEntry(char* varName, int dataType) {
+ParamListEntry* createParamListEntry(char* varName, TypeTable* dataType) {
     ParamListEntry* n = (ParamListEntry*)malloc(sizeof(ParamListEntry));
     n->varName = strdup(varName);
-    
-    if(dataType == INTEGER_TYPE)
-        n->type = searchInTypeTable("int");
-    else if(dataType == STRING_TYPE)
-        n->type = searchInTypeTable("str");
-    else if(dataType == INT_PTR_TYPE)
-        n->type = searchInTypeTable("intPtr");
-    else if(dataType == STR_PTR_TYPE)
-        n->type = searchInTypeTable("strPtr");
-
+    n->type = dataType;
     n->next = NULL;
     return n;
 }
@@ -323,7 +308,7 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
     return head;
 }
 
-LsTableEntry* setLsTableType(LsTableEntry* head, int type) {
+LsTableEntry* setLsTableType(LsTableEntry* head, TypeTable* type) {
     LsTableEntry* temp = head;
     while(temp) {
 
@@ -339,12 +324,7 @@ LsTableEntry* setLsTableType(LsTableEntry* head, int type) {
 
         // else
         else {
-            if(type == INTEGER_TYPE) {
-                temp->type = searchInTypeTable("int");
-            }
-            else {
-                temp->type = searchInTypeTable("str");
-            }
+            temp->type = type;
         }
 
         temp = temp->next;

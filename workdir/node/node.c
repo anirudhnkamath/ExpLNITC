@@ -328,16 +328,14 @@ void setIdNodeType(Tnode* idNode) {
     return;
 }
 
-void validateFunction(int retType, char* fnName, ParamListEntry* fnParams) {
+void validateFunction(TypeTable* retType, char* fnName, ParamListEntry* fnParams) {
     GsTableEntry* found = findInGsTable(gsTableHead, fnName);
     if(!found) {
         printf("Error : fn not exists\n");
         exit(1);
     }
 
-    if(retType == INTEGER_TYPE && strcmp(found->type->name, "int") != 0 ||
-       retType == STRING_TYPE && strcmp(found->type->name, "str") != 0
-    ) {
+    if(strcmp(retType->name, found->type->name) != 0) {
         printf("Error : invalid ret type in fn definition\n");
         exit(1);
     }

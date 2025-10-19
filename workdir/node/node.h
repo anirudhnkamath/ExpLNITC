@@ -46,7 +46,7 @@ Tnode* addArgToArgList(Tnode* list, Tnode* expr);
 Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode);
 Tnode* createReturnNode(Tnode* exprNode);
 
-void validateFunction(int retType, char* fnName, ParamListEntry* fnParams);
+void validateFunction(TypeTable* retType, char* fnName, ParamListEntry* fnParams);
 void validateProperId(Tnode* idNode);
 void validatePointer(Tnode* idNode);
 

@@ -1,6 +1,7 @@
 %{
     #include <stdio.h>
     #include <stdlib.h>
+    #include <string.h>
     #include "./define/constants.h"
     #include "./codeGen/codeGen.h"
     #include "./registers/registers.h"
@@ -21,7 +22,7 @@
     struct GsTableEntry* gsTableEntry;
     struct ParamListEntry* paramListEntry;
     struct LsTableEntry* lsTableEntry;
-    int declDataType;
+    struct TypeTable* declDataType;
 }
 
 %token <astNode> ID NUMBER STR_LTRL
@@ -86,8 +87,8 @@ gid         :   ID                          { $$ = createIdEntryInGsTable($1->va
             |   MULT ID                     { $$ = createPtrEntryInGsTable($2->varName); }
             ;
 
-type        :   INT     { $$ = INTEGER_TYPE; }
-            |   STR     { $$ = STRING_TYPE; }
+type        :   INT     { $$ = searchInTypeTable("int"); }
+            |   STR     { $$ = searchInTypeTable("str"); }
             ;
 
 arrDimn     :   arrDimn LBRACK NUMBER RBRACK    { $$ = insertToArrDimn($1, $3); }
@@ -116,9 +117,7 @@ fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
                                                                     codeGen($$, targetFile);
                                                                     functionExitCodeGen($2, targetFile);
 
-                                                                    // freeLsTable();
-                                                                    // freeTree($$);
-                                                                    lsTableHead = NULL; 
+                                                                    lsTableHead = NULL;
                                                                 } 
             ;
 
@@ -128,7 +127,9 @@ paramList   :   paramList COMMA param   { $$ = concatParamList($1, $3); }
             ;
 
 param       :   type ID         { $$ = createParamListEntry($2->varName, $1); }
-            |   type MULT ID    { $$ = createParamListEntry($3->varName, $1 == INTEGER_TYPE ? INT_PTR_TYPE : STR_PTR_TYPE); }
+            |   type MULT ID    { 
+                                    TypeTable* cur = strcmp($1->name, "int") == 0 ? searchInTypeTable("intPtr") : searchInTypeTable("strPtr");
+                                    $$ = createParamListEntry($3->varName, cur); }
             ;
 
 
