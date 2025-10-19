@@ -2,6 +2,7 @@
 #include "../gsTable/gsTable.h"
 #include "../label/label.h"
 #include "../codeGen/codeGen.h"
+#include "../typeTable/typeTable.h"
 #include "xsmGen.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -57,7 +58,14 @@ void exitProgram(FILE* targetFile) {
 }
 
 int getEffectiveAddr(Tnode* idNode, FILE* targetFile) {
+
     int addrReg = getFreeRegister();
+
+    if(idNode->tnodeType == NODE_TUP_FIELD) {
+        fprintf(targetFile, "MOV R%d, %d\n", addrReg, idNode->left->gsTableEntry->binding);
+        fprintf(targetFile, "ADD R%d, %d\n", addrReg, searchInFieldList(idNode->left->gsTableEntry->type->fields, idNode->right->varName)->fieldIndex);
+        return addrReg;
+    }
 
     if (idNode->lsTableEntry) {
         fprintf(targetFile, "MOV R%d, BP\n", addrReg);

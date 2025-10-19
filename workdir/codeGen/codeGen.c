@@ -99,9 +99,7 @@ void generateWriteCode(Tnode* node, FILE* targetFile) {
 }
 
 void generateReadCode(Tnode* node, FILE* targetFile) {
-    if(node->tnodeType == NODE_ID) {
-        readFromConsole(node, _NA_, _NA_, _NA_, targetFile);
-    }
+    readFromConsole(node, _NA_, _NA_, _NA_, targetFile);
 }
 
 void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
@@ -148,6 +146,9 @@ void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
 
         fprintf(targetFile, "MOV [R%d], R%d\n", addrReg, exprReg);
         releaseRegister(addrReg);
+    }
+    else if(lhs->tnodeType == NODE_TUP_FIELD) {
+        setMemValue(lhs, exprReg, _NA_, _NA_, _NA_, targetFile);
     }
 
     releaseRegister(exprReg);
@@ -297,6 +298,10 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
 
     if(node->tnodeType == NODE_FN_CALL) {
         return evaluateFunction(node, targetFile);
+    }
+
+    if(node->tnodeType == NODE_TUP_FIELD) {
+        return getMemValue(node, _NA_, _NA_, _NA_, targetFile);
     }
 
     if (node->tnodeType == NODE_OR) {

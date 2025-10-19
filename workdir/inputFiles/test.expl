@@ -1,5 +1,5 @@
 decl
-  int hi;
+  int arr[10];
   tuple stud(str name, int age) s1, s2, s3;
 enddecl
 
@@ -9,6 +9,12 @@ int main()
   enddecl
 
   begin
+    read(s1.name);
+    read(s2.name);
+    read(s3.name);
+    write(s1.name);
+    write(s2.name);
+    write(s3.name);
     return 1;
   end
 }

@@ -60,6 +60,7 @@
 "until" { return UNTIL; }
 
 "&" { return AMPSAND; }
+"." { return DOT; }
 
 "break" { return BREAK; }
 "continue" { return CONTINUE; }

@@ -32,7 +32,7 @@
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR TUPLE
-%token EOL COMMA
+%token EOL COMMA DOT
 
 %type <astNode> stmtList stmt
 %type <astNode> inputStmt outputStmt assignStmt 
@@ -66,7 +66,7 @@ program     :   gDeclBlock fDefBlock mainBlock  { }
 
 /*  GLOBAL DECLARATIONS  */
 
-gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; printGsTable(); printTypeTable(); }
+gDeclBlock  :   BEGIN_DECL gDeclList END_DECL       { gsTableHead = $2; }
             |   BEGIN_DECL END_DECL                 { gsTableHead = NULL; }
             ;
 
@@ -205,7 +205,11 @@ inputStmt   :   READ LPAR ID RPAR EOL           {
                                                     validateArrOffset($3, $4);
                                                     $3->arrOffset = $4;
                                                     $$ = createReadNode($3); 
-                                                }    
+                                                } 
+            |   READ LPAR ID DOT ID RPAR EOL    {
+                                                    setIdNodeType($3);
+                                                    $$ = createReadNode(createTupEntryNode($3, $5));
+                                                }
             ;
 
 outputStmt  :   WRITE LPAR expr RPAR EOL        { $$ = createWriteNode($3); }
@@ -223,6 +227,10 @@ assignStmt  :   ID ASSG expr EOL                {
             |   MULT ID ASSG expr EOL           {
                                                     setIdNodeType($2);
                                                     $$ = createAssignNode(createDerefNode($2), $4);
+                                                }
+            |   ID DOT ID ASSG expr EOL         {
+                                                    setIdNodeType($1);
+                                                    $$ = createAssignNode(createTupEntryNode($1, $3), $5);
                                                 }
             ;
 
@@ -265,6 +273,8 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
 
             |   MULT ID                 { setIdNodeType($2); $$ = createDerefNode($2); }
             |   AMPSAND ID              { setIdNodeType($2); $$ = createAddrToNode($2); }
+
+            |   ID DOT ID               { setIdNodeType($1); $$ = createTupEntryNode($1, $3); }
             ;
 
 arrIndex    :   arrIndex LBRACK expr RBRACK { $$ = insertToArrDimn($1, $3); }

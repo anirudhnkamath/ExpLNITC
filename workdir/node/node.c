@@ -93,7 +93,11 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
             // do nothing
         }
 
-        else {
+        else if(leftNode->type->fields) {
+            // do nothign
+        }
+
+        else{
             validateProperId(leftNode); 
         }
     }
@@ -307,6 +311,27 @@ Tnode* createReturnNode(Tnode* exprNode) {
 }
 
 
+Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
+    if(tupNode->lsTableEntry || tupNode->gsTableEntry->type->fields == NULL) {
+        printf("Error : invalid tuple\n");
+        exit(1);
+    }
+
+    FieldList* foundField = searchInFieldList(tupNode->gsTableEntry->type->fields, fieldNode->varName);
+    if(!foundField) {
+        printf("Error : invalide field in tuple\n");
+        exit(1);
+    }
+
+    Tnode* n = createEmptyNode();
+    n->left = tupNode;
+    n->right = fieldNode;
+    n->type = foundField->type;
+    n->tnodeType = NODE_TUP_FIELD;
+
+    return n;
+}
+
 
 void setIdNodeType(Tnode* idNode) {
     LsTableEntry* lsEntry = findInLsTable(lsTableHead, idNode->varName);
@@ -322,6 +347,9 @@ void setIdNodeType(Tnode* idNode) {
         idNode->type = gsEntry->type;
         return;
     }
+
+    printGsTable();
+    printf("%s\n", idNode->varName);
 
     printf("Error : undeclared variable\n");
     exit(1);

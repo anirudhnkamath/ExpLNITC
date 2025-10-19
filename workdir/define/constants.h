@@ -59,6 +59,7 @@ enum nodeTypes {
     NODE_RET,
     NODE_OR,
     NODE_AND,
+    NODE_TUP_FIELD,
 };
 
 enum errorCodes {

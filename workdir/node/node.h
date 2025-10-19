@@ -42,6 +42,8 @@ Tnode* createLogOpNode(int tNodeType, Tnode* left, Tnode* right);
 Tnode* createAddrToNode(Tnode* idNode);
 Tnode* createDerefNode(Tnode* idNode);
 
+Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode);
+
 Tnode* addArgToArgList(Tnode* list, Tnode* expr);
 Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode);
 Tnode* createReturnNode(Tnode* exprNode);
