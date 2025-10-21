@@ -356,7 +356,7 @@ LsTableEntry* setLsTableType(LsTableEntry* head, TypeTable* type) {
 
         // some kind of ptr
         if(temp->type != NULL) {
-            if(type == INTEGER_TYPE) {
+            if(strcmp(type->name, "int") == 0) {
                 // nothing
             }
             else {
@@ -364,7 +364,6 @@ LsTableEntry* setLsTableType(LsTableEntry* head, TypeTable* type) {
             }
         }
 
-        // else
         else {
             temp->type = type;
         }

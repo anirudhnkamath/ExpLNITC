@@ -57,6 +57,26 @@ Tnode* createIdNode(char varName[]) {
 
 
 Tnode* createReadNode(Tnode* idNode) {
+
+    if(idNode->tnodeType == NODE_ID && idNode->arrOffset == NULL) {
+        setIdNodeType(idNode);
+        validateProperId(idNode);
+    }
+
+    else if(idNode->tnodeType == NODE_ID && idNode->arrOffset != NULL) {
+        setIdNodeType(idNode);
+        validateArrOffset(idNode, idNode->arrOffset);
+    }
+
+    else if(idNode->tnodeType == NODE_TUP_FIELD) {
+        // ignore as it is already checked
+    }
+
+    else {
+        printf("Error : Invalid node in read\n");
+        exit(1);
+    }
+
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_READ;
     n->left = idNode;
@@ -77,35 +97,39 @@ Tnode* createWriteNode(Tnode* exprNode) {
 }
 
 Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
-    if(strcmp(leftNode->type->name, exprNode->type->name) != 0) {
-        printf("Error : type mismatch\n");
-        exit(1);
+
+    if(leftNode->tnodeType == NODE_ID && leftNode->arrOffset == NULL) {
+        setIdNodeType(leftNode);
     }
 
-    // lhs is id or ptr or arr offset
-    if(leftNode->tnodeType == NODE_ID) {
+    else if(leftNode->tnodeType == NODE_ID && leftNode->arrOffset) {
+        setIdNodeType(leftNode);
+        validateArrOffset(leftNode, leftNode->arrOffset);
+    }
 
-        if(leftNode->arrOffset) {
-            validateArrOffset(leftNode, leftNode->arrOffset);
-        }
+    else if(leftNode->tnodeType == NODE_DEREF) {
+        // do nothing as already checked
+    }
 
-        else if(strcmp(leftNode->type->name, "intPtr") == 0 || strcmp(leftNode->type->name, "strPtr") == 0) {
-            // do nothing
-        }
-
-        else if(leftNode->type->fields) {
-            // do nothign
-        }
-
-        else{
-            validateProperId(leftNode); 
-        }
+    else if(leftNode->tnodeType == NODE_TUP_FIELD) {
+        // do nothing
+    }
+    
+    else {
+        printf("Error : Invalid node in LHS of write\n");
+        exit(1);
     }
 
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_ASSIGN;
     n->left = leftNode;
     n->right = exprNode;
+
+    if(strcmp(leftNode->type->name, exprNode->type->name) != 0) {
+        printf("Error : type mismatch\n");
+        exit(1);
+    }
+
     return n;
 }
 
@@ -211,6 +235,7 @@ Tnode* createLogOpNode(int tNodeType, Tnode* left, Tnode* right) {
 
 
 Tnode* createAddrToNode(Tnode* idNode) {
+    setIdNodeType(idNode);
     validateProperId(idNode);
 
     Tnode* n = createEmptyNode();
@@ -226,6 +251,8 @@ Tnode* createAddrToNode(Tnode* idNode) {
 }
 
 Tnode* createDerefNode(Tnode* idNode) {
+
+    setIdNodeType(idNode);
 
     TypeTable* curType; 
     if(idNode->lsTableEntry) {
@@ -259,6 +286,8 @@ Tnode* createDerefNode(Tnode* idNode) {
 
 Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
     Tnode* n = createEmptyNode();
+
+    setIdNodeType(idNode);
 
     if(idNode->gsTableEntry->fLabel == _NA_) {
         printf("Error : ID doesnt accept aruments\n");
@@ -348,28 +377,28 @@ void setIdNodeType(Tnode* idNode) {
         return;
     }
 
-    printGsTable();
-    printf("%s\n", idNode->varName);
-
-    printf("Error : undeclared variable\n");
+    printf("Error : Undeclared variable being used\n");
     exit(1);
-    return;
 }
 
-void validateFunction(TypeTable* retType, char* fnName, ParamListEntry* fnParams) {
-    GsTableEntry* found = findInGsTable(gsTableHead, fnName);
+void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParams) {
+
+    setIdNodeType(idNode);
+    curFnType = idNode->type;
+
+    GsTableEntry* found = findInGsTable(gsTableHead, idNode->varName);
     if(!found) {
-        printf("Error : fn not exists\n");
+        printf("Error : The defined function was never declared\n");
         exit(1);
     }
 
     if(strcmp(retType->name, found->type->name) != 0) {
-        printf("Error : invalid ret type in fn definition\n");
+        printf("Error : Return type of function definition and declaration conflicts\n");
         exit(1);
     }
 
     if(found->fLabel == _NA_) {
-        printf("Error : invalid fn\n");
+        printf("Error : Wrong function name in function definition\n");
         exit(1);
     }
 
@@ -377,7 +406,7 @@ void validateFunction(TypeTable* retType, char* fnName, ParamListEntry* fnParams
     ParamListEntry *temp1 = fnParams, *temp2 = declParams;
     while(temp1 && temp2) {
         if(strcmp(temp1->type->name, temp2->type->name) != 0 || strcmp(temp1->varName, temp2->varName) != 0) {
-            printf("Error : definition doesnt match declaration\n");
+            printf("Error : Parameters of function definition and declaration conflict\n");
             exit(1);
         }
         temp1 = temp1->next;
@@ -385,7 +414,7 @@ void validateFunction(TypeTable* retType, char* fnName, ParamListEntry* fnParams
     }
 
     if(temp1 || temp2) {
-        printf("Error : definition doesnt match declaration\n");
+        printf("Error : Parameters of function definition and declaration conflict\n");
         exit(1);
     }
 
@@ -415,17 +444,22 @@ void validateProperId(Tnode* idNode) {
         (strcmp(idNode->gsTableEntry->type->name, "int") == 0 || strcmp(idNode->gsTableEntry->type->name, "str") == 0)
     ) return;
 
-    printf("Error : invalid use of ID\n");
+    printf("Error : Invalid use of proper ID\n");
     exit(1);
 }
 
 void validateArrOffset(Tnode* idNode, Tnode* indexExprNode) {
     if(idNode->lsTableEntry) {
-        printf("Error : non-array can't be indexed\n");
+        printf("Error : Invalid ID being indexed\n");
         exit(1);
     }
 
-    if(idNode->gsTableEntry && idNode->gsTableEntry->fLabel != _NA_) {
+    if(idNode->gsTableEntry && 
+            (idNode->gsTableEntry->fLabel != _NA_ || 
+                (strcmp(idNode->gsTableEntry->type->name, "int") != 0 && 
+                 strcmp(idNode->gsTableEntry->type->name, "str") != 0)
+            ) 
+    ) {
         printf("Error : functions can't be indexed\n");
         exit(1);
     }

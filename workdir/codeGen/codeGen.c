@@ -118,7 +118,6 @@ void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
 
         setMemValue(lhs, exprReg, _NA_, _NA_, _NA_, targetFile);
         releaseRegister(exprReg);
-
         return;
     }
     
@@ -405,28 +404,63 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
 }
 
 int evaluateFunction(Tnode* fnNode, FILE* targetFile) {
-    int pushedRegisters[20];
-    int pushedRegCount = pushAllRegisters(pushedRegisters, targetFile);
 
-    int numArgs = pushAllArguments(fnNode->left->argList, targetFile);
-    
+    // get free registers for later use
+    int freeReg1 = getFreeRegister();
+    int freeReg2 = getFreeRegister();
+    registerFree[freeReg1] = registerFree[freeReg2] = 1;
+
+
+    // save current state
+    int pushedRegisters[20];
+    int pushedRegCount = 0;
+    for(int i=0; i<NUM_REGISTERS; i++) {
+        if(!registerFree[i]) {
+            fprintf(targetFile, "PUSH R%d\n", i);
+            pushedRegisters[pushedRegCount] = i;
+            pushedRegCount += 1;
+        }
+    }
+    resetRegisters();
+    registerFree[freeReg1] = registerFree[freeReg2] = 0;
+
+
+    // push all arguments
+    int numArgs = 0;
+    Tnode* temp = fnNode->left->argList;
+    while(temp) {
+        int argReg = evaluateExpression(temp, targetFile);
+        fprintf(targetFile, "PUSH R%d\n", argReg);
+        releaseRegister(argReg);
+        numArgs += 1;
+        temp = temp->argList;
+    }
+
+
+    // push space for retval and call function
+    resetRegisters();
     fprintf(targetFile, "PUSH R0\n");
     fprintf(targetFile, "CALL F%d\n", fnNode->left->gsTableEntry->fLabel);
+    resetRegisters();
 
-    // temporary method to retreive return val
-    int freeReg = pushedRegCount == 0 ? 0 : pushedRegisters[pushedRegCount-1] + 1;
-    if(freeReg >= NUM_REGISTERS) {
-        printf("Out of registers\n");
-        exit(1);
-    }
-    fprintf(targetFile, "POP R%d\n", freeReg);
+    
+    // retrieve return val in freeReg1
+    registerFree[freeReg1] = 0;
+    fprintf(targetFile, "POP R%d\n", freeReg1);
+
 
     // temporary method to pop all args
-    int freeReg2 = freeReg + 1;
     for(int i=0; i<numArgs; i++)
         fprintf(targetFile, "POP R%d\n", freeReg2);
 
-    popAllRegisters(pushedRegisters, pushedRegCount, targetFile);
-    registerFree[freeReg] = 0;
-    return freeReg;
+
+    // recover the saved state
+    for(int i=pushedRegCount-1; i>=0; i--) {
+        int r = pushedRegisters[i];
+        fprintf(targetFile, "POP R%d\n", r);
+        registerFree[r] = 0;
+    }
+
+    // return the register storing the return value
+    return freeReg1;
 }

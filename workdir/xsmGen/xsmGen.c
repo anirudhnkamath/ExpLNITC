@@ -15,6 +15,15 @@ void initialiseMainFn(FILE* targetFile) {
     fprintf(targetFile, "MAIN:\n");
     fprintf(targetFile, "MOV BP, %d\n", nextBinding+2);
     fprintf(targetFile, "MOV SP, %d\n", nextBinding+2);
+
+    // push space for local variables
+    LsTableEntry* temp = lsTableHead;
+    int freeReg = getFreeRegister();
+    while(temp) {
+        fprintf(targetFile, "PUSH R%d\n", freeReg);
+        temp = temp->next;
+    }
+    releaseRegister(freeReg);
 }
 
 void printToConsole(int regIndex, FILE* targetFile) {
@@ -149,52 +158,23 @@ void readFromConsole(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE*
     releaseRegister(addrReg);
 }
 
-int pushAllRegisters(int pushedRegisters[], FILE* targetFile) {
-    int count = 0;
-    for(int i=0; i<NUM_REGISTERS; i++) {
-        if(!registerFree[i]) {
-            fprintf(targetFile, "PUSH R%d\n", i);
-            pushedRegisters[count] = i;
-
-            count += 1;
-        }
-    }
-
-    resetRegisters();
-    return count;
-}
-
-void popAllRegisters(int pushedRegisters[], int count, FILE* targetFile) {
-    for(int i=count-1; i>=0; i--) {
-        int r = pushedRegisters[i];
-        
-        fprintf(targetFile, "POP R%d\n", r);
-        registerFree[r] = 0;
-    }
-}
-
-int pushAllArguments(Tnode* argListHead, FILE* targetFile) {
-    Tnode* temp = argListHead;
-    int numArgs = 0;
-    while(temp) {
-        int argReg =  evaluateExpression(temp, targetFile);
-
-        fprintf(targetFile, "PUSH R%d\n", argReg);
-        releaseRegister(argReg);
-
-        numArgs += 1;
-        temp = temp->argList;
-    }
-
-    return numArgs;
-}
-
 void functionEntryCodeGen(Tnode* node, FILE* targetFile) {
+
+    // generate label for function
     fprintf(targetFile, "F%d:\n", node->gsTableEntry->fLabel);
+
+    // save old bp and move bp to sp
     fprintf(targetFile, "PUSH BP\n");
     fprintf(targetFile, "MOV BP, SP\n");
 
-    pushLocalVariables(lsTableHead, targetFile);
+    // push space for local variables
+    LsTableEntry* temp = lsTableHead;
+    int freeReg = getFreeRegister();
+    while(temp) {
+        fprintf(targetFile, "PUSH R%d\n", freeReg);
+        temp = temp->next;
+    }
+    releaseRegister(freeReg);
 }
 
 void functionExitCodeGen(Tnode* node, FILE* targetFile) {
@@ -202,20 +182,4 @@ void functionExitCodeGen(Tnode* node, FILE* targetFile) {
     fprintf(targetFile, "POP BP\n");
     fprintf(targetFile, "RET\n");
 }
-
-int pushLocalVariables(LsTableEntry* lsTableHead, FILE* targetFile) {
-    LsTableEntry* temp = lsTableHead;
-    int freeReg = getFreeRegister();
-    int count = 0;
-
-    while(temp) {
-        fprintf(targetFile, "PUSH R%d\n", freeReg);
-        temp = temp->next;
-        count += 1;
-    }
-    
-    releaseRegister(freeReg);
-    return count;
-}
-
 

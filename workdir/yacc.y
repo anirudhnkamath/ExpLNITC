@@ -108,12 +108,11 @@ fDefBlock   :   fDefBlock fDef      { }
             ;
 
 fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
-                                                                    setIdNodeType($2);
-                                                                    curFnType = $2->type;
-                                                                    validateFunction($1, $2->varName, $4);
+                                                                    validateFunction($1, $2, $4);
                                                                     
                                                                     setLDeclBinding(lsTableHead);
                                                                     functionEntryCodeGen($2, targetFile);
+
                                                                     lsTableHead = addParamsToLsTable(lsTableHead, $4);
                                                                 } 
                 /* mid-rule action */               body RCURL  {   
@@ -130,10 +129,11 @@ paramList   :   paramList COMMA param   { $$ = concatParamList($1, $3); }
             |                           { $$ = NULL; }
             ;
 
-param       :   type ID         { $$ = createParamListEntry($2->varName, $1); }
+param       :   type ID         {   $$ = createParamListEntry($2->varName, $1); }
             |   type MULT ID    { 
                                     TypeTable* cur = strcmp($1->name, "int") == 0 ? searchInTypeTable("intPtr") : searchInTypeTable("strPtr");
-                                    $$ = createParamListEntry($3->varName, cur); }
+                                    $$ = createParamListEntry($3->varName, cur); 
+                                }
             ;
 
 
@@ -167,7 +167,6 @@ mainBlock   :   INT {curFnType = searchInTypeTable("int"); } MAIN
                                                                                         setLDeclBinding(lsTableHead);
 
                                                                                         initialiseMainFn(targetFile);
-                                                                                        pushLocalVariables(lsTableHead, targetFile); 
                                                                                         codeGen($8, targetFile); 
                                                                                     }
             ;
@@ -195,19 +194,14 @@ stmt        :   inputStmt                       { $$ = $1; }
             |   CONTINUE EOL                    { $$ = createLoopJumpNode(NODE_CONTINUE); }
             ;
 
-inputStmt   :   READ LPAR ID RPAR EOL           {   
-                                                    setIdNodeType($3); 
-                                                    validateProperId($3); 
+inputStmt   :   READ LPAR ID RPAR EOL           {    
                                                     $$ = createReadNode($3); 
                                                 }
             |   READ LPAR ID arrIndex RPAR EOL  {   
-                                                    setIdNodeType($3);
-                                                    validateArrOffset($3, $4);
                                                     $3->arrOffset = $4;
                                                     $$ = createReadNode($3); 
                                                 } 
             |   READ LPAR ID DOT ID RPAR EOL    {
-                                                    setIdNodeType($3);
                                                     $$ = createReadNode(createTupEntryNode($3, $5));
                                                 }
             ;
@@ -216,20 +210,16 @@ outputStmt  :   WRITE LPAR expr RPAR EOL        { $$ = createWriteNode($3); }
             ;
 
 assignStmt  :   ID ASSG expr EOL                {   
-                                                    setIdNodeType($1);
                                                     $$ = createAssignNode($1, $3); 
                                                 }
-            |   ID arrIndex ASSG expr EOL       {   
-                                                    setIdNodeType($1);
+            |   ID arrIndex ASSG expr EOL       {
                                                     $1->arrOffset = $2;
                                                     $$ = createAssignNode($1, $4); 
                                                 }
             |   MULT ID ASSG expr EOL           {
-                                                    setIdNodeType($2);
                                                     $$ = createAssignNode(createDerefNode($2), $4);
                                                 }
             |   ID DOT ID ASSG expr EOL         {
-                                                    setIdNodeType($1);
                                                     $$ = createAssignNode(createTupEntryNode($1, $3), $5);
                                                 }
             ;
@@ -268,11 +258,11 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   ID arrIndex             { setIdNodeType($1); validateArrOffset($1, $2); $1->arrOffset = $2; $$ = $1; }
             |   STR_LTRL                { $$ = $1; }
 
-            |   ID LPAR RPAR            { setIdNodeType($1); $$ = createFnCallNode($1, NULL); }
-            |   ID LPAR argList RPAR    { setIdNodeType($1); $$ = createFnCallNode($1, $3); }
+            |   ID LPAR RPAR            { $$ = createFnCallNode($1, NULL); }
+            |   ID LPAR argList RPAR    { $$ = createFnCallNode($1, $3); }
 
-            |   MULT ID                 { setIdNodeType($2); $$ = createDerefNode($2); }
-            |   AMPSAND ID              { setIdNodeType($2); $$ = createAddrToNode($2); }
+            |   MULT ID                 { $$ = createDerefNode($2); }
+            |   AMPSAND ID              { $$ = createAddrToNode($2); }
 
             |   ID DOT ID               { setIdNodeType($1); $$ = createTupEntryNode($1, $3); }
             ;
