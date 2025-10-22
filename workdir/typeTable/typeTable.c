@@ -8,17 +8,31 @@ TypeTable *typeTableHead = NULL;
 
 void createTypeTable() {
     typeTableHead = NULL;
-    insertToTypeTable("int", NULL);
-    insertToTypeTable("str", NULL);
-    insertToTypeTable("bool", NULL);
-    insertToTypeTable("null", NULL);
-    insertToTypeTable("void", NULL);
-    insertToTypeTable("intPtr", NULL);
-    insertToTypeTable("strPtr", NULL);
+    typeTableHead = concatTypeTable(typeTableHead, createNewType("int", NULL));
+    typeTableHead = concatTypeTable(typeTableHead, createNewType("str", NULL));
+    typeTableHead = concatTypeTable(typeTableHead, createNewType("bool", NULL));
 }
 
-TypeTable* searchInTypeTable(char *name) {
-    TypeTable *temp = typeTableHead;
+TypeTable* createNewType(char* varName, FieldList* fields) {
+    TypeTable* t = (TypeTable*)malloc(sizeof(TypeTable));
+    t->name = strdup(varName);
+    t->next = NULL;
+    t->fields = fields;
+
+    FieldList* temp = fields;
+    int size = 0;
+    while(temp) {
+        size += 1;
+        temp = temp->next;
+    }
+
+    t->size = size > 0 ? size : 1;
+
+    return t;
+}
+
+TypeTable* searchInTypeTable(TypeTable* head, char *name) {
+    TypeTable *temp = head;
     while(temp) {
         if(strcmp(temp->name, name) == 0)
             return temp;
@@ -27,57 +41,34 @@ TypeTable* searchInTypeTable(char *name) {
     return NULL;
 }
 
-FieldList* searchInFieldList(FieldList* head, char* name) {
-    FieldList *temp = head;
-    while(temp) {
-        if(strcmp(temp->name, name) == 0)
-            return temp;
-        temp = temp->next;
-    }
-    return NULL;
-}
+TypeTable* concatTypeTable(TypeTable* head1, TypeTable* head2) {
+    if(!head1) return head2;
 
-TypeTable* insertToTypeTable(char *name, ParamListEntry* paramListHead) {
-    if(searchInTypeTable(name) != NULL) {
-        printf("Error : duplicate type exists\n");
-        exit(1);
-    }
-
-
-    ParamListEntry* temp = paramListHead;
-    FieldList* fhead = NULL;
-    int index = 0;
-    while(temp) {
-        FieldList* f = createField(temp->varName, temp->type, index);
-
-        if(searchInFieldList(fhead, f->name) != NULL) {
-            printf("Error : duplicate field\n");
+    TypeTable* temp2 = head2;
+    while(temp2) {
+        if(searchInTypeTable(head1, temp2->name)) {
+            printf("Error : duplicate type detected\n");
             exit(1);
         }
 
-        index += 1;
-        fhead = insertField(fhead, f);
-        temp = temp->next;
+        temp2 = temp2->next;
     }
 
-    TypeTable* t = (TypeTable*)malloc(sizeof(TypeTable));
-    t->fields = fhead;
-    t->name = strdup(name);
-    t->next = NULL;
-    t->size = index > 1 ? index : 1;
+    TypeTable* temp1 = head1;
+    while(temp1->next) temp1 = temp1->next;
+    temp1->next = head2;
 
-    TypeTable* tail = typeTableHead;
-    if(!tail) {
-        typeTableHead = t;
-        return t;
+    return head1;
+}
+
+TypeTable* validateUserType(TypeTable* head, char* typeName) {
+    TypeTable* t = searchInTypeTable(head, typeName);
+    if(!t) {
+        printf("Error : user type not defined\n");
+        exit(1);
     }
 
-    while(tail->next) {
-        tail = tail->next;
-    }
-    tail->next = t;
-
-    return typeTableHead;
+    return t;
 }
 
 void printTypeTable() {
@@ -116,20 +107,54 @@ void printTypeTable() {
     printf("--- End of Table ---\n\n");
 }
 
-FieldList* createField(char *name, TypeTable *type, int index) {
+
+
+FieldList* searchInFieldList(FieldList* head, char* name) {
+    FieldList *temp = head;
+    while(temp) {
+        if(strcmp(temp->name, name) == 0)
+            return temp;
+        temp = temp->next;
+    }
+    return NULL;
+}
+
+FieldList* createField(char *name, TypeTable *type) {
     FieldList *f = (FieldList*)malloc(sizeof(FieldList));
     f->name = strdup(name);
     f->type = type;
-    f->fieldIndex = index;
     f->next = NULL;
     return f;
 }
 
-FieldList* insertField(FieldList *head, FieldList *newField) {
-    if(!head) return newField;
-    FieldList *temp = head;
-    while (temp->next) temp = temp->next;
-    temp->next = newField;
-    return head;
+FieldList* concatFieldList(FieldList* head1, FieldList* head2) {
+    if(!head1) return head2;
+    
+    FieldList* temp2 = head2;
+    while(temp2) {
+        if(searchInFieldList(head1, temp2->name)) {
+            printf("Error : duplicate fields detected\n");
+            exit(1);
+        }
+
+        temp2 = temp2->next;
+    }
+
+    FieldList* temp1 = head1;
+    while(temp1->next) temp1 = temp1->next;
+    temp1->next = head2;
+
+    return head1;
 }
 
+FieldList* setFieldIndex(FieldList* head) {
+    int index = 0;
+    FieldList* temp = head;
+    while(temp) {
+        temp->fieldIndex = index;
+        index += 1;
+        temp = temp->next;
+    }
+
+    return head;
+}

@@ -20,7 +20,8 @@ void initialiseMainFn(FILE* targetFile) {
     LsTableEntry* temp = lsTableHead;
     int freeReg = getFreeRegister();
     while(temp) {
-        fprintf(targetFile, "PUSH R%d\n", freeReg);
+        for(int i=0; i<temp->type->size; i++) 
+            fprintf(targetFile, "PUSH R%d\n", freeReg);
         temp = temp->next;
     }
     releaseRegister(freeReg);
@@ -70,73 +71,80 @@ int getEffectiveAddr(Tnode* idNode, FILE* targetFile) {
 
     int addrReg = getFreeRegister();
 
-    if(idNode->tnodeType == NODE_TUP_FIELD) {
-        fprintf(targetFile, "MOV R%d, %d\n", addrReg, idNode->left->gsTableEntry->binding);
-        fprintf(targetFile, "ADD R%d, %d\n", addrReg, searchInFieldList(idNode->left->gsTableEntry->type->fields, idNode->right->varName)->fieldIndex);
-        return addrReg;
+    // for proper id and for pointers
+    if(idNode->tnodeType == NODE_ID) {
+        if(idNode->lsTableEntry) {
+            fprintf(targetFile, "MOV R%d, BP\n", addrReg);
+            fprintf(targetFile, "ADD R%d, %d\n", addrReg, idNode->lsTableEntry->binding);
+        }
+        else {
+            fprintf(targetFile, "MOV R%d, %d\n", addrReg, idNode->gsTableEntry->binding);
+        }
     }
 
-    if (idNode->lsTableEntry) {
-        fprintf(targetFile, "MOV R%d, BP\n", addrReg);
-        fprintf(targetFile, "ADD R%d, %d\n", addrReg, idNode->lsTableEntry->binding);
-        return addrReg;
-    }
-
-    fprintf(targetFile, "MOV R%d, %d\n", addrReg, idNode->gsTableEntry->binding);
-
-    if (!idNode->gsTableEntry->dimensions) {
-        return addrReg;
-    }
-
-    Tnode* dimNode = idNode->gsTableEntry->dimensions;
-    Tnode* indexNode = idNode->arrOffset;
-    int offsetReg = getFreeRegister();
-
-    fprintf(targetFile, "MOV R%d, 0\n", offsetReg);
-
-    while (dimNode && indexNode) {
-        // got index
-        int indexValReg = evaluateExpression(indexNode, targetFile);
-
-        int mult = 1;
-        Tnode* temp = dimNode->arrOffset;
-        while(temp) {
-            mult *= dimNode->val;
-            temp = temp->arrOffset;
+    // for tuples 
+    else if(idNode->tnodeType == NODE_TUP_FIELD) {
+        if(idNode->left->lsTableEntry) {
+            fprintf(targetFile, "MOV R%d, BP\n", addrReg);
+            fprintf(targetFile, "ADD R%d, %d\n", addrReg, idNode->left->lsTableEntry->binding);
+        }
+        else {
+            fprintf(targetFile, "MOV R%d, %d\n", addrReg, idNode->left->gsTableEntry->binding);
         }
 
-        fprintf(targetFile, "MUL R%d, %d\n", indexValReg, mult);
-        fprintf(targetFile, "ADD R%d, R%d\n", offsetReg, indexValReg);
-
-        releaseRegister(indexValReg);
-        dimNode = dimNode->arrOffset;
-        indexNode = indexNode->arrOffset;
+        fprintf(targetFile, "ADD R%d, %d\n", addrReg, searchInFieldList(idNode->left->type->fields, idNode->right->varName)->fieldIndex);
     }
 
-    fprintf(targetFile, "ADD R%d, R%d\n", addrReg, offsetReg);
+    // for dereference
+    else if(idNode->tnodeType == NODE_DEREF) {
+        if(idNode->left->lsTableEntry) {
+            fprintf(targetFile, "MOV R%d, BP\n", addrReg);
+            fprintf(targetFile, "ADD R%d, %d\n", addrReg, idNode->left->lsTableEntry->binding);
+            fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
+        }
+        else {
+            fprintf(targetFile, "MOV R%d, %d\n", addrReg, idNode->left->gsTableEntry->binding);
+            fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
+        }
+    }
 
-    releaseRegister(offsetReg);
 
+
+    // this condition only for arrays
+    if(idNode->gsTableEntry && idNode->gsTableEntry->dimensions) {
+        Tnode* dimNode = idNode->gsTableEntry->dimensions;
+        Tnode* indexNode = idNode->arrOffset;
+        int offsetReg = getFreeRegister();
+
+        fprintf(targetFile, "MOV R%d, 0\n", offsetReg);
+
+        while (dimNode && indexNode) {
+            int indexValReg = evaluateExpression(indexNode, targetFile);
+
+            int mult = 1;
+            Tnode* temp = dimNode->arrOffset;
+            while(temp) {
+                mult *= dimNode->val;
+                temp = temp->arrOffset;
+            }
+
+            fprintf(targetFile, "MUL R%d, %d\n", indexValReg, mult);
+            fprintf(targetFile, "ADD R%d, R%d\n", offsetReg, indexValReg);
+
+            releaseRegister(indexValReg);
+            dimNode = dimNode->arrOffset;
+            indexNode = indexNode->arrOffset;
+        }
+
+        fprintf(targetFile, "ADD R%d, R%d\n", addrReg, offsetReg);
+
+        releaseRegister(offsetReg);
+    }
+    
     return addrReg;
 }
 
-void setMemValue(Tnode* idNode, int exprReg, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
-    int addrReg = getEffectiveAddr(idNode, targetFile);
-    
-    fprintf(targetFile, "MOV [R%d], R%d\n", addrReg, exprReg);
-    releaseRegister(addrReg);
-}
-
-int getMemValue(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
-    int addrReg = getEffectiveAddr(idNode, targetFile);
-    int storeReg = getFreeRegister();
-
-    fprintf(targetFile, "MOV R%d, [R%d]\n", storeReg, addrReg);
-    releaseRegister(addrReg);
-    return storeReg;
-}
-
-void readFromConsole(Tnode* idNode, int offsetReg, int rowReg, int colReg, FILE* targetFile) {
+void readFromConsole(Tnode* idNode, FILE* targetFile) {
     int addrReg = getEffectiveAddr(idNode, targetFile);
     int freeReg = getFreeRegister();
 

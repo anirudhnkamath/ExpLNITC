@@ -1,14 +1,26 @@
+type
+    student {
+        int age;
+        str name;
+    }
+endtype
+
 decl
-    tuple stud(str name, int age) s1, s2, s3;
+    student s1;
 enddecl
 
 int main()
 {
-  decl
-  enddecl
+    decl
+        student s2;
+    enddecl
 
-  begin
-    s1 = s2;
-    return 1;
-  end
+    begin  
+        read(s1.age);
+        read(s1.name);
+        s2 = s1;
+        write(s2.age);
+        write(s2.name);
+        return 1;
+    end
 }

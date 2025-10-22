@@ -18,6 +18,7 @@ typedef struct Tnode {
     struct Tnode* left;
     struct Tnode* right;
     struct Tnode* arrOffset;
+    int isPtr;
 } Tnode;
 
 Tnode* createConnectorNode(Tnode* left, Tnode* right);
@@ -50,7 +51,7 @@ Tnode* createReturnNode(Tnode* exprNode);
 
 void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParams);
 void validateProperId(Tnode* idNode);
-void validatePointer(Tnode* idNode);
+void validateIdForExpr(Tnode* idNode);
 
 void setIdNodeType(Tnode* idNode);
 

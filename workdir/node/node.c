@@ -17,6 +17,7 @@ Tnode* createEmptyNode() {
     n->strVal = NULL;
     n->val = _NA_;
     n->type = NULL;
+    n->isPtr = _NA_;
     return n;
 }
 
@@ -34,7 +35,7 @@ Tnode* createIntNode(int val) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_INT;
     n->val = val;
-    n->type = searchInTypeTable("int");
+    n->type = searchInTypeTable(typeTableHead, "int");
     n->argList = NULL;
     
     return n;
@@ -44,7 +45,7 @@ Tnode* createStrLtrlNode(char* str) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_STR_LTRL;
     n->strVal = strdup(str);
-    n->type = searchInTypeTable("str");
+    n->type = searchInTypeTable(typeTableHead, "str");
     return n;
 }
 
@@ -58,18 +59,20 @@ Tnode* createIdNode(char varName[]) {
 
 Tnode* createReadNode(Tnode* idNode) {
 
+    // read id
     if(idNode->tnodeType == NODE_ID && idNode->arrOffset == NULL) {
         setIdNodeType(idNode);
         validateProperId(idNode);
     }
 
+    // read id[][]...
     else if(idNode->tnodeType == NODE_ID && idNode->arrOffset != NULL) {
         setIdNodeType(idNode);
         validateArrOffset(idNode, idNode->arrOffset);
     }
 
+    // read id.id
     else if(idNode->tnodeType == NODE_TUP_FIELD) {
-        // ignore as it is already checked
     }
 
     else {
@@ -84,11 +87,12 @@ Tnode* createReadNode(Tnode* idNode) {
 }
 
 Tnode* createWriteNode(Tnode* exprNode) {
+    
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_WRITE;
 
-    if(strcmp(exprNode->type->name, "bool") == 0) {
-        printf("Error: Mismatched type\n");
+    if(strcmp(exprNode->type->name, "int") != 0 && strcmp(exprNode->type->name, "str") != 0) {
+        printf("Error: Can't write anything other than STR or INT\n");
         exit(1);
     }
 
@@ -97,39 +101,17 @@ Tnode* createWriteNode(Tnode* exprNode) {
 }
 
 Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
-
-    if(leftNode->tnodeType == NODE_ID && leftNode->arrOffset == NULL) {
-        setIdNodeType(leftNode);
-    }
-
-    else if(leftNode->tnodeType == NODE_ID && leftNode->arrOffset) {
-        setIdNodeType(leftNode);
-        validateArrOffset(leftNode, leftNode->arrOffset);
-    }
-
-    else if(leftNode->tnodeType == NODE_DEREF) {
-        // do nothing as already checked
-    }
-
-    else if(leftNode->tnodeType == NODE_TUP_FIELD) {
-        // do nothing
-    }
     
-    else {
-        printf("Error : Invalid node in LHS of write\n");
-        exit(1);
-    }
-
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_ASSIGN;
     n->left = leftNode;
     n->right = exprNode;
 
-    if(strcmp(leftNode->type->name, exprNode->type->name) != 0) {
-        printf("Error : type mismatch\n");
+    if(strcmp(leftNode->type->name, exprNode->type->name) != 0 || leftNode->isPtr != exprNode->isPtr) {
+        printf("Error : type mismatch in assignment\n");
         exit(1);
     }
-
+    
     return n;
 }
 
@@ -198,7 +180,7 @@ Tnode* createArithOpNode(int tnodeType, Tnode* left, Tnode* right) {
 
     n->left = left;
     n->right = right;
-    n->type = searchInTypeTable("int");
+    n->type = searchInTypeTable(typeTableHead, "int");
     n->argList = NULL;
     return n;
 }
@@ -214,7 +196,7 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
 
     n->left = left;
     n->right = right;
-    n->type = searchInTypeTable("bool");
+    n->type = searchInTypeTable(typeTableHead, "bool");
     n->argList = NULL;
     return n;
 }
@@ -229,7 +211,7 @@ Tnode* createLogOpNode(int tNodeType, Tnode* left, Tnode* right) {
     n->tnodeType = tNodeType;
     n->left = left;
     n->right = right;
-    n->type = searchInTypeTable("bool");
+    n->type = searchInTypeTable(typeTableHead, "bool");
     return n;
 }
 
@@ -241,12 +223,8 @@ Tnode* createAddrToNode(Tnode* idNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_ADDR_TO;
     n->left = idNode;
-
-    if(strcmp(idNode->type->name, "int") == 0)
-        n->type = searchInTypeTable("intPtr");
-    else
-        n->type = searchInTypeTable("strPtr");
-        
+    n->type = idNode->type;
+    n->isPtr = 1;
     return n;
 }
 
@@ -255,29 +233,15 @@ Tnode* createDerefNode(Tnode* idNode) {
     setIdNodeType(idNode);
 
     TypeTable* curType; 
-    if(idNode->lsTableEntry) {
-        if(strcmp(idNode->lsTableEntry->type->name, "intPtr") != 0 && strcmp(idNode->lsTableEntry->type->name, "strPtr") != 0) {
-            printf("Error : invalid address access\n");
-            exit(1);
-        }
-        else curType = idNode->lsTableEntry->type;
+    if(idNode->isPtr != 1 && idNode->isPtr != 1) {
+        printf("Error : invalid address access\n");
+        exit(1);
     }
-    else if(idNode->gsTableEntry) {
-        if(strcmp(idNode->gsTableEntry->type->name, "intPtr") != 0 && strcmp(idNode->gsTableEntry->type->name, "strPtr") != 0) {
-            printf("Error : invalid address access\n");
-            exit(1);
-        }
-        else curType = idNode->gsTableEntry->type;
-    }
+    else curType = idNode->type;
 
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_DEREF;
-
-    if(strcmp(curType->name, "intPtr") == 0)
-        n->type = searchInTypeTable("int");
-    else
-        n->type = searchInTypeTable("str");
-
+    n->type = curType;
     n->left = idNode;
 
     return n;
@@ -299,7 +263,7 @@ Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
     ParamListEntry *temp1 = declParams;
     Tnode* temp2 = argListNode;
     while(temp1 && temp2) {
-        if(strcmp(temp1->type->name, temp2->type->name) != 0) {
+        if(strcmp(temp1->type->name, temp2->type->name) != 0 || temp1->isPtr != temp2->isPtr) {
             printf("Error : type mismatch in function call\n");
             exit(1);
         }
@@ -341,12 +305,14 @@ Tnode* createReturnNode(Tnode* exprNode) {
 
 
 Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
-    if(tupNode->lsTableEntry || tupNode->gsTableEntry->type->fields == NULL) {
+    setIdNodeType(tupNode);
+
+    FieldList* foundField = NULL;
+    if(tupNode->type->fields == NULL) {
         printf("Error : invalid tuple\n");
         exit(1);
     }
-
-    FieldList* foundField = searchInFieldList(tupNode->gsTableEntry->type->fields, fieldNode->varName);
+    else foundField = searchInFieldList(tupNode->type->fields, fieldNode->varName);
     if(!foundField) {
         printf("Error : invalide field in tuple\n");
         exit(1);
@@ -366,6 +332,7 @@ void setIdNodeType(Tnode* idNode) {
     LsTableEntry* lsEntry = findInLsTable(lsTableHead, idNode->varName);
     if(lsEntry) {
         idNode->lsTableEntry = lsEntry;
+        idNode->isPtr = lsEntry->isPtr;
         idNode->type = lsEntry->type;
         return;
     }
@@ -373,6 +340,7 @@ void setIdNodeType(Tnode* idNode) {
     GsTableEntry* gsEntry = findInGsTable(gsTableHead, idNode->varName);
     if(gsEntry) {
         idNode->gsTableEntry = gsEntry;
+        idNode->isPtr = gsEntry->isPtr;
         idNode->type = gsEntry->type;
         return;
     }
@@ -421,21 +389,11 @@ void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParam
     return;
 }
 
-void validatePointer(Tnode* idNode) {
-    if(idNode->lsTableEntry && (strcmp(idNode->lsTableEntry->type->name, "intPtr") == 0 || strcmp(idNode->lsTableEntry->type->name, "strPtr") == 0))
-        return;
-
-    if(idNode->gsTableEntry && (strcmp(idNode->gsTableEntry->type->name, "intPtr") == 0 || strcmp(idNode->gsTableEntry->type->name, "strPtr") == 0))
-        return;
-
-    printf("Error : invalid pointer\n");
-    exit(1);
-}
-
 void validateProperId(Tnode* idNode) {
-    if( idNode->lsTableEntry && 
-        (strcmp(idNode->lsTableEntry->type->name, "int") == 0 || strcmp(idNode->lsTableEntry->type->name, "str") == 0)
-    ) return;
+    if(idNode->isPtr == 1) {
+        printf("Error : Invalid use of proper ID\n");
+        exit(1);
+    }
     
     // not fn and not array
     if( idNode->gsTableEntry && 
@@ -475,6 +433,30 @@ void validateArrOffset(Tnode* idNode, Tnode* indexExprNode) {
     if(temp1 || temp2) {
         printf("Error : invalid indexing\n");
         exit(1);
+    }
+}
+
+void validateIdForExpr(Tnode* idNode) {
+    if(idNode->gsTableEntry) {
+        if(idNode->gsTableEntry->fLabel != _NA_) {
+            printf("Error : invalid ID used in expression\n");
+            exit(1);
+        }
+        if(idNode->gsTableEntry->dimensions) {
+            printf("Error : invalid ID used in expression\n");
+            exit(1);
+        }
+        if(idNode->gsTableEntry->isPtr == 1) {
+            printf("Error : invalid ID used in expression\n");
+            exit(1);
+        }
+    }
+
+    else { // in ls table
+        if(idNode->isPtr == 1) {
+            printf("Error : invalid ID used in expression\n");
+            exit(1);
+        }
     }
 }
 

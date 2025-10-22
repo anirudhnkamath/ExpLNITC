@@ -41,6 +41,9 @@
 "decl" { return BEGIN_DECL; }
 "enddecl" { return END_DECL; }
 
+"type" { return BEGIN_TYPE; }
+"endtype" { return END_TYPE; }
+
 "read" { return READ; }
 "write" { return WRITE; }
 
@@ -67,7 +70,6 @@
 
 "int" { return INT; }
 "str" { return STR; }
-"tuple" { return TUPLE; }
 
 "main" { return MAIN; }
 

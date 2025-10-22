@@ -24,13 +24,15 @@ typedef struct TypeTable {
 extern TypeTable *typeTableHead;
 
 void createTypeTable();
-TypeTable* searchInTypeTable(char *name) ;
-TypeTable* insertToTypeTable(char *name, ParamListEntry* paramListHead);
+TypeTable* createNewType(char* varName, FieldList* fields);
+TypeTable* searchInTypeTable(TypeTable* head, char *name);
+TypeTable* concatTypeTable(TypeTable* head1, TypeTable* head2);
+TypeTable* validateUserType(TypeTable* head, char* typeName);
 void printTypeTable();
 
 FieldList* searchInFieldList(FieldList* head, char* name);
-FieldList* createField(char *name, TypeTable *type, int index);
-FieldList* insertField(FieldList *head, FieldList *newField);
-
+FieldList* createField(char *name, TypeTable *type);
+FieldList* concatFieldList(FieldList* head1, FieldList* head2);
+FieldList* setFieldIndex(FieldList* head);
 
 #endif

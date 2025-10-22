@@ -44,7 +44,7 @@ GsTableEntry* createEmptyGsTableEntry() {
     n->fLabel = _NA_;
     n->dimensions = NULL; 
     n->size = _NA_;
-
+    n->isPtr = _NA_;
     return n;
 }
 
@@ -86,7 +86,6 @@ GsTableEntry* createIdEntryInGsTable(char* varName) {
     GsTableEntry* n = createEmptyGsTableEntry();
     n->varName = strdup(varName);
     n->size = 1;
-    n->binding = getNextBinding(1);
     return n;
 }
 
@@ -102,7 +101,6 @@ GsTableEntry* createArrEntryInGsTable(char* varName, Tnode* arrOffsetNode) {
     }
 
     n->size = size;
-    n->binding = getNextBinding(size);
     n->dimensions = arrOffsetNode;
 
     return n;
@@ -121,51 +119,39 @@ GsTableEntry* createPtrEntryInGsTable(char* varName) {
     GsTableEntry* n = createEmptyGsTableEntry();
     n->varName = strdup(varName);
     n->size = 1;
-    n->binding = getNextBinding(1);
-    n->type = searchInTypeTable("intPtr");
+    n->isPtr = 1;
     return n;
-}
-
-GsTableEntry* insertTuplesToGsTable(LsTableEntry* entries, TypeTable* type) {
-    LsTableEntry* temp = entries;
-    while(temp) {
-        if(temp->type) {
-            printf("Error : tuples dont support pointers\n");
-            exit(1);
-        }
-
-        GsTableEntry* n = createEmptyGsTableEntry();
-        n->binding = getNextBinding(type->size);
-        n->size = type->size;
-        n->type = type;
-        n->varName = strdup(temp->varName);
-
-        gsTableHead = concatGsTable(gsTableHead, n);
-
-        temp = temp->next;
-    }
-
-    return gsTableHead;
 }
 
 GsTableEntry* setGsTableType(GsTableEntry* head, TypeTable* type) {
     GsTableEntry* temp = head;
     while(temp) {
 
-        // some kind of ptr
-        if(temp->type != NULL) {
-            if(strcmp(type->name, "int") == 0) {
-                // nothing
-            }
-            else {
-                temp->type = searchInTypeTable("strPtr");
-            }
+        if(temp->dimensions && (strcmp(type->name, "int") != 0 && strcmp(type->name, "str") != 0)) {
+            printf("Error : user type arrays not allowed\n");
+            exit(1);
         }
 
-        else {
-            temp->type = type;
+        if(temp->isPtr == 1 && (strcmp(type->name, "int") != 0 && strcmp(type->name, "str") != 0)) {
+            printf("Error : user defined pointers not allowed\n");
+            exit(1);
         }
-        
+
+        if(temp->fLabel != _NA_ && (strcmp(type->name, "int") != 0 && strcmp(type->name, "str") != 0)) {
+            printf("Error : functions can't return user types\n");
+            exit(1);
+        }
+
+
+        if(temp->fLabel == _NA_ && temp->isPtr == _NA_) {
+            temp->size *= type->size;
+            temp->binding = getNextBinding(temp->size);
+        }
+        else if(temp->isPtr == 1) {
+            temp->binding = getNextBinding(1);
+        }
+
+        temp->type = type;
         temp = temp->next;
     }
     return head;
@@ -188,6 +174,7 @@ void printGsTable() {
         printf("Size       : %d\n", temp->size);
         printf("Binding    : %d\n", temp->binding);
         printf("FLabel     : %d\n", temp->fLabel);
+        printf("IsPtr      : %d\n", temp->isPtr);
 
         if(temp->dimensions) {
             printf("Dimensions : [");
@@ -212,11 +199,12 @@ void printGsTable() {
 }
 
 
-ParamListEntry* createParamListEntry(char* varName, TypeTable* dataType) {
+ParamListEntry* createParamListEntry(char* varName, TypeTable* dataType, int isPtr) {
     ParamListEntry* n = (ParamListEntry*)malloc(sizeof(ParamListEntry));
     n->varName = strdup(varName);
     n->type = dataType;
     n->next = NULL;
+    n->isPtr = isPtr;
     return n;
 }
 
@@ -262,7 +250,7 @@ void printParamList(ParamListEntry* paramListHead) {
     ParamListEntry* temp = paramListHead;
     
     while(temp) {
-        printf("%s(%s)", temp->varName, temp->type->name);
+        printf("%s(%s, isPtr(%d))", temp->varName, temp->type->name, temp->isPtr);
         if(temp->next) printf(", ");
         temp = temp->next;
     }
@@ -286,7 +274,7 @@ LsTableEntry* createLsTableEntry() {
     n->binding = _NA_;
     n->type = NULL;
     n->next = NULL;
-
+    n->isPtr = _NA_;
     return n;
 }
 
@@ -299,7 +287,7 @@ LsTableEntry* createIdEntryInLsTable(char* varName) {
 LsTableEntry* createPtrEntryInLsTable(char* varName) {
     LsTableEntry* n =  createLsTableEntry();
     n->varName = strdup(varName);
-    n->type = searchInTypeTable("intPtr");
+    n->isPtr = 1;
     return n;
 }
 
@@ -341,6 +329,7 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
         n->varName = strdup(temp->varName);
         n->type = temp->type;
         n->binding = bind;
+        n->isPtr = temp->isPtr;
 
         head = concatLsTable(head, n);
         temp = temp->next;
@@ -353,21 +342,7 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
 LsTableEntry* setLsTableType(LsTableEntry* head, TypeTable* type) {
     LsTableEntry* temp = head;
     while(temp) {
-
-        // some kind of ptr
-        if(temp->type != NULL) {
-            if(strcmp(type->name, "int") == 0) {
-                // nothing
-            }
-            else {
-                temp->type = searchInTypeTable("strPtr");
-            }
-        }
-
-        else {
-            temp->type = type;
-        }
-
+        temp->type = type;
         temp = temp->next;
     }
     return head;
@@ -379,7 +354,7 @@ void setLDeclBinding(LsTableEntry* head) {
     LsTableEntry* temp = head;
     while(temp) {
         temp->binding = bind;
-        bind += 1;
+        bind += temp->type->size;
         temp = temp->next;
     }
 }
@@ -409,6 +384,7 @@ void printLsTable() {
         printf("Name    : %s\n", temp->varName);
         printf("Type    : %s\n", temp->type != NULL ? temp->type->name : "N/A");
         printf("Binding : %d\n", temp->binding);
+        printf("isPtr   : %d\n", temp->isPtr);
         printf("\n");
         temp = temp->next;
     }

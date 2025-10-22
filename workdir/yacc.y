@@ -23,15 +23,17 @@
     struct ParamListEntry* paramListEntry;
     struct LsTableEntry* lsTableEntry;
     struct TypeTable* declDataType;
+    struct FieldList* fieldList;
+    struct TypeTable* typeTable;
 }
 
 %token <astNode> ID NUMBER STR_LTRL
-%token BEGIN_DECL END_DECL BEGIN_CODE END_CODE
+%token BEGIN_DECL END_DECL BEGIN_CODE END_CODE BEGIN_TYPE END_TYPE
 %token ASSG
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR AMPSAND
 %token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
-%token INT STR TUPLE
+%token INT STR
 %token EOL COMMA DOT
 
 %type <astNode> stmtList stmt
@@ -47,6 +49,9 @@
 
 %type <paramListEntry> paramList param
 
+%type <fieldList> field fieldList
+%type <typeTable> tDeclBlock tDeclList
+
 
 %left OR
 %left AND
@@ -57,9 +62,12 @@
 
 %%
 
-program     :   gDeclBlock fDefBlock mainBlock  { }
-            |   gDeclBlock mainBlock            { }
-            |   mainBlock                       { }
+program     :   tDeclBlock gDeclBlock fDefBlock mainBlock  { }
+            |   tDeclBlock gDeclBlock mainBlock            { }
+            |   tDeclBlock mainBlock                       { }
+            |   gDeclBlock fDefBlock mainBlock             { }
+            |   gDeclBlock mainBlock                       { }
+            |   mainBlock                                  { }
             ;
 
 
@@ -74,11 +82,7 @@ gDeclList   :   gDeclList gDecl     { $$ = concatGsTable($1, $2); }
             |   gDecl               { $$ = $1; }
             ;
 
-gDecl       :   type gidList EOL                            { $$ = setGsTableType($2, $1); }
-            |   TUPLE ID LPAR paramList RPAR idList EOL     { 
-                                                                insertToTypeTable($2->varName, $4);
-                                                                $$ = insertTuplesToGsTable($6, searchInTypeTable($2->varName));
-                                                            }
+gDecl       :   type gidList EOL    { $$ = setGsTableType($2, $1); }
             ;
 
 gidList     :   gidList COMMA gid   { $$ = concatGsTable($1, $3); }
@@ -91,14 +95,39 @@ gid         :   ID                          { $$ = createIdEntryInGsTable($1->va
             |   MULT ID                     { $$ = createPtrEntryInGsTable($2->varName); }
             ;
 
-type        :   INT     { $$ = searchInTypeTable("int"); }
-            |   STR     { $$ = searchInTypeTable("str"); }
+type        :   INT     { $$ = searchInTypeTable(typeTableHead, "int"); }
+            |   STR     { $$ = searchInTypeTable(typeTableHead, "str"); }
+            |   ID      { $$ = validateUserType(typeTableHead, $1->varName); }
             ;
 
 arrDimn     :   arrDimn LBRACK NUMBER RBRACK    { $$ = insertToArrDimn($1, $3); }
             |   LBRACK NUMBER RBRACK            { $$ = $2; }
             ;      
 
+
+
+/* TYPE DECLARATION */
+
+tDeclBlock  :   BEGIN_TYPE tDeclList END_TYPE   { typeTableHead = concatTypeTable(typeTableHead, $2); }
+            |   BEGIN_TYPE END_TYPE             { }
+            ;
+
+tDeclList   :   tDeclList ID LCURL fieldList RCURL      {
+                                                            $4 = setFieldIndex($4);
+                                                            $$ = concatTypeTable($1, createNewType($2->varName, $4));
+                                                        }
+            |   ID LCURL fieldList RCURL                {
+                                                            $3 = setFieldIndex($3);
+                                                            $$ = createNewType($1->varName, $3);
+                                                        }
+            ;
+
+fieldList   :   fieldList field                 { $$ = concatFieldList($1, $2); }
+            |   field                           { $$ = $1; }
+
+field       :   INT ID EOL                      { $$ = createField($2->varName, searchInTypeTable(typeTableHead, "int")); }
+            |   STR ID EOL                      { $$ = createField($2->varName, searchInTypeTable(typeTableHead, "str")); }
+            ;
 
 
 /*  FUNCTION DEFINITIONS  */
@@ -129,11 +158,8 @@ paramList   :   paramList COMMA param   { $$ = concatParamList($1, $3); }
             |                           { $$ = NULL; }
             ;
 
-param       :   type ID         {   $$ = createParamListEntry($2->varName, $1); }
-            |   type MULT ID    { 
-                                    TypeTable* cur = strcmp($1->name, "int") == 0 ? searchInTypeTable("intPtr") : searchInTypeTable("strPtr");
-                                    $$ = createParamListEntry($3->varName, cur); 
-                                }
+param       :   type ID         {   $$ = createParamListEntry($2->varName, $1, _NA_); }
+            |   type MULT ID    {   $$ = createParamListEntry($3->varName, $1, 1); }
             ;
 
 
@@ -161,7 +187,7 @@ idList      :   idList COMMA ID         { $$ = concatLsTable($1, createIdEntryIn
 
 /*  MAIN BLOCK  */
 
-mainBlock   :   INT {curFnType = searchInTypeTable("int"); } MAIN
+mainBlock   :   INT {curFnType = searchInTypeTable(typeTableHead, "int"); } MAIN
                                          LPAR RPAR LCURL lDeclBlock body RCURL     {
                                                                                         $$ = $8; 
                                                                                         setLDeclBinding(lsTableHead);
@@ -210,9 +236,12 @@ outputStmt  :   WRITE LPAR expr RPAR EOL        { $$ = createWriteNode($3); }
             ;
 
 assignStmt  :   ID ASSG expr EOL                {   
+                                                    setIdNodeType($1);
                                                     $$ = createAssignNode($1, $3); 
                                                 }
             |   ID arrIndex ASSG expr EOL       {
+                                                    setIdNodeType($1);
+                                                    validateArrOffset($1, $2);
                                                     $1->arrOffset = $2;
                                                     $$ = createAssignNode($1, $4); 
                                                 }
@@ -253,7 +282,7 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   expr OR expr            { $$ = createLogOpNode(NODE_OR, $1, $3); }
             |   LPAR expr RPAR          { $$ = $2; }
 
-            |   ID                      { setIdNodeType($1); validateProperId($1); $$ = $1; }
+            |   ID                      { setIdNodeType($1); validateIdForExpr($1); $$ = $1; }
             |   NUMBER                  { $$ = $1; }
             |   ID arrIndex             { setIdNodeType($1); validateArrOffset($1, $2); $1->arrOffset = $2; $$ = $1; }
             |   STR_LTRL                { $$ = $1; }
@@ -293,7 +322,7 @@ int main(int argc, char *argv[]) {
     setHeader(targetFile);
     resetRegisters();
     createTypeTable();
-
+    
     yyparse();
 
     exitProgram(targetFile);
