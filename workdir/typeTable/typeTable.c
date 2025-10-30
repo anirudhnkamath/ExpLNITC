@@ -11,12 +11,29 @@ void createTypeTable() {
     typeTableHead = concatTypeTable(typeTableHead, createNewType("int", NULL));
     typeTableHead = concatTypeTable(typeTableHead, createNewType("str", NULL));
     typeTableHead = concatTypeTable(typeTableHead, createNewType("bool", NULL));
+    typeTableHead = concatTypeTable(typeTableHead, createNewType("null", NULL));
 }
 
 TypeTable* createNewType(char* varName, FieldList* fields) {
     TypeTable* t = (TypeTable*)malloc(sizeof(TypeTable));
     t->name = strdup(varName);
     t->next = NULL;
+    t->fields = fields;
+
+    FieldList* temp = fields;
+    int size = 0;
+    while(temp) {
+        size += 1;
+        temp = temp->next;
+    }
+
+    t->size = size > 0 ? size : 1;
+
+    return t;
+}
+
+TypeTable* updateType(char* varName, FieldList* fields) {
+    TypeTable* t = searchInTypeTable(typeTableHead, varName);
     t->fields = fields;
 
     FieldList* temp = fields;
@@ -90,7 +107,7 @@ void printTypeTable() {
             printf("Fields     :\n");
             FieldList *f = t->fields;
             while(f) {
-                printf("  - %s (Index: %d, Type: %s)\n", 
+                printf("\t%s (Index: %d, Type: %s)\n", 
                        f->name, 
                        f->fieldIndex, 
                        f->type->name);
@@ -120,6 +137,12 @@ FieldList* searchInFieldList(FieldList* head, char* name) {
 }
 
 FieldList* createField(char *name, TypeTable *type) {
+
+    if(!type) {
+        printf("Error : invalid type\n");
+        exit(1);
+    }
+
     FieldList *f = (FieldList*)malloc(sizeof(FieldList));
     f->name = strdup(name);
     f->type = type;

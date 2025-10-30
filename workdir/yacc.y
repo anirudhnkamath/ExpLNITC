@@ -108,25 +108,29 @@ arrDimn     :   arrDimn LBRACK NUMBER RBRACK    { $$ = insertToArrDimn($1, $3); 
 
 /* TYPE DECLARATION */
 
-tDeclBlock  :   BEGIN_TYPE tDeclList END_TYPE   { typeTableHead = concatTypeTable(typeTableHead, $2); }
+tDeclBlock  :   BEGIN_TYPE tDeclList END_TYPE   { printTypeTable(); }
             |   BEGIN_TYPE END_TYPE             { }
             ;
 
-tDeclList   :   tDeclList ID LCURL fieldList RCURL      {
-                                                            $4 = setFieldIndex($4);
-                                                            $$ = concatTypeTable($1, createNewType($2->varName, $4));
+tDeclList   :   tDeclList ID                            { typeTableHead = concatTypeTable(typeTableHead, createNewType($2->varName, NULL)); }
+                LCURL fieldList RCURL                   {
+                                                            $5 = setFieldIndex($5);
+                                                            updateType($2->varName, $5);
                                                         }
-            |   ID LCURL fieldList RCURL                {
-                                                            $3 = setFieldIndex($3);
-                                                            $$ = createNewType($1->varName, $3);
+                                                    
+            |   ID                                      { typeTableHead = concatTypeTable(typeTableHead, createNewType($1->varName, NULL)); }
+                LCURL fieldList RCURL                   {
+                                                            $4 = setFieldIndex($4);
+                                                            updateType($1->varName, $4);
                                                         }
             ;
 
 fieldList   :   fieldList field                 { $$ = concatFieldList($1, $2); }
             |   field                           { $$ = $1; }
 
-field       :   INT ID EOL                      { $$ = createField($2->varName, searchInTypeTable(typeTableHead, "int")); }
-            |   STR ID EOL                      { $$ = createField($2->varName, searchInTypeTable(typeTableHead, "str")); }
+field       :   ID ID EOL                      { $$ = createField($2->varName, searchInTypeTable(typeTableHead, $1->varName)); }
+            |   INT ID EOL                     { $$ = createField($2->varName, searchInTypeTable(typeTableHead, "int")); }
+            |   STR ID EOL                     { $$ = createField($2->varName, searchInTypeTable(typeTableHead, "str")); }
             ;
 
 

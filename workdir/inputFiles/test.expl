@@ -1,8 +1,19 @@
 type
+
     student {
         int age;
         str name;
+        student hi;
+        teacher bye;
     }
+
+    teacher {
+        str a;
+        str b;
+        teacher hi;
+        student s;
+    }
+
 endtype
 
 decl
