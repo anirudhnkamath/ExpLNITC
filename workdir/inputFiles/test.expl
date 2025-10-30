@@ -1,37 +1,25 @@
 type
-
-    student {
-        int age;
-        str name;
-        student hi;
-        teacher bye;
+    node {
+        int val;
+        node next;
     }
-
-    teacher {
-        str a;
-        str b;
-        teacher hi;
-        student s;
-    }
-
 endtype
 
 decl
-    student s1;
+    node a, b;
+
+    int fib(node a);
 enddecl
 
 int main()
 {
     decl
-        student s2;
     enddecl
-
+    
     begin  
-        read(s1.age);
-        read(s1.name);
-        s2 = s1;
-        write(s2.age);
-        write(s2.name);
+        read(a.val);
+        write(a.val);
+
         return 1;
     end
 }

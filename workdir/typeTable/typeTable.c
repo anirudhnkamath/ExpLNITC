@@ -139,7 +139,8 @@ FieldList* searchInFieldList(FieldList* head, char* name) {
 FieldList* createField(char *name, TypeTable *type) {
 
     if(!type) {
-        printf("Error : invalid type\n");
+        printf("%s\n", name);
+        printf("Error : Type not declared\n");
         exit(1);
     }
 

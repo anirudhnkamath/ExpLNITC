@@ -58,6 +58,7 @@
 %nonassoc EQ NEQ GT GTE LT LTE
 %left PLUS MIN
 %left MULT DIV MOD
+%left DOT
 %nonassoc ASSG
 
 %%
@@ -108,7 +109,7 @@ arrDimn     :   arrDimn LBRACK NUMBER RBRACK    { $$ = insertToArrDimn($1, $3); 
 
 /* TYPE DECLARATION */
 
-tDeclBlock  :   BEGIN_TYPE tDeclList END_TYPE   { printTypeTable(); }
+tDeclBlock  :   BEGIN_TYPE tDeclList END_TYPE   { }
             |   BEGIN_TYPE END_TYPE             { }
             ;
 
@@ -197,6 +198,7 @@ mainBlock   :   INT {curFnType = searchInTypeTable(typeTableHead, "int"); } MAIN
                                                                                         setLDeclBinding(lsTableHead);
 
                                                                                         initialiseMainFn(targetFile);
+                                                                                        printf("Codegen startd\n");
                                                                                         codeGen($8, targetFile); 
                                                                                     }
             ;
@@ -231,7 +233,7 @@ inputStmt   :   READ LPAR ID RPAR EOL           {
                                                     $3->arrOffset = $4;
                                                     $$ = createReadNode($3); 
                                                 } 
-            |   READ LPAR ID DOT ID RPAR EOL    {
+            |   READ LPAR expr DOT ID RPAR EOL  {
                                                     $$ = createReadNode(createTupEntryNode($3, $5));
                                                 }
             ;
@@ -252,7 +254,7 @@ assignStmt  :   ID ASSG expr EOL                {
             |   MULT ID ASSG expr EOL           {
                                                     $$ = createAssignNode(createDerefNode($2), $4);
                                                 }
-            |   ID DOT ID ASSG expr EOL         {
+            |   expr DOT ID ASSG expr EOL       {
                                                     $$ = createAssignNode(createTupEntryNode($1, $3), $5);
                                                 }
             ;
@@ -297,7 +299,7 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   MULT ID                 { $$ = createDerefNode($2); }
             |   AMPSAND ID              { $$ = createAddrToNode($2); }
 
-            |   ID DOT ID               { setIdNodeType($1); $$ = createTupEntryNode($1, $3); }
+            |   expr DOT ID               { $$ = createTupEntryNode($1, $3); }
             ;
 
 arrIndex    :   arrIndex LBRACK expr RBRACK { $$ = insertToArrDimn($1, $3); }

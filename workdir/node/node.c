@@ -80,6 +80,11 @@ Tnode* createReadNode(Tnode* idNode) {
         exit(1);
     }
 
+    if(strcmp(idNode->type->name, "int") != 0 && strcmp(idNode->type->name, "str") != 0) {
+        printf("Error : Invalid read type\n");
+        exit(1);
+    }
+
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_READ;
     n->left = idNode;
@@ -305,7 +310,17 @@ Tnode* createReturnNode(Tnode* exprNode) {
 
 
 Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
-    setIdNodeType(tupNode);
+
+    if(tupNode->tnodeType == NODE_TUP_FIELD) {
+        // do nothing, always right
+    }
+    else if(tupNode->tnodeType == NODE_ID && tupNode->arrOffset == NULL) {
+        setIdNodeType(tupNode);
+    }
+    else {
+        printf("Error : invalid tuple access\n");
+        exit(1);
+    }
 
     FieldList* foundField = NULL;
     if(tupNode->type->fields == NULL) {
@@ -313,6 +328,7 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
         exit(1);
     }
     else foundField = searchInFieldList(tupNode->type->fields, fieldNode->varName);
+
     if(!foundField) {
         printf("Error : invalide field in tuple\n");
         exit(1);
