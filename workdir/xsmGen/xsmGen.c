@@ -121,7 +121,7 @@ int getEffectiveAddr(Tnode* idNode, FILE* targetFile) {
         fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
 
         int offset = (searchInFieldList(idNode->left->type->fields, idNode->right->varName))->fieldIndex;
-        fprintf(targetFile, "ADD R%d, R%d\n", addrReg, offset);
+        fprintf(targetFile, "ADD R%d, %d\n", addrReg, offset);
 
         return addrReg;
     }
@@ -228,14 +228,36 @@ int xsmAlloc(FILE* targetFile) {
     fprintf(targetFile, "MOV R%d, [%d]\n", addrReg, HEAP_START);
     fprintf(targetFile, "MOV [%d], [R%d]\n", HEAP_START, addrReg);
 
+    int freeReg = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, R%d\n", freeReg, addrReg);
+    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
+    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
+    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
+    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
+    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
+    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
+    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
+    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
+    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
+    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
+    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
+    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
+    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
+    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
+    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
+
+    releaseRegister(freeReg);
+
     return addrReg;
 }
 
 void xsmFree(Tnode* tupNode, FILE* targetFile) {
     int addrReg = getEffectiveAddr(tupNode, targetFile);
 
+    fprintf(targetFile, "MOV [R%d], %d\n", addrReg, BIG_INT);
+
     fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
-    fprintf(targetFile, "MOV [R%d], [%d]", addrReg, HEAP_START);
+    fprintf(targetFile, "MOV [R%d], [%d]\n", addrReg, HEAP_START);
     fprintf(targetFile, "MOV [%d], R%d\n", HEAP_START, addrReg);
 
     releaseRegister(addrReg);

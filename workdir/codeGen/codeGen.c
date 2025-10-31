@@ -88,6 +88,11 @@ int codeGen(Tnode* node, FILE* targetFile) {
             break;
         }
 
+        case NODE_BRKP : {
+            fprintf(targetFile, "BRKP\n");
+            break;
+        }
+
         default:
             break;
     }

@@ -31,7 +31,7 @@
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE BEGIN_TYPE END_TYPE
 %token ASSG
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR AMPSAND
-%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE
+%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE BRKP
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
 %token EOL COMMA DOT
@@ -225,6 +225,7 @@ stmt        :   inputStmt                       { $$ = $1; }
             |   CONTINUE EOL                    { $$ = createLoopJumpNode(NODE_CONTINUE); }
             |   FREE LPAR expr RPAR EOL         { $$ = createFreeNode($3); }
             |   INITLZE LPAR RPAR EOL           { $$ = createInitlzeNode(); }
+            |   BRKP EOL                        { $$ = createBrkpNode(); }
             ;
 
 inputStmt   :   READ LPAR ID RPAR EOL           {    

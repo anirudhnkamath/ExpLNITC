@@ -11,18 +11,7 @@
 #define HEAP_START 1024
 #define HEAP_END 2047
 
-enum dataTypes {
-    INTEGER_TYPE = 0,
-    BOOLEAN_TYPE,
-    STRING_TYPE,
-    INT_PTR_TYPE,
-    STR_PTR_TYPE,
-    PTR_TYPE,
-    NO_TYPE,
-};
-
-#define YACC_DECL_INT 0
-#define YACC_DECL_STR 1
+#define BIG_INT 1000000000
 
 #define LDECL_BINDING_START 1
 #define PARAMS_BINDING_START -3
@@ -66,6 +55,7 @@ enum nodeTypes {
     NODE_ALLOC,
     NODE_FREE,
     NODE_INITLZE,
+    NODE_BRKP,
 };
 
 enum errorCodes {

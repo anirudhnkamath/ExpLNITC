@@ -75,6 +75,8 @@
 "free" { return FREE; }
 "init" { return INITLZE; }
 
+"breakpoint" { return BRKP; }
+
 "main" { return MAIN; }
 
 "return" { return RETURN; }

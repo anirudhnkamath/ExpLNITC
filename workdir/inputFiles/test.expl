@@ -16,7 +16,15 @@ int main()
     
     begin  
         a = alloc();
-        free(a);
+        a.next = alloc();
+        read(a.next.val);
+        write(a.next.val);
+
+        breakpoint;
+        
+        free(a.next);
+        read(a.next.val);
+        write(a.next.val);
         return 1;
     end
 }

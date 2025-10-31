@@ -21,6 +21,12 @@ Tnode* createEmptyNode() {
     return n;
 }
 
+Tnode* createBrkpNode() {
+    Tnode* n = createEmptyNode();
+    n->tnodeType = NODE_BRKP;
+    return n;
+}
+
 Tnode* createConnectorNode(Tnode* left, Tnode* right) {
     Tnode* n = (Tnode*)malloc(sizeof(Tnode));
     n->tnodeType = NODE_CONNECTOR;
@@ -361,7 +367,7 @@ Tnode* createAllocNode() {
 
 Tnode* createFreeNode(Tnode* exprNode) {
     Tnode* n = createEmptyNode();
-    n->tnodeType == NODE_FREE;
+    n->tnodeType = NODE_FREE;
 
     if(strcmp(exprNode->type->name, "int") == 0 || strcmp(exprNode->type->name, "str") == 0) {
         printf("Error : primitive values cannot be freed\n");

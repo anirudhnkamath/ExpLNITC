@@ -22,6 +22,7 @@ typedef struct Tnode {
 } Tnode;
 
 Tnode* createConnectorNode(Tnode* left, Tnode* right);
+Tnode* createBrkpNode();
 
 Tnode* createIntNode(int val);
 Tnode* createStrLtrlNode(char* str);
