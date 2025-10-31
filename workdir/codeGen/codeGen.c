@@ -83,6 +83,11 @@ int codeGen(Tnode* node, FILE* targetFile) {
             break;
         }
 
+        case NODE_FREE : {
+            xsmFree(node->left, targetFile);
+            break;
+        }
+
         default:
             break;
     }
@@ -103,6 +108,16 @@ void generateReadCode(Tnode* node, FILE* targetFile) {
 }
 
 void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
+
+    if(rhs->tnodeType == NODE_ALLOC) {
+        int heapReg = xsmAlloc(targetFile);
+        int storeReg = getEffectiveAddr(lhs, targetFile);
+        fprintf(targetFile, "MOV [R%d], R%d\n", storeReg, heapReg);
+        releaseRegister(heapReg);
+        releaseRegister(storeReg);
+
+        return;
+    }
 
     if(lhs->type && lhs->type->fields) {
         int lhsAddr = getEffectiveAddr(lhs, targetFile);

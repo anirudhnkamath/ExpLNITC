@@ -49,6 +49,10 @@ Tnode* addArgToArgList(Tnode* list, Tnode* expr);
 Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode);
 Tnode* createReturnNode(Tnode* exprNode);
 
+Tnode* createAllocNode();
+Tnode* createFreeNode(Tnode* exprNode);
+Tnode* createInitlzeNode();
+
 void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParams);
 void validateProperId(Tnode* idNode);
 void validateIdForExpr(Tnode* idNode);

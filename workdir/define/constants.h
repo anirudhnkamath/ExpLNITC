@@ -6,7 +6,10 @@
 #define NUM_REGISTERS 20
 
 #define STACK_START 4096
-#define STACK_END 4607
+#define STACK_END 5119
+
+#define HEAP_START 1024
+#define HEAP_END 2047
 
 enum dataTypes {
     INTEGER_TYPE = 0,
@@ -60,6 +63,9 @@ enum nodeTypes {
     NODE_OR,
     NODE_AND,
     NODE_TUP_FIELD,
+    NODE_ALLOC,
+    NODE_FREE,
+    NODE_INITLZE,
 };
 
 enum errorCodes {

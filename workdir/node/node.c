@@ -112,7 +112,16 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
     n->left = leftNode;
     n->right = exprNode;
 
-    if(strcmp(leftNode->type->name, exprNode->type->name) != 0 || leftNode->isPtr != exprNode->isPtr) {
+    if(exprNode->tnodeType == NODE_ALLOC) {
+        if(strcmp(leftNode->type->name, "int") == 0 || strcmp(leftNode->type->name, "str") == 0) {
+            printf("Error : heap memory can be allocated only for user-defined types\n");
+            exit(1);
+        }
+        else 
+            return n;
+    }
+
+    else if(strcmp(leftNode->type->name, exprNode->type->name) != 0 || leftNode->isPtr != exprNode->isPtr) {
         printf("Error : type mismatch in assignment\n");
         exit(1);
     }
@@ -341,6 +350,32 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
     n->tnodeType = NODE_TUP_FIELD;
 
     return n;
+}
+
+
+Tnode* createAllocNode() {
+    Tnode* t = createEmptyNode();
+    t->tnodeType = NODE_ALLOC;
+    return t;
+}
+
+Tnode* createFreeNode(Tnode* exprNode) {
+    Tnode* n = createEmptyNode();
+    n->tnodeType == NODE_FREE;
+
+    if(strcmp(exprNode->type->name, "int") == 0 || strcmp(exprNode->type->name, "str") == 0) {
+        printf("Error : primitive values cannot be freed\n");
+        exit(1);
+    }
+
+    n->left = exprNode;
+    return n;
+}
+
+Tnode* createInitlzeNode() {
+    Tnode* t = createEmptyNode();
+    t->tnodeType = NODE_INITLZE;
+    return t;
 }
 
 

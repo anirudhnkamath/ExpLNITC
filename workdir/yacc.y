@@ -31,7 +31,7 @@
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE BEGIN_TYPE END_TYPE
 %token ASSG
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR AMPSAND
-%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN
+%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
 %token EOL COMMA DOT
@@ -198,7 +198,6 @@ mainBlock   :   INT {curFnType = searchInTypeTable(typeTableHead, "int"); } MAIN
                                                                                         setLDeclBinding(lsTableHead);
 
                                                                                         initialiseMainFn(targetFile);
-                                                                                        printf("Codegen startd\n");
                                                                                         codeGen($8, targetFile); 
                                                                                     }
             ;
@@ -224,6 +223,8 @@ stmt        :   inputStmt                       { $$ = $1; }
             |   rptUntStmt                      { $$ = $1; }
             |   BREAK EOL                       { $$ = createLoopJumpNode(NODE_BREAK); }
             |   CONTINUE EOL                    { $$ = createLoopJumpNode(NODE_CONTINUE); }
+            |   FREE LPAR expr RPAR EOL         { $$ = createFreeNode($3); }
+            |   INITLZE LPAR RPAR EOL           { $$ = createInitlzeNode(); }
             ;
 
 inputStmt   :   READ LPAR ID RPAR EOL           {    
@@ -257,6 +258,14 @@ assignStmt  :   ID ASSG expr EOL                {
             |   expr DOT ID ASSG expr EOL       {
                                                     $$ = createAssignNode(createTupEntryNode($1, $3), $5);
                                                 }
+            |   ID ASSG ALLOC LPAR RPAR EOL     {   
+                                                    setIdNodeType($1);
+                                                    $$ = createAssignNode($1, createAllocNode()); 
+                                                }
+
+            |   expr DOT ID ASSG ALLOC LPAR RPAR EOL    {  
+                                                            $$ = createAssignNode(createTupEntryNode($1, $3), createAllocNode()); 
+                                                        }
             ;
 
 ifStmt      :   IF LPAR expr RPAR THEN stmtList ELSE stmtList ENDIF EOL         { $$ = createIfElseNode($3, $6, $8); }

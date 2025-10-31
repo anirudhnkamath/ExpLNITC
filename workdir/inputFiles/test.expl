@@ -6,9 +6,7 @@ type
 endtype
 
 decl
-    node a, b;
-
-    int fib(node a);
+    node a;
 enddecl
 
 int main()
@@ -17,9 +15,8 @@ int main()
     enddecl
     
     begin  
-        read(a.val);
-        write(a.val);
-
+        a = alloc();
+        free(a);
         return 1;
     end
 }

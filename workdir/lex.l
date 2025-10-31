@@ -71,6 +71,10 @@
 "int" { return INT; }
 "str" { return STR; }
 
+"alloc" { return ALLOC; }
+"free" { return FREE; }
+"init" { return INITLZE; }
+
 "main" { return MAIN; }
 
 "return" { return RETURN; }
