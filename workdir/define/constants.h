@@ -56,6 +56,7 @@ enum nodeTypes {
     NODE_FREE,
     NODE_INITLZE,
     NODE_BRKP,
+    NODE_NULL,
 };
 
 enum errorCodes {

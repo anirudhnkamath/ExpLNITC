@@ -31,7 +31,7 @@
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE BEGIN_TYPE END_TYPE
 %token ASSG
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR AMPSAND
-%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE BRKP
+%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE BRKP NULL_VAL
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
 %token EOL COMMA DOT
@@ -149,7 +149,7 @@ fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
 
                                                                     lsTableHead = addParamsToLsTable(lsTableHead, $4);
                                                                 } 
-                /* mid-rule action */               body RCURL  {   
+                /* mid-rule action */               body RCURL  {
                                                                     $$ = $9;
                                                                     codeGen($$, targetFile);
                                                                     functionExitCodeGen($2, targetFile);
@@ -309,7 +309,9 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   MULT ID                 { $$ = createDerefNode($2); }
             |   AMPSAND ID              { $$ = createAddrToNode($2); }
 
-            |   expr DOT ID               { $$ = createTupEntryNode($1, $3); }
+            |   expr DOT ID             { $$ = createTupEntryNode($1, $3); }
+
+            |   NULL_VAL                { $$ = createNullNode(); }
             ;
 
 arrIndex    :   arrIndex LBRACK expr RBRACK { $$ = insertToArrDimn($1, $3); }

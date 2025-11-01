@@ -74,6 +74,7 @@
 "alloc" { return ALLOC; }
 "free" { return FREE; }
 "init" { return INITLZE; }
+"null" { return NULL_VAL; }
 
 "breakpoint" { return BRKP; }
 

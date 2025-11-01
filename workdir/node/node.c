@@ -27,6 +27,13 @@ Tnode* createBrkpNode() {
     return n;
 }
 
+Tnode* createNullNode() {
+    Tnode* n = createEmptyNode();
+    n->tnodeType = NODE_NULL;
+    n->type = searchInTypeTable(typeTableHead, "null");
+    return n;
+}
+
 Tnode* createConnectorNode(Tnode* left, Tnode* right) {
     Tnode* n = (Tnode*)malloc(sizeof(Tnode));
     n->tnodeType = NODE_CONNECTOR;
@@ -127,6 +134,15 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
             return n;
     }
 
+    if(exprNode->tnodeType == NODE_NULL) {
+        if(leftNode->type->fields)
+            return n;
+        else {
+            printf("Error : null value can be only assigned to user-defined types\n");
+            exit(1);
+        }
+    }
+
     else if(strcmp(leftNode->type->name, exprNode->type->name) != 0 || leftNode->isPtr != exprNode->isPtr) {
         printf("Error : type mismatch in assignment\n");
         exit(1);
@@ -209,15 +225,48 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
     Tnode* n = createEmptyNode();
     n->tnodeType = tnodeType;
 
-    if(strcmp(left->type->name, "int") != 0 || strcmp(right->type->name, "int") != 0) {
-        printf("Error: mistmatch type\n");
-        exit(1);
-    }
-
     n->left = left;
     n->right = right;
     n->type = searchInTypeTable(typeTableHead, "bool");
     n->argList = NULL;
+
+    TypeTable* lt = left->type;
+    TypeTable* rt = right->type;
+
+    if(tnodeType == NODE_EQ || tnodeType == NODE_NEQ) {
+        int leftNull = strcmp(lt->name, "null") == 0;
+        int rightNull = strcmp(rt->name, "null") == 0;
+
+        if(leftNull && rt->fields || rightNull && lt->fields || leftNull && rightNull) {
+            return n;
+        }
+
+        if(strcmp(lt->name, rt->name) != 0) {
+            printf("Error : type mismatch in comparison\n");
+            exit(1);
+        }
+
+        if(lt->fields != NULL) {
+            printf("Error : user-defined types cannot be compared\n");
+            exit(1);
+        }
+
+        return n;
+    }
+
+    else {
+        if(strcmp(lt->name, rt->name) != 0) {
+            printf("Error : type mismatch in comparison\n");
+            exit(1);
+        }
+
+        if(lt->fields != NULL) {
+            printf("Error : user-defined types cannot be compared\n");
+            exit(1);
+        }
+    }
+
+
     return n;
 }
 
@@ -383,6 +432,7 @@ Tnode* createInitlzeNode() {
     t->tnodeType = NODE_INITLZE;
     return t;
 }
+
 
 
 void setIdNodeType(Tnode* idNode) {

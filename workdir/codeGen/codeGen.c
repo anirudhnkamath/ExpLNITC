@@ -124,28 +124,6 @@ void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
         return;
     }
 
-    if(lhs->type && lhs->type->fields) {
-        int lhsAddr = getEffectiveAddr(lhs, targetFile);
-        int rhsAddr = getEffectiveAddr(rhs, targetFile);
-
-        for(int i=0; i<lhs->type->size; i++) {
-            if(i != 0) {
-                fprintf(targetFile, "ADD R%d, 1\n", lhsAddr);
-                fprintf(targetFile, "ADD R%d, 1\n", rhsAddr);
-            }
-            
-            int freeReg = getFreeRegister();
-            fprintf(targetFile, "MOV R%d, [R%d]\n", freeReg, rhsAddr);
-            fprintf(targetFile, "MOV [R%d], R%d\n", lhsAddr, freeReg);
-            releaseRegister(freeReg);
-        }
-
-        releaseRegister(lhsAddr);
-        releaseRegister(rhsAddr);
-
-        return;
-    }
-
     int lhsAddr = getEffectiveAddr(lhs, targetFile);
     int exprReg = evaluateExpression(rhs, targetFile);
 
@@ -249,6 +227,12 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
 
     if(node == NULL)
         return E_INVALIDNODE;
+
+    if(node->tnodeType == NODE_NULL) {
+        int freeReg = getFreeRegister();
+        fprintf(targetFile, "MOV R%d, %d\n", freeReg, BIG_INT);
+        return freeReg;
+    }
 
     if(node->tnodeType == NODE_DEREF) {
         int addrReg = getEffectiveAddr(node, targetFile);

@@ -6,23 +6,34 @@ type
 endtype
 
 decl
-    node a;
+    node a, b;
+    int temp;
+    int swapval(node x, node y);
 enddecl
+
+int swapval(node x, node y) {
+    decl
+        int t;
+    enddecl
+
+    begin
+        t = x.val;
+        x.val = y.val;
+        y.val = t;
+        return 1;
+    end
+}
 
 int main()
 {
     decl
     enddecl
     
-    begin  
-        a = alloc();
-
-        read(a.val);
-        write(a.val);
-
-        free(a);
-
-        read(a.val);
+    begin
+        a = null;
+        if(a == null) then
+            write("hi");
+        endif;
 
         return 1;
     end
