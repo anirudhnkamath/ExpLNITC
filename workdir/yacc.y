@@ -40,7 +40,7 @@
 %type <astNode> inputStmt outputStmt assignStmt 
 %type <astNode> ifStmt whileStmt doWhileStmt rptUntStmt
 %type <astNode> expr
-%type <astNode> body fDef argList mainBlock retStmt arrDimn arrIndex
+%type <astNode> body fDef argList mainBlock retStmt arrDimn arrIndex tupEntry
 
 %type <gsTableEntry> gDeclBlock gDeclList gDecl gidList gid
 %type <lsTableEntry> idList lDecl lDeclList
@@ -233,8 +233,8 @@ inputStmt   :   READ LPAR ID RPAR EOL           {
                                                     $3->arrOffset = $4;
                                                     $$ = createReadNode($3); 
                                                 } 
-            |   READ LPAR expr DOT ID RPAR EOL  {
-                                                    $$ = createReadNode(createTupEntryNode($3, $5));
+            |   READ LPAR tupEntry RPAR EOL     {
+                                                    $$ = createReadNode($3);
                                                 }
             ;
 
@@ -254,16 +254,23 @@ assignStmt  :   ID ASSG expr EOL                {
             |   MULT ID ASSG expr EOL           {
                                                     $$ = createAssignNode(createDerefNode($2), $4);
                                                 }
-            |   expr DOT ID ASSG expr EOL       {
-                                                    $$ = createAssignNode(createTupEntryNode($1, $3), $5);
+            |   tupEntry ASSG expr EOL          {
+                                                    $$ = createAssignNode($1, $3);
                                                 }
             |   ID ASSG ALLOC LPAR RPAR EOL     {   
                                                     setIdNodeType($1);
                                                     $$ = createAssignNode($1, createAllocNode()); 
                                                 }
 
-            |   expr DOT ID ASSG ALLOC LPAR RPAR EOL    {  
-                                                            $$ = createAssignNode(createTupEntryNode($1, $3), createAllocNode()); 
+            |   tupEntry ASSG ALLOC LPAR RPAR EOL       {  
+                                                            $$ = createAssignNode($1, createAllocNode()); 
+                                                        }
+            
+            |   ID arrIndex ASSG ALLOC LPAR RPAR EOL    {   
+                                                            setIdNodeType($1);
+                                                            validateArrOffset($1, $2);
+                                                            $1->arrOffset = $2;
+                                                            $$ = createAssignNode($1, createAllocNode()); 
                                                         }
             ;
 
@@ -307,7 +314,7 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   MULT ID                 { $$ = createDerefNode($2); }
             |   AMPSAND ID              { $$ = createAddrToNode($2); }
 
-            |   expr DOT ID             { $$ = createTupEntryNode($1, $3); }
+            |   tupEntry                { $$ = $1; }
 
             |   NULL_VAL                { $$ = createNullNode(); }
             ;
@@ -319,6 +326,17 @@ arrIndex    :   arrIndex LBRACK expr RBRACK { $$ = insertToArrDimn($1, $3); }
 argList     :   argList COMMA expr      { $$ = addArgToArgList($1, $3); }
             |   expr                    { $$ = $1; }
             ;
+
+tupEntry    :   ID DOT ID               { setIdNodeType($1); $$ = createTupEntryNode($1, $3); }
+            |   ID arrIndex DOT ID      { 
+                                            setIdNodeType($1); 
+                                            validateArrOffset($1, $2); 
+                                            $1->arrOffset = $2; 
+                                            $$ = createTupEntryNode($1, $4); 
+                                        }
+            |   tupEntry DOT ID         { createTupEntryNode($1, $3); }
+
+
 
 %%
 

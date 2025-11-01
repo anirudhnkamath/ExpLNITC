@@ -125,7 +125,7 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
     n->right = exprNode;
 
     if(exprNode->tnodeType == NODE_ALLOC) {
-        if(strcmp(leftNode->type->name, "int") == 0 || strcmp(leftNode->type->name, "str") == 0) {
+        if(leftNode->type->fields == NULL) {
             printf("Error : heap memory can be allocated only for user-defined types\n");
             exit(1);
         }
@@ -377,7 +377,10 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
     if(tupNode->tnodeType == NODE_TUP_FIELD) {
         // do nothing, always right
     }
-    else if(tupNode->tnodeType == NODE_ID && tupNode->arrOffset == NULL) {
+    // else if(tupNode->tnodeType == NODE_ID && tupNode->arrOffset == NULL) {
+    //     setIdNodeType(tupNode);
+    // }
+    else if(tupNode->tnodeType == NODE_ID) {
         setIdNodeType(tupNode);
     }
     else {
@@ -524,13 +527,8 @@ void validateArrOffset(Tnode* idNode, Tnode* indexExprNode) {
         exit(1);
     }
 
-    if(idNode->gsTableEntry && 
-            (idNode->gsTableEntry->fLabel != _NA_ || 
-                (strcmp(idNode->gsTableEntry->type->name, "int") != 0 && 
-                 strcmp(idNode->gsTableEntry->type->name, "str") != 0)
-            ) 
-    ) {
-        printf("Error : functions can't be indexed\n");
+    if(idNode->gsTableEntry && idNode->gsTableEntry->dimensions == NULL) {
+        printf("Error : Invalid ID being indexed\n");
         exit(1);
     }
 
