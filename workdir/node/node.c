@@ -71,7 +71,6 @@ Tnode* createIdNode(char varName[]) {
 
 
 Tnode* createReadNode(Tnode* idNode) {
-
     // read id
     if(idNode->tnodeType == NODE_ID && idNode->arrOffset == NULL) {
         setIdNodeType(idNode);
@@ -506,7 +505,13 @@ void validateProperId(Tnode* idNode) {
     if( idNode->gsTableEntry && 
         idNode->gsTableEntry->fLabel == _NA_ && 
         idNode->gsTableEntry->dimensions == NULL &&
+        idNode->gsTableEntry->isPtr == _NA_ &&
         (strcmp(idNode->gsTableEntry->type->name, "int") == 0 || strcmp(idNode->gsTableEntry->type->name, "str") == 0)
+    ) return;
+
+    if( idNode->lsTableEntry &&
+        idNode->lsTableEntry->isPtr == _NA_ &&
+        (strcmp(idNode->type->name, "int") == 0 || strcmp(idNode->type->name, "str") == 0)
     ) return;
 
     printf("Error : Invalid use of proper ID\n");

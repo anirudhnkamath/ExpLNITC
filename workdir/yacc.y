@@ -129,9 +129,7 @@ tDeclList   :   tDeclList ID                            { typeTableHead = concat
 fieldList   :   fieldList field                 { $$ = concatFieldList($1, $2); }
             |   field                           { $$ = $1; }
 
-field       :   ID ID EOL                      { $$ = createField($2->varName, searchInTypeTable(typeTableHead, $1->varName)); }
-            |   INT ID EOL                     { $$ = createField($2->varName, searchInTypeTable(typeTableHead, "int")); }
-            |   STR ID EOL                     { $$ = createField($2->varName, searchInTypeTable(typeTableHead, "str")); }
+field       :   type ID EOL                      { $$ = createField($2->varName, $1); }
             ;
 
 

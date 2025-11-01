@@ -137,12 +137,6 @@ GsTableEntry* setGsTableType(GsTableEntry* head, TypeTable* type) {
             exit(1);
         }
 
-        if(temp->fLabel != _NA_ && (strcmp(type->name, "int") != 0 && strcmp(type->name, "str") != 0)) {
-            printf("Error : functions can't return user types\n");
-            exit(1);
-        }
-
-
         if(temp->fLabel == _NA_ && temp->isPtr == _NA_) {
             temp->size *= type->size;
             temp->binding = getNextBinding(temp->size);
