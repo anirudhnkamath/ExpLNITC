@@ -223,43 +223,49 @@ void functionExitCodeGen(Tnode* node, FILE* targetFile) {
 }
 
 int xsmAlloc(FILE* targetFile) {
-    int addrReg = getFreeRegister();
 
-    fprintf(targetFile, "MOV R%d, [%d]\n", addrReg, HEAP_START);
-    fprintf(targetFile, "MOV [%d], [R%d]\n", HEAP_START, addrReg);
+    int retReg = getFreeRegister();
+    int reg1 = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, \"Alloc\"\n", reg1);
+    fprintf(targetFile, "PUSH R%d\n", reg1);
+    fprintf(targetFile, "PUSH R%d\n", reg1);
+    fprintf(targetFile, "PUSH R%d\n", reg1);
+    fprintf(targetFile, "PUSH R%d\n", reg1);
+    fprintf(targetFile, "PUSH R%d\n", reg1);
 
-    int freeReg = getFreeRegister();
-    fprintf(targetFile, "MOV R%d, R%d\n", freeReg, addrReg);
-    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
-    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
-    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
-    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
-    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
-    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
-    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
-    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
-    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
-    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
-    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
-    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
-    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
-    fprintf(targetFile, "ADD R%d, 1\n", freeReg);
-    fprintf(targetFile, "MOV [R%d], %d\n", freeReg, BIG_INT);
+    fprintf(targetFile, "CALL 0\n");
 
-    releaseRegister(freeReg);
-
-    return addrReg;
+    fprintf(targetFile, "POP R%d\n", retReg);
+    fprintf(targetFile, "POP R%d\n", reg1);
+    fprintf(targetFile, "POP R%d\n", reg1);
+    fprintf(targetFile, "POP R%d\n", reg1);
+    fprintf(targetFile, "POP R%d\n", reg1);
+    
+    releaseRegister(reg1);
+    return retReg;
 }
 
 void xsmFree(Tnode* tupNode, FILE* targetFile) {
+
     int addrReg = getEffectiveAddr(tupNode, targetFile);
+    int freeReg = getFreeRegister();
 
-    fprintf(targetFile, "MOV [R%d], %d\n", addrReg, BIG_INT);
+    fprintf(targetFile, "MOV R%d, \"Free\"\n", freeReg);
+    fprintf(targetFile, "PUSH R%d\n", freeReg);
+    fprintf(targetFile, "PUSH R%d\n", addrReg);
+    fprintf(targetFile, "PUSH R%d\n", freeReg);
+    fprintf(targetFile, "PUSH R%d\n", freeReg);
+    fprintf(targetFile, "PUSH R%d\n", freeReg);
 
-    fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
-    fprintf(targetFile, "MOV [R%d], [%d]\n", addrReg, HEAP_START);
-    fprintf(targetFile, "MOV [%d], R%d\n", HEAP_START, addrReg);
+    fprintf(targetFile, "CALL 0\n");
 
+    fprintf(targetFile, "POP R%d\n", freeReg);
+    fprintf(targetFile, "POP R%d\n", freeReg);
+    fprintf(targetFile, "POP R%d\n", freeReg);
+    fprintf(targetFile, "POP R%d\n", freeReg);
+    fprintf(targetFile, "POP R%d\n", freeReg);
+
+    releaseRegister(freeReg);
     releaseRegister(addrReg);
 }
 
