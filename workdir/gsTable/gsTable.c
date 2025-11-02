@@ -127,11 +127,6 @@ GsTableEntry* setGsTableType(GsTableEntry* head, TypeTable* type) {
     GsTableEntry* temp = head;
     while(temp) {
 
-        // if(temp->dimensions && (strcmp(type->name, "int") != 0 && strcmp(type->name, "str") != 0)) {
-        //     printf("Error : user type arrays not allowed\n");
-        //     exit(1);
-        // }
-
         if(temp->isPtr == 1 && (strcmp(type->name, "int") != 0 && strcmp(type->name, "str") != 0)) {
             printf("Error : user defined pointers not allowed\n");
             exit(1);

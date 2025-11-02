@@ -104,11 +104,11 @@ Tnode* createReadNode(Tnode* idNode) {
 }
 
 Tnode* createWriteNode(Tnode* exprNode) {
-    
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_WRITE;
 
     if(strcmp(exprNode->type->name, "int") != 0 && strcmp(exprNode->type->name, "str") != 0) {
+        printf("type %s  dot %s\n", exprNode->type->name, exprNode->right->varName);
         printf("Error: Can't write anything other than STR or INT\n");
         exit(1);
     }
@@ -377,9 +377,6 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
     if(tupNode->tnodeType == NODE_TUP_FIELD) {
         // do nothing, always right
     }
-    // else if(tupNode->tnodeType == NODE_ID && tupNode->arrOffset == NULL) {
-    //     setIdNodeType(tupNode);
-    // }
     else if(tupNode->tnodeType == NODE_ID) {
         setIdNodeType(tupNode);
     }
@@ -454,6 +451,7 @@ void setIdNodeType(Tnode* idNode) {
         return;
     }
 
+    printf("%s\n", idNode->varName);
     printf("Error : Undeclared variable being used\n");
     exit(1);
 }

@@ -117,6 +117,8 @@ int getEffectiveAddr(Tnode* idNode, FILE* targetFile) {
 
     // for tuples 
     else if(idNode->tnodeType == NODE_TUP_FIELD) {
+        releaseRegister(addrReg);
+
         int addrReg = getEffectiveAddr(idNode->left, targetFile);
         fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
 

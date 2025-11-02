@@ -3,6 +3,7 @@
 #include <string.h>
 #include "../gsTable/gsTable.h"
 #include "./typeTable.h"
+#include "../define/constants.h"
 
 TypeTable *typeTableHead = NULL;
 
@@ -28,6 +29,10 @@ TypeTable* createNewType(char* varName, FieldList* fields) {
     }
 
     t->size = size > 0 ? size : 1;
+    if(size > HEAP_BLOCK_SIZE) {
+        printf("Error : user-types cannot have more than 8 fields\n");
+        exit(1);
+    }
 
     return t;
 }
@@ -44,6 +49,10 @@ TypeTable* updateType(char* varName, FieldList* fields) {
     }
 
     t->size = size > 0 ? size : 1;
+    if(size > HEAP_BLOCK_SIZE) {
+        printf("Error : user-types cannot have more than 8 fields\n");
+        exit(1);
+    }
 
     return t;
 }

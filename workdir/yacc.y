@@ -334,7 +334,7 @@ tupEntry    :   ID DOT ID               { setIdNodeType($1); $$ = createTupEntry
                                             $1->arrOffset = $2; 
                                             $$ = createTupEntryNode($1, $4); 
                                         }
-            |   tupEntry DOT ID         { createTupEntryNode($1, $3); }
+            |   tupEntry DOT ID         { $$ = createTupEntryNode($1, $3); }
 
 
 
