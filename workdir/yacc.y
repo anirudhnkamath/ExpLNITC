@@ -31,7 +31,7 @@
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE BEGIN_TYPE END_TYPE
 %token ASSG
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR AMPSAND
-%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE BRKP NULL_VAL
+%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE BRKP NULL_VAL CLASS ENDCLASS
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
 %token EOL COMMA DOT
@@ -63,13 +63,45 @@
 
 %%
 
-program     :   tDeclBlock gDeclBlock fDefBlock mainBlock  { }
-            |   tDeclBlock gDeclBlock mainBlock            { }
-            |   tDeclBlock mainBlock                       { }
-            |   gDeclBlock fDefBlock mainBlock             { }
-            |   gDeclBlock mainBlock                       { }
-            |   mainBlock                                  { }
+program     :   tDeclBlock clsDeclBlock gDeclBlock fDefBlock mainBlock;
+            |   tDeclBlock clsDeclBlock gDeclBlock mainBlock;
+
+
+
+/*  CLASS DECLARATIONS  */
+
+clsDeclBlock:   CLASS clsDeclList ENDCLASS      {}
+            |   CLASS ENDCLASS                  {}
+
+clsDeclList :   clsDeclList clsDecl             {}
+            |   clsDecl                         {}
+
+clsDecl     :   clsName LCURL BEGIN_DECL clsFldList mthdList END_DECL mthdDefList RCURL      {}
             ;
+
+clsName     :   ID                              {}
+            ; 
+
+clsFldList  :   clsFldList clsFld               {}
+            |   clsFld                          {}
+            ;
+
+clsFld      :   INT ID EOL                      {}
+            |   STR ID EOL                      {}
+            |   ID ID EOL                       {}
+            ;
+
+mthdList    :   mthdList mthdDecl               {}
+            |   mthdDecl                        {}
+            ;
+
+mthdDecl    :   ID ID LPAR paramList RPAR       {}
+            ;
+
+mthdDefList :   mthdDefList fDef                {}
+            |   fDef                            {}
+            ;
+
 
 
 

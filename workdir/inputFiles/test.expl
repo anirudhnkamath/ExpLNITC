@@ -1,45 +1,21 @@
 type
-    node {
-        str name;
-        int age;
-        int a;
-        int b;
-        int c;
-        int d;
-        int e;
-        int f;
-        int g;
-    }
 endtype
 
+class
+    class1 {
+        decl
+        enddecl
+    }
+endclass
+
 decl
-    node arr[5];
 enddecl
 
 int main() {
     decl
-        int index;
     enddecl
 
     begin
-        index = 0;
-        while(index < 5) do
-            arr[index] = alloc();
-            read(arr[index].name); 
-            read(arr[index].age);
-            
-            index = index + 1;
-        endwhile; 
-
-        index = 0;
-        while(index < 5) do
-            write(arr[index].name); 
-            write(arr[index].age);
-            free(arr[index]);
-            
-            index = index + 1;
-        endwhile; 
-
         return 1;
     end
 }

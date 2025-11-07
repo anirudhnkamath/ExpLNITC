@@ -40,9 +40,10 @@
 
 "decl" { return BEGIN_DECL; }
 "enddecl" { return END_DECL; }
-
 "type" { return BEGIN_TYPE; }
 "endtype" { return END_TYPE; }
+"class" { return CLASS; }
+"endclass" { return ENDCLASS; }
 
 "read" { return READ; }
 "write" { return WRITE; }
