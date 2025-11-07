@@ -18,7 +18,8 @@ gcc -o main_compiler \
     gsTable/gsTable.c \
     label/label.c \
     typeTable/typeTable.c \
-    xsmGen/xsmGen.c
+    xsmGen/xsmGen.c \
+    classTable/classTable.c
 
 # compiler to generate labelled code
 ./main_compiler "$INPUT_FILE"

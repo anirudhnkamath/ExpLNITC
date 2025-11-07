@@ -1,9 +1,24 @@
 type
+    student {
+        str name;
+        int age;
+    }
 endtype
 
 class
-    class1 {
+    student2 {
         decl
+            student2 father;
+            student mother;
+            int fn();
+        enddecl
+    }
+
+    student3 {
+        decl
+            student3 mother;
+            student fn();
+            student fn2(student mother);
         enddecl
     }
 endclass

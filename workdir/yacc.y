@@ -9,6 +9,7 @@
     #include "./node/node.h"
     #include "./xsmGen/xsmGen.h"
     #include "./typeTable/typeTable.h"
+    #include "./classTable/classTable.h"
 
     FILE* yyin;
     FILE* targetFile;
@@ -25,6 +26,9 @@
     struct TypeTable* declDataType;
     struct FieldList* fieldList;
     struct TypeTable* typeTable;
+    struct ClsMthdList* clsMthdList;
+    struct ClsFldList* clsFldList;
+    struct ClassTable* classTable;
 }
 
 %token <astNode> ID NUMBER STR_LTRL
@@ -40,7 +44,7 @@
 %type <astNode> inputStmt outputStmt assignStmt 
 %type <astNode> ifStmt whileStmt doWhileStmt rptUntStmt
 %type <astNode> expr
-%type <astNode> body fDef argList mainBlock retStmt arrDimn arrIndex tupEntry
+%type <astNode> body fDef argList mainBlock retStmt arrDimn arrIndex tupEntry clsName
 
 %type <gsTableEntry> gDeclBlock gDeclList gDecl gidList gid
 %type <lsTableEntry> idList lDecl lDeclList
@@ -51,6 +55,11 @@
 
 %type <fieldList> field fieldList
 %type <typeTable> tDeclBlock tDeclList
+
+%type <clsFldList> clsFldList clsFld
+
+%type <clsMthdList> mthdList mthdDecl
+
 
 
 %left OR
@@ -63,44 +72,56 @@
 
 %%
 
-program     :   tDeclBlock clsDeclBlock gDeclBlock fDefBlock mainBlock;
-            |   tDeclBlock clsDeclBlock gDeclBlock mainBlock;
+program     :   tDeclBlock clsDeclBlock gDeclBlock fDefBlock mainBlock
+            |   tDeclBlock clsDeclBlock gDeclBlock mainBlock
+            ;
 
 
 
 /*  CLASS DECLARATIONS  */
 
-clsDeclBlock:   CLASS clsDeclList ENDCLASS      {}
+clsDeclBlock:   CLASS clsDeclList ENDCLASS      { classTableHead = setClassTableIndices(classTableHead); printClassTable(); }
             |   CLASS ENDCLASS                  {}
+            ;
 
 clsDeclList :   clsDeclList clsDecl             {}
             |   clsDecl                         {}
-
-clsDecl     :   clsName LCURL BEGIN_DECL clsFldList mthdList END_DECL mthdDefList RCURL      {}
             ;
 
-clsName     :   ID                              {}
+clsDecl     :   clsName LCURL BEGIN_DECL clsFldList 
+                        mthdList END_DECL RCURL     { 
+                                                                    updateClassTableEntry($1->varName, $4, $5);
+                                                                }
+            ;
+
+clsName     :   ID                              {   
+                                                    classTableHead = concatClassTable(classTableHead, createEmptyClass($1->varName)); 
+                                                    $$ = $1;
+                                                }
             ; 
 
-clsFldList  :   clsFldList clsFld               {}
-            |   clsFld                          {}
+clsFldList  :   clsFldList clsFld               { $$ = concatClsFld($1, $2); }
+            |   clsFld                          { $$ = $1; }
             ;
 
-clsFld      :   INT ID EOL                      {}
-            |   STR ID EOL                      {}
-            |   ID ID EOL                       {}
+clsFld      :   INT ID EOL                      { $$ = createClsFld("int", $2->varName); }
+            |   STR ID EOL                      { $$ = createClsFld("str", $2->varName); }
+            |   ID ID EOL                       { $$ = createClsFld($1->varName, $2->varName); }
             ;
 
-mthdList    :   mthdList mthdDecl               {}
-            |   mthdDecl                        {}
+mthdList    :   mthdList mthdDecl               { $$ = concatMthdDecl($1, $2); }
+            |   mthdDecl                        { $$ = $1; }
             ;
 
-mthdDecl    :   ID ID LPAR paramList RPAR       {}
+mthdDecl    :   INT ID LPAR paramList RPAR EOL  { $$ = createMthdDecl("int", $2->varName, $4); }
+            |   STR ID LPAR paramList RPAR EOL  { $$ = createMthdDecl("str", $2->varName, $4); }
+            |   ID ID LPAR paramList RPAR EOL   { $$ = createMthdDecl($1->varName, $2->varName, $4); }
             ;
 
-mthdDefList :   mthdDefList fDef                {}
+// idk
+/* mthdDefList :   mthdDefList fDef                {}
             |   fDef                            {}
-            ;
+            ; */
 
 
 
@@ -161,7 +182,7 @@ tDeclList   :   tDeclList ID                            { typeTableHead = concat
 fieldList   :   fieldList field                 { $$ = concatFieldList($1, $2); }
             |   field                           { $$ = $1; }
 
-field       :   type ID EOL                      { $$ = createField($2->varName, $1); }
+field       :   type ID EOL                     { $$ = createField($2->varName, $1); }
             ;
 
 
