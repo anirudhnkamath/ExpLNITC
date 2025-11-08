@@ -46,7 +46,8 @@ int main() {
     enddecl
 
     begin
-        temp = p.fn();
+        p = new(person);
+        delete(p);
         return 1;
     end
 }

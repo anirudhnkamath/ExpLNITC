@@ -58,6 +58,8 @@ enum nodeTypes {
     NODE_INITLZE,
     NODE_BRKP,
     NODE_NULL,
+    NODE_NEW,
+    NODE_DELETE,
 };
 
 enum errorCodes {

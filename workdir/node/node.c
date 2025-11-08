@@ -145,6 +145,15 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
         }
     }
 
+    if(exprNode->tnodeType == NODE_NEW) {
+        if(!leftNode->class || strcmp(leftNode->class->name, exprNode->left->class->name) != 0) {
+            printf("Error : type mismatch in assigning NEW\n");
+            exit(1);
+        }
+
+        return n;
+    }
+
     else if(strcmp(leftNode->type->name, exprNode->type->name) != 0 || leftNode->isPtr != exprNode->isPtr) {
         printf("Error : type mismatch in assignment\n");
         exit(1);
@@ -523,6 +532,33 @@ Tnode* createMthdCallNode(Tnode* idNode, Tnode* argList) {
     n->left = idNode;
     n->left->argList = argList;
 
+    return n;
+}
+
+Tnode* createNewNode(Tnode* idNode) {
+    ClassTable* class = searchInClassTable(classTableHead, idNode->varName);
+    if(!class) {
+        printf("Error : NEW called on invalid class name\n");
+        exit(1);
+    }
+
+    Tnode* n = createEmptyNode();
+    n->left = idNode;
+    n->tnodeType = NODE_NEW;
+    n->left->class = class;
+
+    return n;
+}
+
+Tnode* createDeleteNode(Tnode* exprNode) {
+    if(!exprNode->class) {
+        printf("Error : variables of non-class type cannot be deleted\n");
+        exit(1);
+    }
+
+    Tnode* n = createEmptyNode();
+    n->tnodeType = NODE_DELETE;
+    n->left = exprNode;
     return n;
 }
 

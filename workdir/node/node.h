@@ -60,6 +60,8 @@ Tnode* createFreeNode(Tnode* exprNode);
 Tnode* createInitlzeNode();
 
 Tnode* createMthdCallNode(Tnode* idNode, Tnode* argList);
+Tnode* createNewNode(Tnode* idNode);
+Tnode* createDeleteNode(Tnode* exprNode);
 
 void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParams);
 void validateProperId(Tnode* idNode);

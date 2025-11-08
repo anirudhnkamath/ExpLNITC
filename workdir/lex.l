@@ -50,6 +50,9 @@
     return SELF;
 }
 
+"new" { return NEW; }
+"delete" { return DELETE; }
+
 "read" { return READ; }
 "write" { return WRITE; }
 

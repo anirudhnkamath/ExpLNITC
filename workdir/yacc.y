@@ -36,7 +36,7 @@
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE BEGIN_TYPE END_TYPE
 %token ASSG
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR AMPSAND
-%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE BRKP NULL_VAL CLASS ENDCLASS
+%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK NEW DELETE CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE BRKP NULL_VAL CLASS ENDCLASS
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
 %token EOL COMMA DOT
@@ -301,6 +301,7 @@ stmt        :   inputStmt                       { $$ = $1; }
             |   FREE LPAR expr RPAR EOL         { $$ = createFreeNode($3); }
             |   INITLZE LPAR RPAR EOL           { $$ = createInitlzeNode(); }
             |   BRKP EOL                        { $$ = createBrkpNode(); }
+            |   DELETE LPAR expr RPAR EOL       { $$ = createDeleteNode($3); }
             ;
 
 inputStmt   :   READ LPAR ID RPAR EOL           {    
@@ -348,6 +349,17 @@ assignStmt  :   ID ASSG expr EOL                {
                                                             validateArrOffset($1, $2);
                                                             $1->arrOffset = $2;
                                                             $$ = createAssignNode($1, createAllocNode()); 
+                                                        }
+            |   ID ASSG NEW LPAR ID RPAR EOL            {
+                                                            setIdNodeType($1);
+                                                            $$ = createAssignNode($1, createNewNode($5));
+                                                        }
+            |   tupEntry ASSG NEW LPAR ID RPAR EOL      {   $$ = createAssignNode($1, createNewNode($5) ); }
+            |   ID arrIndex ASSG NEW LPAR ID RPAR EOL   {
+                                                            setIdNodeType($1);
+                                                            validateArrOffset($1, $2);
+                                                            $1->arrOffset = $2;
+                                                            $$ = createAssignNode($1, createNewNode($6)); 
                                                         }
             ;
 
