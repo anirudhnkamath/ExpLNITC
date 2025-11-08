@@ -204,6 +204,11 @@ void printGsTable() {
 
 
 ParamListEntry* createParamListEntry(char* varName, TypeTable* dataType, int isPtr) {
+    if(!dataType) {
+        printf("Error : invalid type for parameter\n");
+        exit(1);
+    }
+    
     ParamListEntry* n = (ParamListEntry*)malloc(sizeof(ParamListEntry));
     n->varName = strdup(varName);
     n->type = dataType;
@@ -346,7 +351,7 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
 
 LsTableEntry* setLsTableType(LsTableEntry* head, TypeTable* type) {
     if(!type) {
-        printf("Error : unknown type used in local declaration\n");
+        printf("Error : invalid type used in local declaration\n");
         exit(1);
     }
     LsTableEntry* temp = head;

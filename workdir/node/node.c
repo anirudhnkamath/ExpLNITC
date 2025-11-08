@@ -110,8 +110,9 @@ Tnode* createWriteNode(Tnode* exprNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_WRITE;
 
-    if(strcmp(exprNode->type->name, "int") != 0 && strcmp(exprNode->type->name, "str") != 0) {
-        printf("type %s  dot %s\n", exprNode->type->name, exprNode->right->varName);
+    if( !exprNode->type || 
+        (strcmp(exprNode->type->name, "int") != 0 && strcmp(exprNode->type->name, "str") != 0)
+    ) {
         printf("Error: Can't write anything other than STR or INT\n");
         exit(1);
     }
@@ -128,7 +129,7 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
     n->right = exprNode;
 
     if(exprNode->tnodeType == NODE_ALLOC) {
-        if(leftNode->type->fields == NULL) {
+        if(!leftNode->type || leftNode->type->fields == NULL) {
             printf("Error : heap memory can be allocated only for user-defined types\n");
             exit(1);
         }
@@ -137,12 +138,12 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
     }
 
     if(exprNode->tnodeType == NODE_NULL) {
-        if(leftNode->type->fields)
-            return n;
-        else {
+        if(!leftNode->type || !leftNode->type->fields) {
             printf("Error : null value can be only assigned to user-defined types\n");
             exit(1);
         }
+        else 
+            return n;
     }
 
     if(exprNode->tnodeType == NODE_NEW) {
@@ -154,7 +155,10 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
         return n;
     }
 
-    else if(strcmp(leftNode->type->name, exprNode->type->name) != 0 || leftNode->isPtr != exprNode->isPtr) {
+    if( (leftNode->type != exprNode->type) || 
+        (leftNode->isPtr != exprNode->isPtr) ||
+        (leftNode->class != exprNode->class)
+    ) {
         printf("Error : type mismatch in assignment\n");
         exit(1);
     }
@@ -167,7 +171,7 @@ Tnode* createIfElseNode(Tnode* condNode, Tnode* ifNode, Tnode* elseNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_IF_ELSE;
     
-    if(strcmp(condNode->type->name, "bool") != 0) {
+    if(!condNode->type || strcmp(condNode->type->name, "bool") != 0) {
         printf("Error: Mistmatch type\n");
         exit(1);
     }
@@ -182,7 +186,7 @@ Tnode* createIfNode(Tnode* condNode, Tnode* stmtNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_IF;
     
-    if(strcmp(condNode->type->name, "bool") != 0) {
+    if(!condNode->type || strcmp(condNode->type->name, "bool") != 0) {
         printf("Error: Mistmatch type\n");
         exit(1);
     }
@@ -197,7 +201,7 @@ Tnode* createLoopNode(int tnodeType, Tnode* condNode, Tnode* stmtNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = tnodeType;
 
-    if(strcmp(condNode->type->name, "bool") != 0) {
+    if(!condNode->type || strcmp(condNode->type->name, "bool") != 0) {
         printf("Error: Mistmatch type\n");
         exit(1);
     }
@@ -220,8 +224,10 @@ Tnode* createArithOpNode(int tnodeType, Tnode* left, Tnode* right) {
     Tnode* n = createEmptyNode();
     n->tnodeType = tnodeType;
 
-    if(strcmp(left->type->name, "int") != 0 || strcmp(right->type->name, "int") != 0) {
-        printf("Error: mistmatch type\n");
+    if( !left->type || !right->type || 
+        strcmp(left->type->name, "int") != 0 || strcmp(right->type->name, "int") != 0
+    ) {
+        printf("Error: invalid type in arith OP\n");
         exit(1);
     }
 
@@ -243,6 +249,11 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
 
     TypeTable* lt = left->type;
     TypeTable* rt = right->type;
+
+    if(!lt || !rt) {
+        printf("Error : invalid operands in rel OP\n");
+        exit(1);
+    }
 
     if(tnodeType == NODE_EQ || tnodeType == NODE_NEQ) {
         int leftNull = strcmp(lt->name, "null") == 0;
@@ -282,7 +293,9 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
 }
 
 Tnode* createLogOpNode(int tNodeType, Tnode* left, Tnode* right) {
-    if(strcmp(left->type->name, "bool") != 0 || strcmp(right->type->name, "bool") != 0) {
+    if( !left->type || !right->type || 
+        strcmp(left->type->name, "bool") != 0 || strcmp(right->type->name, "bool") != 0
+    ) {
         printf("Error: mistmatch type\n");
         exit(1);
     }
@@ -300,6 +313,11 @@ Tnode* createAddrToNode(Tnode* idNode) {
     setIdNodeType(idNode);
     validateProperId(idNode);
 
+    if(!idNode->type || idNode->type->fields) {
+        printf("Error : pointers only allower with primitive types\n");
+        exit(1);
+    }
+
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_ADDR_TO;
     n->left = idNode;
@@ -313,7 +331,7 @@ Tnode* createDerefNode(Tnode* idNode) {
     setIdNodeType(idNode);
 
     TypeTable* curType; 
-    if(idNode->isPtr != 1 && idNode->isPtr != 1) {
+    if(idNode->isPtr != 1) {
         printf("Error : invalid address access\n");
         exit(1);
     }
@@ -343,7 +361,9 @@ Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
     ParamListEntry *temp1 = declParams;
     Tnode* temp2 = argListNode;
     while(temp1 && temp2) {
-        if(strcmp(temp1->type->name, temp2->type->name) != 0 || temp1->isPtr != temp2->isPtr) {
+        if( !temp1->type || !temp2->type || 
+            strcmp(temp1->type->name, temp2->type->name) != 0 || temp1->isPtr != temp2->isPtr
+        ) {
             printf("Error : type mismatch in function call\n");
             exit(1);
         }
@@ -372,7 +392,7 @@ Tnode* addArgToArgList(Tnode* list, Tnode* expr) {
 }
 
 Tnode* createReturnNode(Tnode* exprNode) {
-    if(strcmp(exprNode->type->name, curFnType->name) != 0) {
+    if(!exprNode->type || strcmp(exprNode->type->name, curFnType->name) != 0) {
         printf("Error : invalid return type for function\n");
         exit(1);
     }
@@ -510,7 +530,10 @@ Tnode* createFreeNode(Tnode* exprNode) {
     Tnode* n = createEmptyNode();
     n->tnodeType = NODE_FREE;
 
-    if(strcmp(exprNode->type->name, "int") == 0 || strcmp(exprNode->type->name, "str") == 0) {
+    if( !exprNode->type ||
+        strcmp(exprNode->type->name, "int") == 0 || 
+        strcmp(exprNode->type->name, "str") == 0
+    ) {
         printf("Error : primitive values cannot be freed\n");
         exit(1);
     }
@@ -591,6 +614,11 @@ void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParam
     setIdNodeType(idNode);
     curFnType = idNode->type;
 
+    if(!curFnType) {
+        printf("Error : invalid return type for function\n");
+        exit(1);
+    }
+
     GsTableEntry* found = findInGsTable(gsTableHead, idNode->varName);
     if(!found) {
         printf("Error : The defined function was never declared\n");
@@ -610,7 +638,10 @@ void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParam
     ParamListEntry* declParams = found->paramList;
     ParamListEntry *temp1 = fnParams, *temp2 = declParams;
     while(temp1 && temp2) {
-        if(strcmp(temp1->type->name, temp2->type->name) != 0 || strcmp(temp1->varName, temp2->varName) != 0) {
+        if( !temp1->type || !temp2->type ||
+            strcmp(temp1->type->name, temp2->type->name) != 0 || 
+            strcmp(temp1->varName, temp2->varName) != 0
+        ) {
             printf("Error : Parameters of function definition and declaration conflict\n");
             exit(1);
         }

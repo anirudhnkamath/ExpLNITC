@@ -15,6 +15,7 @@ class
             
             int fn();
             int fn2(int age);
+            int getAge();
         enddecl
 
         int fn() {
@@ -32,11 +33,16 @@ class
                 return self.fn();
             end
         }
+
+        int getAge() {
+            decl enddecl
+            begin return self.age; end
+        }
     }
 endclass
 
 decl
-    person p;
+    person p1, p2;
     bst b;
     int temp;
 enddecl
@@ -46,8 +52,9 @@ int main() {
     enddecl
 
     begin
-        p = new(person);
-        delete(p);
-        return 1;
+        p1 = new(person);
+        write(p1.getAge());
+        delete(p1);
+        return p1;
     end
 }
