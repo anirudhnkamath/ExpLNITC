@@ -29,9 +29,10 @@
     struct ClsMthdList* clsMthdList;
     struct ClsFldList* clsFldList;
     struct ClassTable* classTable;
+    char* string;
 }
 
-%token <astNode> ID NUMBER STR_LTRL
+%token <astNode> ID NUMBER STR_LTRL SELF
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE BEGIN_TYPE END_TYPE
 %token ASSG
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR AMPSAND
@@ -44,7 +45,7 @@
 %type <astNode> inputStmt outputStmt assignStmt 
 %type <astNode> ifStmt whileStmt doWhileStmt rptUntStmt
 %type <astNode> expr
-%type <astNode> body fDef argList mainBlock retStmt arrDimn arrIndex tupEntry clsName mthdDef
+%type <astNode> body fDef argList mainBlock retStmt arrDimn arrIndex tupEntry clsName mthdDef fnCall mthdCall
 
 %type <gsTableEntry> gDeclBlock gDeclList gDecl gidList gid
 %type <lsTableEntry> idList lDecl lDeclList
@@ -59,6 +60,8 @@
 %type <clsFldList> clsFldList clsFld
 
 %type <clsMthdList> mthdList mthdDecl
+
+%type <string> gType
 
 
 
@@ -81,7 +84,7 @@ program     :   tDeclBlock clsDeclBlock gDeclBlock fDefBlock mainBlock
 /*  CLASS DECLARATIONS  */
 
 clsDeclBlock:   CLASS clsDeclList ENDCLASS      { classTableHead = setClassTableIndices(classTableHead); }
-            |   CLASS ENDCLASS                  {}
+            |   CLASS ENDCLASS                  { classTableHead = NULL; }
             ;
 
 clsDeclList :   clsDeclList clsDecl             {}
@@ -124,16 +127,18 @@ mthdDefList :   mthdDefList mthdDef              {}
             ;
 
 mthdDef     :   type ID LPAR paramList RPAR LCURL lDeclBlock    {   
-                                                                    ClsMthdList* found = validateMthd($1, $2, $4); 
+                                                                    ClsMthdList* found = validateMthd($1, $2, $4);
+                                                                    lsTableHead = insertSelfToLsTable(lsTableHead);
                                                                     setLDeclBinding(lsTableHead);
-                                                                    functionEntryCodeGen(found->fLabel, targetFile);
+
+                                                                    // functionEntryCodeGen(found->fLabel, targetFile);
 
                                                                     lsTableHead = addParamsToLsTable(lsTableHead, $4);
                                                                 }
                                                     body RCURL  {
                                                                     $$ = $9;
-                                                                    codeGen($$, targetFile);
-                                                                    functionExitCodeGen(targetFile);
+                                                                    // codeGen($$, targetFile);
+                                                                    // functionExitCodeGen(targetFile);
 
                                                                     lsTableHead = NULL;
                                                                 }
@@ -152,7 +157,7 @@ gDeclList   :   gDeclList gDecl     { $$ = concatGsTable($1, $2); }
             |   gDecl               { $$ = $1; }
             ;
 
-gDecl       :   type gidList EOL    { $$ = setGsTableType($2, $1); }
+gDecl       :   gType gidList EOL   { $$ = setGsTableType($2, $1); }
             ;
 
 gidList     :   gidList COMMA gid   { $$ = concatGsTable($1, $3); }
@@ -165,9 +170,9 @@ gid         :   ID                          { $$ = createIdEntryInGsTable($1->va
             |   MULT ID                     { $$ = createPtrEntryInGsTable($2->varName); }
             ;
 
-type        :   INT     { $$ = searchInTypeTable(typeTableHead, "int"); }
-            |   STR     { $$ = searchInTypeTable(typeTableHead, "str"); }
-            |   ID      { $$ = validateUserType(typeTableHead, $1->varName); }
+gType       :   INT                 { $$ = strdup("int"); }
+            |   STR                 { $$ = strdup("str"); }
+            |   ID                  { $$ = $1->varName; }
             ;
 
 arrDimn     :   arrDimn LBRACK NUMBER RBRACK    { $$ = insertToArrDimn($1, $3); }
@@ -212,14 +217,14 @@ fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
                                                                     validateFunction($1, $2, $4);
                                                                     
                                                                     setLDeclBinding(lsTableHead);
-                                                                    functionEntryCodeGen($2->gsTableEntry->fLabel, targetFile);
+                                                                    // functionEntryCodeGen($2->gsTableEntry->fLabel, targetFile);
 
                                                                     lsTableHead = addParamsToLsTable(lsTableHead, $4);
                                                                 } 
                 /* mid-rule action */               body RCURL  {
                                                                     $$ = $9;
-                                                                    codeGen($$, targetFile);
-                                                                    functionExitCodeGen(targetFile);
+                                                                    // codeGen($$, targetFile);
+                                                                    // functionExitCodeGen(targetFile);
 
                                                                     lsTableHead = NULL;
                                                                 } 
@@ -234,7 +239,10 @@ param       :   type ID         {   $$ = createParamListEntry($2->varName, $1, _
             |   type MULT ID    {   $$ = createParamListEntry($3->varName, $1, 1); }
             ;
 
-
+type        :   INT     { $$ = searchInTypeTable(typeTableHead, "int"); }
+            |   STR     { $$ = searchInTypeTable(typeTableHead, "str"); }
+            |   ID      { $$ = searchInTypeTable(typeTableHead, $1->varName); }
+            ;
 
 /*  LOCAL DECLARATIONS  */
 
@@ -263,9 +271,9 @@ mainBlock   :   INT {curFnType = searchInTypeTable(typeTableHead, "int"); } MAIN
                                          LPAR RPAR LCURL lDeclBlock body RCURL     {
                                                                                         $$ = $8; 
                                                                                         setLDeclBinding(lsTableHead);
-
-                                                                                        initialiseMainFn(targetFile);
-                                                                                        codeGen($8, targetFile); 
+                                                                                        printf("parsing over, codegen started\n");
+                                                                                        // initialiseMainFn(targetFile);
+                                                                                        // codeGen($8, targetFile); 
                                                                                     }
             ;
 
@@ -377,8 +385,7 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   ID arrIndex             { setIdNodeType($1); validateArrOffset($1, $2); $1->arrOffset = $2; $$ = $1; }
             |   STR_LTRL                { $$ = $1; }
 
-            |   ID LPAR RPAR            { $$ = createFnCallNode($1, NULL); }
-            |   ID LPAR argList RPAR    { $$ = createFnCallNode($1, $3); }
+            |   fnCall                  { $$ = $1; }
 
             |   MULT ID                 { $$ = createDerefNode($2); }
             |   AMPSAND ID              { $$ = createAddrToNode($2); }
@@ -386,6 +393,10 @@ expr        :   expr PLUS expr          { $$ = createArithOpNode(NODE_ADD, $1, $
             |   tupEntry                { $$ = $1; }
 
             |   NULL_VAL                { $$ = createNullNode(); }
+            ;
+
+fnCall      :   ID LPAR RPAR            { $$ = createFnCallNode($1, NULL); }
+            |   ID LPAR argList RPAR    { $$ = createFnCallNode($1, $3); }
             ;
 
 arrIndex    :   arrIndex LBRACK expr RBRACK { $$ = insertToArrDimn($1, $3); }
@@ -396,14 +407,32 @@ argList     :   argList COMMA expr      { $$ = addArgToArgList($1, $3); }
             |   expr                    { $$ = $1; }
             ;
 
-tupEntry    :   ID DOT ID               { setIdNodeType($1); $$ = createTupEntryNode($1, $3); }
-            |   ID arrIndex DOT ID      { 
-                                            setIdNodeType($1); 
-                                            validateArrOffset($1, $2); 
-                                            $1->arrOffset = $2; 
-                                            $$ = createTupEntryNode($1, $4); 
-                                        }
-            |   tupEntry DOT ID         { $$ = createTupEntryNode($1, $3); }
+mthdCall    :   ID LPAR RPAR            { $$ = createMthdCallNode($1, NULL); }
+            |   ID LPAR argList RPAR    { $$ = createMthdCallNode($1, $3); }
+            ;
+
+tupEntry    :   ID DOT ID                       { setIdNodeType($1); $$ = createTupEntryNode($1, $3); }
+            |   ID DOT mthdCall                 { setIdNodeType($1); $$ = createTupEntryNode($1, $3); }
+
+            |   SELF DOT ID                     { setIdNodeType($1); $$ = createTupEntryNode($1, $3); }
+            |   SELF DOT mthdCall               { setIdNodeType($1); $$ = createTupEntryNode($1, $3); }
+
+            |   ID arrIndex DOT ID              { 
+                                                    setIdNodeType($1); 
+                                                    validateArrOffset($1, $2); 
+                                                    $1->arrOffset = $2; 
+                                                    $$ = createTupEntryNode($1, $4); 
+                                                }
+            |   ID arrIndex DOT mthdCall        { 
+                                                    setIdNodeType($1); 
+                                                    validateArrOffset($1, $2); 
+                                                    $1->arrOffset = $2; 
+                                                    $$ = createTupEntryNode($1, $4); 
+                                                }
+
+            |   tupEntry DOT ID                 { $$ = createTupEntryNode($1, $3); }
+            |   tupEntry DOT mthdCall           { $$ = createTupEntryNode($1, $3); }
+            ;
 
 
 

@@ -2,12 +2,14 @@
 #define CLASSTABLE_H
 
 #include "../gsTable/gsTable.h"
+#include "../node/node.h"
 #include "../typeTable/typeTable.h"
 
-struct ClassTable;
-struct ClsFldList;
-struct ClsMthdList;
-struct ParamListEntry;
+typedef struct ClassTable ClassTable;
+typedef struct ClsFldList ClsFldList;
+typedef struct ClsMthdList ClsMthdList;
+typedef struct ParamListEntry ParamListEntry;
+typedef struct Tnode Tnode;
 
 typedef struct ClassTable {
     char *name;

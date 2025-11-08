@@ -2,11 +2,12 @@
 #define GSTABLE_H
 
 #include "../typeTable/typeTable.h"
+#include "../classTable/classTable.h"
 
 typedef struct Tnode Tnode;
 typedef struct ParamListEntry ParamListEntry;
 typedef struct LsTableEntry LsTableEntry;
-
+typedef struct ClassTable ClassTable;
 
 /* BINDS */
 
@@ -38,6 +39,7 @@ int getNextFLabel();
 typedef struct GsTableEntry {
     char* varName;
     TypeTable* type;
+    ClassTable* class;
     int size;
     int binding;
     int fLabel;
@@ -58,7 +60,7 @@ GsTableEntry* createArrEntryInGsTable(char* varName, Tnode* arrOffsetNode);
 GsTableEntry* createFnEntryInGsTable(char* varName, ParamListEntry* paramListHead);
 GsTableEntry* createPtrEntryInGsTable(char* varName);
 
-GsTableEntry* setGsTableType(GsTableEntry* head, TypeTable* type);
+GsTableEntry* setGsTableType(GsTableEntry* head, char* typeName);
 
 void printGsTable();
 
@@ -68,6 +70,7 @@ void printGsTable();
 typedef struct LsTableEntry {
     char* varName;
     TypeTable* type;
+    ClassTable* class;
     int binding;
     struct LsTableEntry* next;
     int isPtr;
@@ -76,18 +79,14 @@ typedef struct LsTableEntry {
 extern LsTableEntry* lsTableHead;
 
 LsTableEntry* findInLsTable(LsTableEntry* head, char* varName);
-
 LsTableEntry* createLsTableEntry();
 LsTableEntry* createIdEntryInLsTable(char* varName);
 LsTableEntry* createPtrEntryInLsTable(char* varName);
-
 LsTableEntry* concatLsTable(LsTableEntry* head1, LsTableEntry* head2);
 LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHead);
-
 LsTableEntry* setLsTableType(LsTableEntry* head, TypeTable* type);
-
+LsTableEntry* insertSelfToLsTable(LsTableEntry* head);
 void setLDeclBinding(LsTableEntry* head);
-
 void freeLsTable();
 void printLsTable();
 

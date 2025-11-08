@@ -4,11 +4,15 @@
 #include "../gsTable/gsTable.h"
 #include "../typeTable/typeTable.h"
 
+typedef struct GsTableEntry GsTableEntry;
+typedef struct ClassTable ClassTable;
+
 extern TypeTable* curFnType;
 
 typedef struct Tnode {
     int tnodeType;
     TypeTable* type;
+    ClassTable* class;
     int val;
     char* strVal;
     char* varName;
@@ -54,6 +58,8 @@ Tnode* createReturnNode(Tnode* exprNode);
 Tnode* createAllocNode();
 Tnode* createFreeNode(Tnode* exprNode);
 Tnode* createInitlzeNode();
+
+Tnode* createMthdCallNode(Tnode* idNode, Tnode* argList);
 
 void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParams);
 void validateProperId(Tnode* idNode);

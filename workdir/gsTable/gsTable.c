@@ -1,5 +1,6 @@
 #include "./gsTable.h"
 #include "../node/node.h"
+#include "../classTable/classTable.h"
 #include "../define/constants.h"
 #include <string.h>
 #include <stdlib.h>
@@ -37,13 +38,13 @@ GsTableEntry* createEmptyGsTableEntry() {
     GsTableEntry* n = (GsTableEntry*)malloc(sizeof(GsTableEntry));
     n->varName = NULL;
     n->type = NULL;
+    n->class = NULL;
     n->size = _NA_;
     n->binding = _NA_;
     n->next = NULL;
     n->paramList = NULL;
     n->fLabel = _NA_;
     n->dimensions = NULL; 
-    n->size = _NA_;
     n->isPtr = _NA_;
     return n;
 }
@@ -123,26 +124,40 @@ GsTableEntry* createPtrEntryInGsTable(char* varName) {
     return n;
 }
 
-GsTableEntry* setGsTableType(GsTableEntry* head, TypeTable* type) {
+GsTableEntry* setGsTableType(GsTableEntry* head, char* typeName) {
+
+    TypeTable* type = searchInTypeTable(typeTableHead, typeName);
+    ClassTable* class = searchInClassTable(classTableHead, typeName);
+
+    if(!type && !class || type && class) {
+        printf("Error : invalid type in global declarations\n");
+        exit(1);
+    }
+
     GsTableEntry* temp = head;
     while(temp) {
 
-        if(temp->isPtr == 1 && (strcmp(type->name, "int") != 0 && strcmp(type->name, "str") != 0)) {
-            printf("Error : user defined pointers not allowed\n");
+        if(
+            (temp->isPtr == 1 && class) ||
+            (temp->isPtr == 1 && strcmp(type->name, "int") != 0 && strcmp(type->name, "str") != 0)
+        ) {
+            printf("Error : user defined or class pointers not allowed\n");
             exit(1);
         }
 
         if(temp->fLabel == _NA_ && temp->isPtr == _NA_) {
-            temp->size *= type->size;
             temp->binding = getNextBinding(temp->size);
         }
+
         else if(temp->isPtr == 1) {
             temp->binding = getNextBinding(1);
         }
 
+        temp->class = class;
         temp->type = type;
         temp = temp->next;
     }
+
     return head;
 }
 
@@ -159,7 +174,7 @@ void printGsTable() {
 
     while(temp) {
         printf("Name       : %s\n", temp->varName);
-        printf("Type       : %s\n", temp->type != NULL ? temp->type->name : "N/A");
+        printf("Type       : %s\n", temp->type ? temp->type->name : temp->class->name);
         printf("Size       : %d\n", temp->size);
         printf("Binding    : %d\n", temp->binding);
         printf("FLabel     : %d\n", temp->fLabel);
@@ -262,6 +277,7 @@ LsTableEntry* createLsTableEntry() {
     n->varName = NULL;
     n->binding = _NA_;
     n->type = NULL;
+    n->class = NULL;
     n->next = NULL;
     n->isPtr = _NA_;
     return n;
@@ -329,6 +345,10 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
 }
 
 LsTableEntry* setLsTableType(LsTableEntry* head, TypeTable* type) {
+    if(!type) {
+        printf("Error : unknown type used in local declaration\n");
+        exit(1);
+    }
     LsTableEntry* temp = head;
     while(temp) {
         temp->type = type;
@@ -337,13 +357,25 @@ LsTableEntry* setLsTableType(LsTableEntry* head, TypeTable* type) {
     return head;
 }
 
+LsTableEntry* insertSelfToLsTable(LsTableEntry* head) {
+    LsTableEntry* n = createIdEntryInLsTable("self");
+
+    ClassTable* curClass = classTableHead;
+    while(curClass->next)
+        curClass = curClass->next;
+
+    n->class = curClass;
+    
+    return concatLsTable(head, n);
+}
+
 void setLDeclBinding(LsTableEntry* head) {
     int bind = LDECL_BINDING_START;
 
     LsTableEntry* temp = head;
     while(temp) {
         temp->binding = bind;
-        bind += temp->type->size;
+        bind += 1;
         temp = temp->next;
     }
 }
@@ -371,7 +403,7 @@ void printLsTable() {
 
     while(temp) {
         printf("Name    : %s\n", temp->varName);
-        printf("Type    : %s\n", temp->type != NULL ? temp->type->name : "N/A");
+        printf("Type    : %s\n", temp->type != NULL ? temp->type->name : temp->class->name);
         printf("Binding : %d\n", temp->binding);
         printf("isPtr   : %d\n", temp->isPtr);
         printf("\n");

@@ -45,6 +45,11 @@
 "class" { return CLASS; }
 "endclass" { return ENDCLASS; }
 
+"self" { 
+    yylval.astNode = createIdNode(strdup(yytext));
+    return SELF;
+}
+
 "read" { return READ; }
 "write" { return WRITE; }
 

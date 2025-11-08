@@ -17,6 +17,7 @@ Tnode* createEmptyNode() {
     n->strVal = NULL;
     n->val = _NA_;
     n->type = NULL;
+    n->class = NULL;
     n->isPtr = _NA_;
     return n;
 }
@@ -92,7 +93,9 @@ Tnode* createReadNode(Tnode* idNode) {
         exit(1);
     }
 
-    if(strcmp(idNode->type->name, "int") != 0 && strcmp(idNode->type->name, "str") != 0) {
+    if (!idNode->type || 
+        (strcmp(idNode->type->name, "int") != 0 && strcmp(idNode->type->name, "str") != 0)
+    ) {
         printf("Error : Invalid read type\n");
         exit(1);
     }
@@ -374,36 +377,117 @@ Tnode* createReturnNode(Tnode* exprNode) {
 
 Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
 
-    if(tupNode->tnodeType == NODE_TUP_FIELD) {
-        // do nothing, always right
+    // if class node
+    if(tupNode->class) {
+
+        // if accessing a field
+        if(fieldNode->tnodeType == NODE_ID) {
+
+            // if self is accessing
+            if(tupNode->tnodeType == NODE_ID && strcmp(tupNode->varName, "self") == 0) {
+                ClsFldList* foundField = NULL;
+                if(tupNode->class->fieldList == NULL) {
+                    printf("Error : invalid class field being accessed\n");
+                    exit(1);
+                }
+
+                else foundField = searchInClsFld(tupNode->class->fieldList, fieldNode->varName);
+                if(!foundField) {
+                    printf("Error : invalid field in class\n");
+                    exit(1);
+                }
+
+                Tnode* n = createEmptyNode();
+                n->left = tupNode;
+                n->right = fieldNode;
+                n->tnodeType = NODE_TUP_FIELD;
+
+                if(foundField->type) {
+                    n->type = foundField->type;
+                }
+                else {
+                    n->class = foundField->clsType;
+                }
+                
+                return n;
+            }
+
+            // something else is accessing
+            else {
+                printf("Error : private fields cannot be accesses without self pointer\n");
+                exit(1);
+            }
+        }
+
+        // accessing a method
+        else {
+        
+            if(tupNode->type || !tupNode->class->mthdList) {
+                printf("Error : method called on invalid type\n");
+                exit(1);
+            }
+
+            ClsMthdList* curMthd = searchInMthdDecl(tupNode->class->mthdList, fieldNode->left->varName);
+            if(!curMthd) {
+                printf("Error : method called on invalid type\n");
+                exit(1);
+            }
+
+            ParamListEntry* temp1 = curMthd->paramlist;
+            Tnode* temp2 = fieldNode->left->argList;
+
+            while(temp1 && temp2) {
+                if(temp2->class || strcmp(temp1->type->name, temp2->type->name) != 0) {
+                    printf("Error : conflicting arguments in method call\n");
+                    exit(1);
+                }
+
+                temp1 = temp1->next;
+                temp2 = temp2->argList;
+            }
+
+            if(temp1 || temp2) {
+                printf("Error : conflicting arguments in method call\n");
+                exit(1);
+            }
+
+            Tnode* n = createEmptyNode();
+            n->tnodeType = NODE_TUP_FIELD;
+            n->left = tupNode;
+            n->right = fieldNode;
+
+            if(n->right->class) {
+                printf("Error : methods cannot return classes\n");
+                exit(1);
+            }
+
+            n->type = curMthd->type;
+            return n;
+        }
     }
-    else if(tupNode->tnodeType == NODE_ID) {
-        setIdNodeType(tupNode);
-    }
+
+    // if user type
     else {
-        printf("Error : invalid tuple access\n");
-        exit(1);
+        FieldList* foundField = NULL;
+        if(tupNode->type->fields == NULL) {
+            printf("Error : invalid user-type being accessed\n");
+            exit(1);
+        }
+
+        else foundField = searchInFieldList(tupNode->type->fields, fieldNode->varName);
+        if(!foundField) {
+            printf("Error : invalide field in user-type\n");
+            exit(1);
+        }
+
+        Tnode* n = createEmptyNode();
+        n->left = tupNode;
+        n->right = fieldNode;
+        n->type = foundField->type;
+        n->tnodeType = NODE_TUP_FIELD;
+        
+        return n;
     }
-
-    FieldList* foundField = NULL;
-    if(tupNode->type->fields == NULL) {
-        printf("Error : invalid tuple\n");
-        exit(1);
-    }
-    else foundField = searchInFieldList(tupNode->type->fields, fieldNode->varName);
-
-    if(!foundField) {
-        printf("Error : invalide field in tuple\n");
-        exit(1);
-    }
-
-    Tnode* n = createEmptyNode();
-    n->left = tupNode;
-    n->right = fieldNode;
-    n->type = foundField->type;
-    n->tnodeType = NODE_TUP_FIELD;
-
-    return n;
 }
 
 
@@ -433,6 +517,15 @@ Tnode* createInitlzeNode() {
 }
 
 
+Tnode* createMthdCallNode(Tnode* idNode, Tnode* argList) {
+    Tnode* n = createEmptyNode();
+    n->tnodeType = NODE_FN_CALL;
+    n->left = idNode;
+    n->left->argList = argList;
+
+    return n;
+}
+
 
 void setIdNodeType(Tnode* idNode) {
     LsTableEntry* lsEntry = findInLsTable(lsTableHead, idNode->varName);
@@ -440,6 +533,7 @@ void setIdNodeType(Tnode* idNode) {
         idNode->lsTableEntry = lsEntry;
         idNode->isPtr = lsEntry->isPtr;
         idNode->type = lsEntry->type;
+        idNode->class = lsEntry->class;
         return;
     }
 
@@ -448,10 +542,10 @@ void setIdNodeType(Tnode* idNode) {
         idNode->gsTableEntry = gsEntry;
         idNode->isPtr = gsEntry->isPtr;
         idNode->type = gsEntry->type;
+        idNode->class = gsEntry->class;
         return;
     }
 
-    printf("%s\n", idNode->varName);
     printf("Error : Undeclared variable being used\n");
     exit(1);
 }

@@ -87,10 +87,10 @@ TypeTable* concatTypeTable(TypeTable* head1, TypeTable* head2) {
     return head1;
 }
 
-TypeTable* validateUserType(TypeTable* head, char* typeName) {
+TypeTable* validateType(TypeTable* head, char* typeName) {
     TypeTable* t = searchInTypeTable(head, typeName);
     if(!t) {
-        printf("Error : user type not defined\n");
+        printf("Error : invalid type used\n");
         exit(1);
     }
 
@@ -148,8 +148,7 @@ FieldList* searchInFieldList(FieldList* head, char* name) {
 FieldList* createField(char *name, TypeTable *type) {
 
     if(!type) {
-        printf("%s\n", name);
-        printf("Error : Type not declared\n");
+        printf("Error : field type not declared\n");
         exit(1);
     }
 

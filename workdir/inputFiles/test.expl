@@ -1,29 +1,44 @@
 type
-    student {
-        str name;
-        int age;
+    bst {
+        int val;
+        bst left;
+        bst right;
     }
 endtype
 
 class
-    student2 {
+    person {
         decl
-            student2 father;
-            student mother;
+            person guardian;
+            str name;
+            int age;
+            
             int fn();
+            int fn2(int age);
         enddecl
 
         int fn() {
             decl
+            
             enddecl
             begin
-                return 1;
+                return self.fn2(self.age);
+            end
+        }
+
+        int fn2(int age) {
+            decl enddecl
+            begin
+                return self.fn();
             end
         }
     }
 endclass
 
 decl
+    person p;
+    bst b;
+    int temp;
 enddecl
 
 int main() {
@@ -31,6 +46,7 @@ int main() {
     enddecl
 
     begin
+        temp = p.fn();
         return 1;
     end
 }

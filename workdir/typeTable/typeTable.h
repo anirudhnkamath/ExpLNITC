@@ -28,7 +28,7 @@ TypeTable* createNewType(char* varName, FieldList* fields);
 TypeTable* updateType(char* varName, FieldList* fields);
 TypeTable* searchInTypeTable(TypeTable* head, char *name);
 TypeTable* concatTypeTable(TypeTable* head1, TypeTable* head2);
-TypeTable* validateUserType(TypeTable* head, char* typeName);
+TypeTable* validateType(TypeTable* head, char* typeName);
 void printTypeTable();
 
 FieldList* searchInFieldList(FieldList* head, char* name);
