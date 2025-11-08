@@ -53,5 +53,8 @@ ClsFldList* concatClsFld(ClsFldList* head1, ClsFldList* head2);
 ClsMthdList* createMthdDecl(char* type, char* name, struct ParamListEntry* paramList);
 ClsMthdList* searchInMthdDecl(ClsMthdList* head, char* name);
 ClsMthdList* concatMthdDecl(ClsMthdList* head1, ClsMthdList* head2);
+ClsMthdList* createMthdDecl(char* type, char* name, ParamListEntry* paramList);
+ClsMthdList* validateMthd(TypeTable* returnType, Tnode* idNode, ParamListEntry* fnParams);
+
 
 #endif

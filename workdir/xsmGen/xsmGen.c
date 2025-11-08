@@ -199,10 +199,10 @@ void readFromConsole(Tnode* idNode, FILE* targetFile) {
     releaseRegister(addrReg);
 }
 
-void functionEntryCodeGen(Tnode* node, FILE* targetFile) {
+void functionEntryCodeGen(int label, FILE* targetFile) {
 
     // generate label for function
-    fprintf(targetFile, "F%d:\n", node->gsTableEntry->fLabel);
+    fprintf(targetFile, "F%d:\n", label);
 
     // save old bp and move bp to sp
     fprintf(targetFile, "PUSH BP\n");
@@ -218,7 +218,7 @@ void functionEntryCodeGen(Tnode* node, FILE* targetFile) {
     releaseRegister(freeReg);
 }
 
-void functionExitCodeGen(Tnode* node, FILE* targetFile) {
+void functionExitCodeGen(FILE* targetFile) {
     fprintf(targetFile, "MOV SP, BP\n");
     fprintf(targetFile, "POP BP\n");
     fprintf(targetFile, "RET\n");

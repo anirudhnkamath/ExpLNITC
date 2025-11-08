@@ -44,7 +44,7 @@
 %type <astNode> inputStmt outputStmt assignStmt 
 %type <astNode> ifStmt whileStmt doWhileStmt rptUntStmt
 %type <astNode> expr
-%type <astNode> body fDef argList mainBlock retStmt arrDimn arrIndex tupEntry clsName
+%type <astNode> body fDef argList mainBlock retStmt arrDimn arrIndex tupEntry clsName mthdDef
 
 %type <gsTableEntry> gDeclBlock gDeclList gDecl gidList gid
 %type <lsTableEntry> idList lDecl lDeclList
@@ -80,7 +80,7 @@ program     :   tDeclBlock clsDeclBlock gDeclBlock fDefBlock mainBlock
 
 /*  CLASS DECLARATIONS  */
 
-clsDeclBlock:   CLASS clsDeclList ENDCLASS      { classTableHead = setClassTableIndices(classTableHead); printClassTable(); }
+clsDeclBlock:   CLASS clsDeclList ENDCLASS      { classTableHead = setClassTableIndices(classTableHead); }
             |   CLASS ENDCLASS                  {}
             ;
 
@@ -88,10 +88,10 @@ clsDeclList :   clsDeclList clsDecl             {}
             |   clsDecl                         {}
             ;
 
-clsDecl     :   clsName LCURL BEGIN_DECL clsFldList 
-                        mthdList END_DECL RCURL     { 
+clsDecl     :   clsName LCURL BEGIN_DECL clsFldList mthdList    {
                                                                     updateClassTableEntry($1->varName, $4, $5);
                                                                 }
+                                END_DECL mthdDefList RCURL
             ;
 
 clsName     :   ID                              {   
@@ -119,9 +119,25 @@ mthdDecl    :   INT ID LPAR paramList RPAR EOL  { $$ = createMthdDecl("int", $2-
             ;
 
 // idk
-/* mthdDefList :   mthdDefList fDef                {}
-            |   fDef                            {}
-            ; */
+mthdDefList :   mthdDefList mthdDef              {}
+            |   mthdDef                          {}
+            ;
+
+mthdDef     :   type ID LPAR paramList RPAR LCURL lDeclBlock    {   
+                                                                    ClsMthdList* found = validateMthd($1, $2, $4); 
+                                                                    setLDeclBinding(lsTableHead);
+                                                                    functionEntryCodeGen(found->fLabel, targetFile);
+
+                                                                    lsTableHead = addParamsToLsTable(lsTableHead, $4);
+                                                                }
+                                                    body RCURL  {
+                                                                    $$ = $9;
+                                                                    codeGen($$, targetFile);
+                                                                    functionExitCodeGen(targetFile);
+
+                                                                    lsTableHead = NULL;
+                                                                }
+            ;
 
 
 
@@ -196,14 +212,14 @@ fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
                                                                     validateFunction($1, $2, $4);
                                                                     
                                                                     setLDeclBinding(lsTableHead);
-                                                                    functionEntryCodeGen($2, targetFile);
+                                                                    functionEntryCodeGen($2->gsTableEntry->fLabel, targetFile);
 
                                                                     lsTableHead = addParamsToLsTable(lsTableHead, $4);
                                                                 } 
                 /* mid-rule action */               body RCURL  {
                                                                     $$ = $9;
                                                                     codeGen($$, targetFile);
-                                                                    functionExitCodeGen($2, targetFile);
+                                                                    functionExitCodeGen(targetFile);
 
                                                                     lsTableHead = NULL;
                                                                 } 

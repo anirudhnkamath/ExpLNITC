@@ -1,5 +1,6 @@
 #include "./classTable.h"
 #include "../define/constants.h"
+#include "../node/node.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -249,4 +250,42 @@ ClsMthdList* createMthdDecl(char* type, char* name, ParamListEntry* paramList) {
 
     printf("Error: Undefined return type for class method\n");
     exit(1);
+}
+
+ClsMthdList* validateMthd(TypeTable* returnType, Tnode* idNode, ParamListEntry* fnParams) {
+    
+    ClassTable* foundClass = classTableHead;
+    while(foundClass->next)
+        foundClass = foundClass->next;
+
+    ClsMthdList* found = searchInMthdDecl(foundClass->mthdList, idNode->varName);
+    if(!found) {
+        printf("Error : The method defined was not declared\n");
+        exit(1);
+    }
+
+    curFnType = found->type;
+
+    if(strcmp(returnType->name, found->type->name) != 0) {
+        printf("Error : Mismatch in return type of method definition\n");
+        exit(1);
+    }
+
+    ParamListEntry* declParams = found->paramlist;
+    ParamListEntry *temp1 = fnParams, *temp2 = declParams;
+    while(temp1 && temp2) {
+        if(strcmp(temp1->type->name, temp2->type->name) != 0 || strcmp(temp1->varName, temp2->varName) != 0) {
+            printf("Error : Parameters of method definition and declaration conflict\n");
+            exit(1);
+        }
+        temp1 = temp1->next;
+        temp2 = temp2->next;
+    }
+
+    if(temp1 || temp2) {
+        printf("Error : Parameters of method definition and declaration conflict\n");
+        exit(1);
+    }
+
+    return found;
 }

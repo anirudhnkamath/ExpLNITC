@@ -12,14 +12,14 @@ class
             student mother;
             int fn();
         enddecl
-    }
 
-    student3 {
-        decl
-            student3 mother;
-            student fn();
-            student fn2(student mother);
-        enddecl
+        int fn() {
+            decl
+            enddecl
+            begin
+                return 1;
+            end
+        }
     }
 endclass
 

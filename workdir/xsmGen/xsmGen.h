@@ -19,8 +19,8 @@ void exitProgram(FILE* targetFile);
 
 int getEffectiveAddr(Tnode* idNode, FILE* targetFile);
 
-void functionEntryCodeGen(Tnode* node, FILE* targetFile);
-void functionExitCodeGen(Tnode* node, FILE* targetFile);
+void functionEntryCodeGen(int label, FILE* targetFile);
+void functionExitCodeGen(FILE* targetFile);
 
 int xsmAlloc(FILE* targetFile);
 void xsmFree(Tnode* node, FILE* targetFile);
