@@ -53,8 +53,7 @@ void initialiseMainFn(FILE* targetFile) {
     LsTableEntry* temp = lsTableHead;
     int freeReg = getFreeRegister();
     while(temp) {
-        for(int i=0; i<temp->type->size; i++) 
-            fprintf(targetFile, "PUSH R%d\n", freeReg);
+        fprintf(targetFile, "PUSH R%d\n", freeReg);
         temp = temp->next;
     }
     releaseRegister(freeReg);
@@ -122,8 +121,26 @@ int getEffectiveAddr(Tnode* idNode, FILE* targetFile) {
         int addrReg = getEffectiveAddr(idNode->left, targetFile);
         fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
 
-        int offset = (searchInFieldList(idNode->left->type->fields, idNode->right->varName))->fieldIndex;
-        fprintf(targetFile, "ADD R%d, %d\n", addrReg, offset);
+        if(idNode->right->tnodeType == NODE_ID) {
+            int offset;
+
+            // class.id
+            if(idNode->left->class)
+                offset = (searchInClsFld(idNode->left->class->fieldList, idNode->right->varName))->index;
+
+            // type.id
+            else 
+                offset = (searchInFieldList(idNode->left->type->fields, idNode->right->varName))->fieldIndex;
+
+            fprintf(targetFile, "ADD R%d, %d\n", addrReg, offset);
+        }
+
+        // weird
+        else if(idNode->right->tnodeType == NODE_FN_CALL) {
+            int freeReg = evaluateMethod(idNode->right, addrReg, targetFile);
+            fprintf(targetFile, "MOV R%d, R%d\n", addrReg, freeReg);
+            releaseRegister(freeReg);
+        }
 
         return addrReg;
     }

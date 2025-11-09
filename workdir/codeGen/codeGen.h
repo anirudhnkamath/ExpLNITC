@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "../define/constants.h"
 #include "../node/node.h"
+#include "../classTable/classTable.h"
 
 int getStaticAddress(char* varName);
 
@@ -22,5 +23,6 @@ void generateReadCode(Tnode* node, FILE* targetFile);
 void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile);
 
 int evaluateFunction(Tnode* fnNode, FILE* targetFile);
+int evaluateMethod(Tnode* fnNode, int selfReg, FILE* targetFile);
 
 #endif

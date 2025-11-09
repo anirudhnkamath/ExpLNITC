@@ -3,6 +3,7 @@
 #include "../gsTable/gsTable.h"
 #include "../label/label.h"
 #include "../xsmGen/xsmGen.h"
+#include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -88,6 +89,11 @@ int codeGen(Tnode* node, FILE* targetFile) {
             break;
         }
 
+        case NODE_DELETE : {
+            xsmFree(node->left, targetFile);
+            break;
+        }
+
         case NODE_BRKP : {
             fprintf(targetFile, "BRKP\n");
             break;
@@ -114,7 +120,7 @@ void generateReadCode(Tnode* node, FILE* targetFile) {
 
 void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
 
-    if(rhs->tnodeType == NODE_ALLOC) {
+    if(rhs->tnodeType == NODE_ALLOC || rhs->tnodeType == NODE_NEW) {
         int heapReg = xsmAlloc(targetFile);
         int storeReg = getEffectiveAddr(lhs, targetFile);
         fprintf(targetFile, "MOV [R%d], R%d\n", storeReg, heapReg);
@@ -278,6 +284,10 @@ int evaluateExpression(Tnode* node, FILE* targetFile) {
 
     if(node->tnodeType == NODE_TUP_FIELD) {
         int addrReg = getEffectiveAddr(node, targetFile);
+
+        if( node->right->tnodeType == NODE_FN_CALL)
+            return addrReg;
+
         fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
         return addrReg;
     }
@@ -403,7 +413,6 @@ int evaluateFunction(Tnode* fnNode, FILE* targetFile) {
     resetRegisters();
     registerFree[freeReg1] = registerFree[freeReg2] = 0;
 
-
     // push all arguments
     int numArgs = 0;
     Tnode* temp = fnNode->left->argList;
@@ -431,6 +440,73 @@ int evaluateFunction(Tnode* fnNode, FILE* targetFile) {
     // temporary method to pop all args
     for(int i=0; i<numArgs; i++)
         fprintf(targetFile, "POP R%d\n", freeReg2);
+
+
+    // recover the saved state
+    for(int i=pushedRegCount-1; i>=0; i--) {
+        int r = pushedRegisters[i];
+        fprintf(targetFile, "POP R%d\n", r);
+        registerFree[r] = 0;
+    }
+
+    // return the register storing the return value
+    return freeReg1;
+}
+
+int evaluateMethod(Tnode* fnNode, int selfReg, FILE* targetFile) {
+
+    // get free registers for later use
+    int freeReg1 = getFreeRegister();
+    int freeReg2 = getFreeRegister();
+
+    // save current state
+    registerFree[freeReg1] = registerFree[freeReg2] = 1;
+    int pushedRegisters[20];
+    int pushedRegCount = 0;
+    for(int i=0; i<NUM_REGISTERS; i++) {
+        if(!registerFree[i]) {
+            fprintf(targetFile, "PUSH R%d\n", i);
+            pushedRegisters[pushedRegCount] = i;
+            pushedRegCount += 1;
+        }
+    }
+    resetRegisters();
+    registerFree[freeReg1] = registerFree[freeReg2] = registerFree[selfReg] = 0;
+
+
+    // push all arguments
+    int numArgs = 0;
+    Tnode* temp = fnNode->left->argList;
+    while(temp) {
+        int argReg = evaluateExpression(temp, targetFile);
+        fprintf(targetFile, "PUSH R%d\n", argReg);
+        releaseRegister(argReg);
+        numArgs += 1;
+        temp = temp->argList;
+    }
+
+    // push self value
+    if(fnNode->left->class) {
+        fprintf(targetFile, "PUSH R%d\n", selfReg);
+    }
+
+
+    // push space for retval and call function
+    ClsMthdList* foundMthd = searchInMthdDecl(fnNode->left->class->mthdList, fnNode->left->varName);
+    int label = foundMthd->fLabel;
+    resetRegisters();
+    fprintf(targetFile, "PUSH R0\n");
+    fprintf(targetFile, "CALL F%d\n", label);
+    resetRegisters();
+
+    // retrieve return val in freeReg1
+    registerFree[freeReg1] = 0;
+    fprintf(targetFile, "POP R%d\n", freeReg1);
+
+    // temporary method to pop all args
+    for(int i=0; i<numArgs + 1; i++)
+        fprintf(targetFile, "POP R%d\n", freeReg2);
+
 
 
     // recover the saved state

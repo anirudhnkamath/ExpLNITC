@@ -484,6 +484,7 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
             n->tnodeType = NODE_TUP_FIELD;
             n->left = tupNode;
             n->right = fieldNode;
+            n->right->left->class = tupNode->class;
 
             if(n->right->class) {
                 printf("Error : methods cannot return classes\n");

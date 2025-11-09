@@ -203,6 +203,7 @@ void printGsTable() {
 }
 
 
+
 ParamListEntry* createParamListEntry(char* varName, TypeTable* dataType, int isPtr) {
     if(!dataType) {
         printf("Error : invalid type for parameter\n");
@@ -249,6 +250,14 @@ ParamListEntry* concatParamList(ParamListEntry* head1, ParamListEntry* head2) {
     return head1;
 }
 
+ParamListEntry* addSelfToParams(ParamListEntry* head) {
+    ParamListEntry* n = (ParamListEntry*)malloc(sizeof(ParamListEntry));
+    n->varName = strdup("self");
+    n->next = NULL;
+    n->isPtr = _NA_;
+    return concatParamList(head, n);
+}
+
 void printParamList(ParamListEntry* paramListHead) {
     if(paramListHead == NULL) {
         printf("Parameters : (none)\n");
@@ -265,6 +274,7 @@ void printParamList(ParamListEntry* paramListHead) {
     }
     printf("\n");
 }
+
 
 
 LsTableEntry* findInLsTable(LsTableEntry* head, char* varName) {
@@ -340,6 +350,15 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
         n->type = temp->type;
         n->binding = bind;
         n->isPtr = temp->isPtr;
+
+        // adding 'self' to parameters
+        ClassTable* curClass = classTableHead;
+        if(curClass && strcmp(n->varName, "self") == 0) {
+            while(curClass->next)
+                curClass = curClass->next;
+                
+            n->class = curClass;
+        }
 
         head = concatLsTable(head, n);
         temp = temp->next;

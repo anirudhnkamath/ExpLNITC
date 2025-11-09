@@ -1,60 +1,37 @@
 type
-    bst {
-        int val;
-        bst left;
-        bst right;
+    node {
+        int a;
+        int b;
     }
 endtype
 
 class
-    person {
-        decl
-            person guardian;
-            str name;
-            int age;
-            
-            int fn();
-            int fn2(int age);
-            int getAge();
-        enddecl
-
-        int fn() {
-            decl
-            
-            enddecl
-            begin
-                return self.fn2(self.age);
-            end
-        }
-
-        int fn2(int age) {
-            decl enddecl
-            begin
-                return self.fn();
-            end
-        }
-
-        int getAge() {
-            decl enddecl
-            begin return self.age; end
-        }
-    }
 endclass
 
 decl
-    person p1, p2;
-    bst b;
+    node n1, n2;
     int temp;
+    node retnode();
 enddecl
+
+node retnode() {
+    decl
+        node a;
+    enddecl
+    begin
+        a = alloc();
+        breakpoint;
+        return a;
+    end
+}
 
 int main() {
     decl
+        node a;
     enddecl
 
     begin
-        p1 = new(person);
-        write(p1.getAge());
-        delete(p1);
-        return p1;
+        a = retnode();
+        return 1;
     end
 }

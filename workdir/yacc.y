@@ -128,17 +128,18 @@ mthdDefList :   mthdDefList mthdDef              {}
 
 mthdDef     :   type ID LPAR paramList RPAR LCURL lDeclBlock    {   
                                                                     ClsMthdList* found = validateMthd($1, $2, $4);
-                                                                    lsTableHead = insertSelfToLsTable(lsTableHead);
                                                                     setLDeclBinding(lsTableHead);
 
-                                                                    // functionEntryCodeGen(found->fLabel, targetFile);
+                                                                    functionEntryCodeGen(found->fLabel, targetFile);
 
+                                                                    $4 = addSelfToParams($4);
                                                                     lsTableHead = addParamsToLsTable(lsTableHead, $4);
                                                                 }
                                                     body RCURL  {
                                                                     $$ = $9;
-                                                                    // codeGen($$, targetFile);
-                                                                    // functionExitCodeGen(targetFile);
+
+                                                                    codeGen($$, targetFile);
+                                                                    functionExitCodeGen(targetFile);
 
                                                                     lsTableHead = NULL;
                                                                 }
@@ -217,14 +218,14 @@ fDef        :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
                                                                     validateFunction($1, $2, $4);
                                                                     
                                                                     setLDeclBinding(lsTableHead);
-                                                                    // functionEntryCodeGen($2->gsTableEntry->fLabel, targetFile);
+                                                                    functionEntryCodeGen($2->gsTableEntry->fLabel, targetFile);
 
                                                                     lsTableHead = addParamsToLsTable(lsTableHead, $4);
                                                                 } 
                 /* mid-rule action */               body RCURL  {
                                                                     $$ = $9;
-                                                                    // codeGen($$, targetFile);
-                                                                    // functionExitCodeGen(targetFile);
+                                                                    codeGen($$, targetFile);
+                                                                    functionExitCodeGen(targetFile);
 
                                                                     lsTableHead = NULL;
                                                                 } 
@@ -269,11 +270,11 @@ idList      :   idList COMMA ID         { $$ = concatLsTable($1, createIdEntryIn
 
 mainBlock   :   INT {curFnType = searchInTypeTable(typeTableHead, "int"); } MAIN
                                          LPAR RPAR LCURL lDeclBlock body RCURL     {
-                                                                                        $$ = $8; 
+                                                                                        $$ = $8;
                                                                                         setLDeclBinding(lsTableHead);
-                                                                                        printf("parsing over, codegen started\n");
-                                                                                        // initialiseMainFn(targetFile);
-                                                                                        // codeGen($8, targetFile); 
+                                                                                        printLsTable();
+                                                                                        initialiseMainFn(targetFile);
+                                                                                        codeGen($8, targetFile); 
                                                                                     }
             ;
 

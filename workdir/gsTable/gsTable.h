@@ -27,6 +27,7 @@ typedef struct ParamListEntry {
 ParamListEntry* createParamListEntry(char* varName, TypeTable* dataType, int isPtr);
 ParamListEntry* findInParamList(ParamListEntry* head, char* varName);
 ParamListEntry* concatParamList(ParamListEntry* head1, ParamListEntry* head2);
+ParamListEntry* addSelfToParams(ParamListEntry* head);
 
 void printParamList(ParamListEntry* paramListHead);
 
