@@ -203,16 +203,20 @@ void printGsTable() {
 }
 
 
+// allow here
+ParamListEntry* createParamListEntry(char* varName, char* typeName, int isPtr) {
+    TypeTable* type = searchInTypeTable(typeTableHead, typeName);
+    ClassTable* class = searchInClassTable(classTableHead, typeName);
 
-ParamListEntry* createParamListEntry(char* varName, TypeTable* dataType, int isPtr) {
-    if(!dataType) {
+    if(!type && !class) {
         printf("Error : invalid type for parameter\n");
         exit(1);
     }
     
     ParamListEntry* n = (ParamListEntry*)malloc(sizeof(ParamListEntry));
     n->varName = strdup(varName);
-    n->type = dataType;
+    n->type = type;
+    n->class = class;
     n->next = NULL;
     n->isPtr = isPtr;
     return n;
@@ -348,6 +352,7 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
         LsTableEntry* n = createLsTableEntry();
         n->varName = strdup(temp->varName);
         n->type = temp->type;
+        n->class = temp->class;
         n->binding = bind;
         n->isPtr = temp->isPtr;
 

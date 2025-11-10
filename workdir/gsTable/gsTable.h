@@ -20,11 +20,12 @@ int getNextBinding(int size);
 typedef struct ParamListEntry {
     char* varName;
     TypeTable* type;
+    ClassTable* class;
     struct ParamListEntry* next;
     int isPtr;
 } ParamListEntry;
 
-ParamListEntry* createParamListEntry(char* varName, TypeTable* dataType, int isPtr);
+ParamListEntry* createParamListEntry(char* varName, char* typeName, int isPtr);
 ParamListEntry* findInParamList(ParamListEntry* head, char* varName);
 ParamListEntry* concatParamList(ParamListEntry* head1, ParamListEntry* head2);
 ParamListEntry* addSelfToParams(ParamListEntry* head);

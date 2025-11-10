@@ -361,8 +361,9 @@ Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
     ParamListEntry *temp1 = declParams;
     Tnode* temp2 = argListNode;
     while(temp1 && temp2) {
-        if( !temp1->type || !temp2->type || 
-            strcmp(temp1->type->name, temp2->type->name) != 0 || temp1->isPtr != temp2->isPtr
+        if( temp1->type != temp2->type ||
+            temp1->class != temp2->class ||
+            temp1->isPtr != temp2->isPtr
         ) {
             printf("Error : type mismatch in function call\n");
             exit(1);
@@ -466,7 +467,10 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
             Tnode* temp2 = fieldNode->left->argList;
 
             while(temp1 && temp2) {
-                if(temp2->class || strcmp(temp1->type->name, temp2->type->name) != 0) {
+                if( temp1->type != temp2->type ||
+                    temp1->class != temp2->class ||
+                    temp1->isPtr != temp2->isPtr
+                ) {
                     printf("Error : conflicting arguments in method call\n");
                     exit(1);
                 }
@@ -639,8 +643,9 @@ void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParam
     ParamListEntry* declParams = found->paramList;
     ParamListEntry *temp1 = fnParams, *temp2 = declParams;
     while(temp1 && temp2) {
-        if( !temp1->type || !temp2->type ||
-            strcmp(temp1->type->name, temp2->type->name) != 0 || 
+        if( temp1->class != temp2->class ||
+            temp1->type != temp2->type ||
+            temp1->isPtr != temp2->isPtr ||
             strcmp(temp1->varName, temp2->varName) != 0
         ) {
             printf("Error : Parameters of function definition and declaration conflict\n");

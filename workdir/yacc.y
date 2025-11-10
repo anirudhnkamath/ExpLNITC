@@ -236,8 +236,8 @@ paramList   :   paramList COMMA param   { $$ = concatParamList($1, $3); }
             |                           { $$ = NULL; }
             ;
 
-param       :   type ID         {   $$ = createParamListEntry($2->varName, $1, _NA_); }
-            |   type MULT ID    {   $$ = createParamListEntry($3->varName, $1, 1); }
+param       :   gType ID         {   $$ = createParamListEntry($2->varName, $1, _NA_); }
+            |   gType MULT ID    {   $$ = createParamListEntry($3->varName, $1, 1); }
             ;
 
 type        :   INT     { $$ = searchInTypeTable(typeTableHead, "int"); }
@@ -272,7 +272,7 @@ mainBlock   :   INT {curFnType = searchInTypeTable(typeTableHead, "int"); } MAIN
                                          LPAR RPAR LCURL lDeclBlock body RCURL     {
                                                                                         $$ = $8;
                                                                                         setLDeclBinding(lsTableHead);
-                                                                                        printLsTable();
+                                                                                        
                                                                                         initialiseMainFn(targetFile);
                                                                                         codeGen($8, targetFile); 
                                                                                     }

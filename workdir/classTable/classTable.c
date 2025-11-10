@@ -274,7 +274,11 @@ ClsMthdList* validateMthd(TypeTable* returnType, Tnode* idNode, ParamListEntry* 
     ParamListEntry* declParams = found->paramlist;
     ParamListEntry *temp1 = fnParams, *temp2 = declParams;
     while(temp1 && temp2) {
-        if(strcmp(temp1->type->name, temp2->type->name) != 0 || strcmp(temp1->varName, temp2->varName) != 0) {
+        if( temp1->type != temp2->type ||
+            temp1->class != temp2->class ||
+            strcmp(temp1->varName, temp2->varName) != 0 ||
+            temp1->isPtr != temp2->isPtr
+        ) {
             printf("Error : Parameters of method definition and declaration conflict\n");
             exit(1);
         }
