@@ -27,7 +27,6 @@ class
 endclass
 
 decl
-    node n1, n2;
     int getter(node n2);
 enddecl
 
@@ -43,6 +42,7 @@ int getter(node n2) {
 
 int main() {
     decl
+        node n1, n2;
         int temp;
     enddecl
 

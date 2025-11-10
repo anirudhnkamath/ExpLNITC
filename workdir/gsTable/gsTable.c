@@ -373,13 +373,19 @@ LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHe
     return head;
 }
 
-LsTableEntry* setLsTableType(LsTableEntry* head, TypeTable* type) {
-    if(!type) {
-        printf("Error : invalid type used in local declaration\n");
+LsTableEntry* setLsTableType(LsTableEntry* head, char* typeName) {
+    
+    TypeTable* type = searchInTypeTable(typeTableHead, typeName);
+    ClassTable* class = searchInClassTable(classTableHead, typeName);
+
+    if(!type && !class) {
+        printf("Error : Invalid type in local declarations\n");
         exit(1);
     }
+    
     LsTableEntry* temp = head;
     while(temp) {
+        temp->class = class;
         temp->type = type;
         temp = temp->next;
     }

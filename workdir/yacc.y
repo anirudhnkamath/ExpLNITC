@@ -255,7 +255,7 @@ lDeclList   :   lDeclList lDecl     { $$ = concatLsTable($1, $2); }
             |   lDecl               { $$ = $1; }
             ;
 
-lDecl       :   type idList EOL     { $$ = setLsTableType($2, $1); }
+lDecl       :   gType idList EOL     { $$ = setLsTableType($2, $1); }
             ;
 
 idList      :   idList COMMA ID         { $$ = concatLsTable($1, createIdEntryInLsTable($3->varName)); }
@@ -272,7 +272,7 @@ mainBlock   :   INT {curFnType = searchInTypeTable(typeTableHead, "int"); } MAIN
                                          LPAR RPAR LCURL lDeclBlock body RCURL     {
                                                                                         $$ = $8;
                                                                                         setLDeclBinding(lsTableHead);
-                                                                                        
+
                                                                                         initialiseMainFn(targetFile);
                                                                                         codeGen($8, targetFile); 
                                                                                     }
