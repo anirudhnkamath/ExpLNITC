@@ -50,6 +50,8 @@
     return SELF;
 }
 
+"extends" { return EXTENDS; }
+
 "new" { return NEW; }
 "delete" { return DELETE; }
 

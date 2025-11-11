@@ -2,54 +2,61 @@ type
 endtype
 
 class
-    node {
+    animal {
         decl
-            int val;
-            int getVal();
-            int setVal(int val);
+            str name;
+            int setname(str name);
+            int speak();
         enddecl
 
-        int getVal() {
+        int setname(str name) {
             decl enddecl
             begin
-                return self.val;
+                self.name = name;
+                return 1;
             end
         }
 
-        int setVal(int val) {
+        int speak() {
             decl enddecl
             begin
-                self.val = val;
-                return val;
+                write("Animal sound");
+                return 1;
+            end
+        }
+    }
+
+    dog extends animal {
+        decl
+            str breed;
+            int speak();
+        enddecl
+
+        int speak() {
+            decl enddecl
+            begin
+                write("Bark Bark!");
+                return 1;
             end
         }
     }
 endclass
 
 decl
-    int getter(node n2);
 enddecl
-
-int getter(node n2) {
-    decl
-        int temp;
-    enddecl
-    begin
-        temp = n2.getVal();
-        return temp;
-    end
-}
 
 int main() {
     decl
-        node n1, n2;
+        animal a;
+        dog d;
         int temp;
     enddecl
 
     begin
-        n1 = new(node);
-        temp = n1.setVal(96);
-        write(getter(n1));
-        return 1;
+        a = new(dog);
+
+        temp = a.setname("Tommy");
+        temp = a.speak();
+        return 0;
     end
 }

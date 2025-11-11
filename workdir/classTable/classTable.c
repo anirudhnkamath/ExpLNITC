@@ -31,12 +31,24 @@ ClassTable* concatClassTable(ClassTable* head1, ClassTable* head2) {
     return head1;
 }
 
-ClassTable* createEmptyClass(char* className) {
+ClassTable* createEmptyClass(char* className, char* parentName) {
+
+    ClassTable* parent;
+    if(parentName) {
+        parent = searchInClassTable(classTableHead, parentName);
+        if(!parent) {
+            printf("Error : invalid super class in class definition\n");
+            exit(1);
+        }
+    }
+    else
+        parent = NULL;
+
     ClassTable* newCls = (ClassTable*)malloc(sizeof(ClassTable));
     newCls->name = strdup(className);
     newCls->fieldList = NULL;
     newCls->mthdList = NULL;
-    newCls->parentPtr = NULL;
+    newCls->parentPtr = parent;
     newCls->index = _NA_;
     newCls->fieldCount = _NA_;
     newCls->methodCount = _NA_;
@@ -57,33 +69,130 @@ ClassTable* createEmptyClass(char* className) {
     return newCls;
 }
 
+int isParentClass(ClassTable* class, ClassTable* parent) {
+    ClassTable* temp = class;
+    while(temp != NULL) {
+        if(temp == parent)
+            return 1;
+        temp = temp->parentPtr;
+    }
+    return 0;
+}
+
 void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsMthdList) {
     ClassTable* clsEntry = searchInClassTable(classTableHead, name);
     if (!clsEntry) {
-        printf("Error: class doesnt exist while searching\n");
+        printf("Error: Class '%s' not found while updating class table.\n", name);
+        exit(1);
+    }
+    ClassTable* parent = clsEntry->parentPtr;
+
+    if(parent && parent->parentPtr) {
+        printf("Error : only one level of inheritance allowed\n");
         exit(1);
     }
 
-    clsEntry->fieldList = clsFldList;
-    int fIndex = 0;
-    ClsFldList* ftemp = clsFldList;
-    while (ftemp) {
-        ftemp->index = fIndex++;
-        ftemp = ftemp->next;
+    ClsFldList* finalFldList = NULL;
+    ClsMthdList* finalMthdList = NULL;
+
+    // add parent fldlist
+    if (parent) {
+
+        ClsFldList* pcur = parent->fieldList;
+        ClsFldList* prev = NULL;
+
+        while (pcur) {
+            ClsFldList* newFld = (ClsFldList*)malloc(sizeof(ClsFldList));
+            newFld->name = strdup(pcur->name);
+            newFld->type = pcur->type;
+            newFld->clsType = pcur->clsType;
+            newFld->index = pcur->index;
+            newFld->next = NULL;
+
+            if (!finalFldList)
+                finalFldList = newFld;
+            else
+                prev->next = newFld;
+            prev = newFld;
+
+            pcur = pcur->next;
+        }
     }
+
+    // add child fldlist
+    finalFldList = concatClsFld(finalFldList, clsFldList);
+
+
+    // add parent methodlist
+    if (parent) {
+
+        ClsMthdList* pcur = parent->mthdList;
+        ClsMthdList* prev = NULL;
+
+        while (pcur) {
+            ClsMthdList* newMthd = (ClsMthdList*)malloc(sizeof(ClsMthdList));
+            newMthd->name = strdup(pcur->name);
+            newMthd->type = pcur->type;
+            newMthd->paramlist = pcur->paramlist;
+            newMthd->index = pcur->index;
+            newMthd->fLabel = pcur->fLabel;
+            newMthd->next = NULL;
+
+            if (!finalMthdList)
+                finalMthdList = newMthd;
+            else
+                prev->next = newMthd;
+            prev = newMthd;
+
+            pcur = pcur->next;
+        }
+    }
+
+    // if methods are re-declared, change the label
+    ClsMthdList* childM = clsMthdList;
+    while (childM) {
+        ClsMthdList* inherited = searchInMthdDecl(finalMthdList, childM->name);
+
+        if (inherited) {
+            inherited->type = childM->type;
+            inherited->paramlist = childM->paramlist;
+            inherited->fLabel = childM->fLabel;
+        } else {
+            finalMthdList = concatMthdDecl(finalMthdList, createMthdDecl(childM->type->name, childM->name, childM->paramlist));
+        }
+        childM = childM->next;
+    }
+
+
+
+    clsEntry->fieldList = finalFldList;
+    clsEntry->mthdList = finalMthdList;
+
+    // set index and count
+
+    int fIndex = 0;
+    for (ClsFldList* f = finalFldList; f; f = f->next)
+        f->index = fIndex++;
     clsEntry->fieldCount = fIndex;
 
-    clsEntry->mthdList = clsMthdList;
     int mIndex = 0;
-    ClsMthdList* mtemp = clsMthdList;
-    while (mtemp) {
-        mtemp->index = mIndex++;
-        mtemp = mtemp->next;
-    }
+    for (ClsMthdList* m = finalMthdList; m; m = m->next)
+        m->index = mIndex++;
     clsEntry->methodCount = mIndex;
+
+    if(fIndex > MAX_FIELDS) {
+        printf("Error : maximum fields in a class is limited to 8\n");
+        exit(1);
+    }
+
+    if(mIndex > MAX_FIELDS) {
+        printf("Error : maximum methods in a class is limited to 8\n");
+        exit(1);
+    }
 
     return;
 }
+
 
 ClassTable* setClassTableIndices(ClassTable* head) {
     if (!head) return NULL;

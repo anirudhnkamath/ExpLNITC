@@ -17,6 +17,8 @@
 #define LDECL_BINDING_START 1
 #define PARAMS_BINDING_START -3
 
+#define MAX_FIELDS 8
+
 enum nodeTypes {
     NODE_CONNECTOR = 1000,
     NODE_EMPTY,

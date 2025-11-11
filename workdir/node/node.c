@@ -147,7 +147,9 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
     }
 
     if(exprNode->tnodeType == NODE_NEW) {
-        if(!leftNode->class || strcmp(leftNode->class->name, exprNode->left->class->name) != 0) {
+        if( !leftNode->class || 
+            (leftNode->class != exprNode->left->class && !isParentClass(exprNode->left->class, leftNode->class))
+        ) {
             printf("Error : type mismatch in assigning NEW\n");
             exit(1);
         }
@@ -157,7 +159,7 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
 
     if( (leftNode->type != exprNode->type) || 
         (leftNode->isPtr != exprNode->isPtr) ||
-        (leftNode->class != exprNode->class)
+        (leftNode->class != exprNode->class && !isParentClass(exprNode->class, leftNode->class))
     ) {
         printf("Error : type mismatch in assignment\n");
         exit(1);

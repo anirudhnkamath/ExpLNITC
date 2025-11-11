@@ -36,7 +36,7 @@
 %token BEGIN_DECL END_DECL BEGIN_CODE END_CODE BEGIN_TYPE END_TYPE
 %token ASSG
 %token PLUS MIN MULT DIV EQ NEQ GTE GT LTE LT MOD AND OR AMPSAND
-%token IF THEN ELSE ENDIF WHILE DO ENDWHILE REPEAT UNTIL BREAK NEW DELETE CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE BRKP NULL_VAL CLASS ENDCLASS
+%token IF THEN ELSE ENDIF WHILE DO ENDWHILE EXTENDS REPEAT UNTIL BREAK NEW DELETE CONTINUE MAIN READ WRITE RETURN ALLOC FREE INITLZE BRKP NULL_VAL CLASS ENDCLASS
 %token LPAR RPAR LBRACK RBRACK LCURL RCURL
 %token INT STR
 %token EOL COMMA DOT
@@ -98,7 +98,11 @@ clsDecl     :   clsName LCURL BEGIN_DECL clsFldList mthdList    {
             ;
 
 clsName     :   ID                              {   
-                                                    classTableHead = concatClassTable(classTableHead, createEmptyClass($1->varName)); 
+                                                    classTableHead = concatClassTable(classTableHead, createEmptyClass($1->varName, NULL)); 
+                                                    $$ = $1;
+                                                }
+            |   ID EXTENDS ID                   {
+                                                    classTableHead = concatClassTable(classTableHead, createEmptyClass($1->varName, $3->varName));
                                                     $$ = $1;
                                                 }
             ; 

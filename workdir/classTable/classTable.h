@@ -43,9 +43,10 @@ extern ClassTable* classTableHead;
 
 ClassTable* searchInClassTable(ClassTable* head, char* name);
 ClassTable* concatClassTable(ClassTable* head1, ClassTable* head2);
-ClassTable* createEmptyClass(char* className);
+ClassTable* createEmptyClass(char* className, char* parentName);
 void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsMthdList);
 ClassTable* setClassTableIndices(ClassTable* head);
+int isParentClass(ClassTable* class, ClassTable* parent);
 void printClassTable();
 
 ClsFldList* createClsFld(char* type, char* name);
