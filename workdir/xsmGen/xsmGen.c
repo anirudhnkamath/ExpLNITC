@@ -16,34 +16,40 @@ void initialiseMainFn(FILE* targetFile) {
     
     // loop for initialising heap
 
-    int label1 = getNewLabel();
-    int label2 = getNewLabel();
-    int label3 = getNewLabel();
+    // int label1 = getNewLabel();
+    // int label2 = getNewLabel();
+    // int label3 = getNewLabel();
 
-    fprintf(targetFile, "MOV R0, %d\n", HEAP_START);
+    // fprintf(targetFile, "MOV R0, %d\n", HEAP_START);
 
-    fprintf(targetFile, "L%d:\n", label1);
+    // fprintf(targetFile, "L%d:\n", label1);
 
-    fprintf(targetFile, "MOV R1, R0\n");
-    fprintf(targetFile, "ADD R1, 8\n");
-    fprintf(targetFile, "MOV R2, %d\n", HEAP_END);
-    fprintf(targetFile, "LT R2, R1\n");
-    fprintf(targetFile, "JNZ R2, L%d\n", label2);
+    // fprintf(targetFile, "MOV R1, R0\n");
+    // fprintf(targetFile, "ADD R1, 8\n");
+    // fprintf(targetFile, "MOV R2, %d\n", HEAP_END);
+    // fprintf(targetFile, "LT R2, R1\n");
+    // fprintf(targetFile, "JNZ R2, L%d\n", label2);
 
-    fprintf(targetFile, "MOV [R0], R1\n");
-    fprintf(targetFile, "JMP L%d\n", label3);
+    // fprintf(targetFile, "MOV [R0], R1\n");
+    // fprintf(targetFile, "JMP L%d\n", label3);
 
-    fprintf(targetFile, "L%d:\n", label2);
-    fprintf(targetFile, "MOV [R0], -1\n");
+    // fprintf(targetFile, "L%d:\n", label2);
+    // fprintf(targetFile, "MOV [R0], -1\n");
 
-    fprintf(targetFile, "L%d:\n", label3);
-    fprintf(targetFile, "ADD R0, 8\n");
-    fprintf(targetFile, "MOV R3, %d\n", HEAP_END);
-    fprintf(targetFile, "MOV R1, R0\n");
-    fprintf(targetFile, "LE R1, R3\n");
-    fprintf(targetFile, "JNZ R1, L%d\n", label1);
+    // fprintf(targetFile, "L%d:\n", label3);
+    // fprintf(targetFile, "ADD R0, 8\n");
+    // fprintf(targetFile, "MOV R3, %d\n", HEAP_END);
+    // fprintf(targetFile, "MOV R1, R0\n");
+    // fprintf(targetFile, "LE R1, R3\n");
+    // fprintf(targetFile, "JNZ R1, L%d\n", label1);
 
-    
+    int freeReg1 = getFreeRegister();
+    fprintf(targetFile, "MOV R%d, \"Init\"\n", freeReg1);
+    fprintf(targetFile, "PUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\n", freeReg1, freeReg1, freeReg1, freeReg1, freeReg1);
+    fprintf(targetFile, "CALL 0\n");
+    fprintf(targetFile, "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n", freeReg1, freeReg1, freeReg1, freeReg1, freeReg1);
+    releaseRegister(freeReg1);
+
     // setting up BP and SP
 
     fprintf(targetFile, "MOV BP, %d\n", nextBinding+2);

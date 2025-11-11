@@ -43,7 +43,8 @@ class
 endclass
 
 decl
-    int arr[10];
+    animal a;
+    dog b;
 enddecl
 
 int main() {
@@ -52,6 +53,10 @@ int main() {
     enddecl
 
     begin
+        breakpoint;
+        a = new(animal);
+        breakpoint;
+        b = new(dog);
         write("hi");
         return 0;
     end
