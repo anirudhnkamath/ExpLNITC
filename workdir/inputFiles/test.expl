@@ -43,20 +43,16 @@ class
 endclass
 
 decl
+    int arr[10];
 enddecl
 
 int main() {
     decl
-        animal a;
-        dog d;
-        int temp;
+        
     enddecl
 
     begin
-        a = new(dog);
-
-        temp = a.setname("Tommy");
-        temp = a.speak();
+        write("hi");
         return 0;
     end
 }

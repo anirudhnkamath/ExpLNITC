@@ -203,12 +203,12 @@ void printGsTable() {
 }
 
 
-// allow here
+
 ParamListEntry* createParamListEntry(char* varName, char* typeName, int isPtr) {
     TypeTable* type = searchInTypeTable(typeTableHead, typeName);
     ClassTable* class = searchInClassTable(classTableHead, typeName);
 
-    if(!type && !class) {
+    if(!type) {
         printf("Error : invalid type for parameter\n");
         exit(1);
     }
@@ -378,7 +378,7 @@ LsTableEntry* setLsTableType(LsTableEntry* head, char* typeName) {
     TypeTable* type = searchInTypeTable(typeTableHead, typeName);
     ClassTable* class = searchInClassTable(classTableHead, typeName);
 
-    if(!type && !class) {
+    if(!type) {
         printf("Error : Invalid type in local declarations\n");
         exit(1);
     }
