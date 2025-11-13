@@ -1,4 +1,8 @@
 type
+    newtype {
+        int a;
+        str b;
+    }
 endtype
 
 class
@@ -45,19 +49,22 @@ endclass
 decl
     animal a;
     dog b;
+    animal x;
+    int n, retval;
 enddecl
 
 int main() {
-    decl
-        
-    enddecl
-
+    decl enddecl
     begin
-        breakpoint;
-        a = new(animal);
-        breakpoint;
-        b = new(dog);
-        write("hi");
+        read(n);
+
+        if (n > 10) then
+            x = new(animal);
+        else
+            x = new(dog);
+        endif;
+
+        retval = x.speak();
         return 0;
     end
 }

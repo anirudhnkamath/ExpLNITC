@@ -81,27 +81,15 @@ int isParentClass(ClassTable* class, ClassTable* parent) {
 
 void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsMthdList) {
     ClassTable* clsEntry = searchInClassTable(classTableHead, name);
-    if (!clsEntry) {
-        printf("Error: Class '%s' not found while updating class table.\n", name);
-        exit(1);
-    }
     ClassTable* parent = clsEntry->parentPtr;
 
-    if(parent && parent->parentPtr) {
-        printf("Error : only one level of inheritance allowed\n");
-        exit(1);
-    }
-
+    // add parent fldlist to final fldlist
     ClsFldList* finalFldList = NULL;
-    ClsMthdList* finalMthdList = NULL;
-
-    // add parent fldlist
     if (parent) {
 
         ClsFldList* pcur = parent->fieldList;
-        ClsFldList* prev = NULL;
-
         while (pcur) {
+
             ClsFldList* newFld = (ClsFldList*)malloc(sizeof(ClsFldList));
             newFld->name = strdup(pcur->name);
             newFld->type = pcur->type;
@@ -109,25 +97,21 @@ void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsM
             newFld->index = pcur->index;
             newFld->next = NULL;
 
-            if (!finalFldList)
-                finalFldList = newFld;
-            else
-                prev->next = newFld;
-            prev = newFld;
+            finalFldList = concatClsFld(finalFldList, newFld);
 
             pcur = pcur->next;
         }
     }
 
-    // add child fldlist
+    // add child fldlist to final fldlist
     finalFldList = concatClsFld(finalFldList, clsFldList);
 
 
-    // add parent methodlist
+    // add parent methodlist to final mtdhlist
+    ClsMthdList* finalMthdList = NULL;
     if (parent) {
 
         ClsMthdList* pcur = parent->mthdList;
-        ClsMthdList* prev = NULL;
 
         while (pcur) {
             ClsMthdList* newMthd = (ClsMthdList*)malloc(sizeof(ClsMthdList));
@@ -138,30 +122,30 @@ void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsM
             newMthd->fLabel = pcur->fLabel;
             newMthd->next = NULL;
 
-            if (!finalMthdList)
-                finalMthdList = newMthd;
-            else
-                prev->next = newMthd;
-            prev = newMthd;
+            finalMthdList = concatMthdDecl(finalMthdList, newMthd);
 
             pcur = pcur->next;
         }
     }
 
-    // if methods are re-declared, change the label
-    ClsMthdList* childM = clsMthdList;
-    while (childM) {
-        ClsMthdList* inherited = searchInMthdDecl(finalMthdList, childM->name);
+    // add child mthdlist to final mthd list after overriding
+    while (clsMthdList) {
+        ClsMthdList* curMthd = clsMthdList;
+        clsMthdList = clsMthdList->next;
+        curMthd->next = NULL;
 
-        if (inherited) {
-            inherited->type = childM->type;
-            inherited->paramlist = childM->paramlist;
-            inherited->fLabel = childM->fLabel;
-        } else {
-            finalMthdList = concatMthdDecl(finalMthdList, createMthdDecl(childM->type->name, childM->name, childM->paramlist));
+        ClsMthdList* override = searchInMthdDecl(finalMthdList, curMthd->name);
+
+        if(override) {
+            override->type = curMthd->type;
+            override->paramlist = curMthd->paramlist;
+            override->fLabel = curMthd->fLabel;
+        } 
+        else {
+            finalMthdList = concatMthdDecl(finalMthdList, curMthd);
         }
-        childM = childM->next;
     }
+
 
 
 
@@ -190,6 +174,9 @@ void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsM
         exit(1);
     }
 
+    // reserve space before global variables for vtable
+    getNextBinding(MAX_FIELDS);
+    
     return;
 }
 

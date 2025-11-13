@@ -92,7 +92,7 @@ clsDeclList :   clsDeclList clsDecl             {}
             ;
 
 clsDecl     :   clsName LCURL BEGIN_DECL clsFldList mthdList    {
-                                                                    updateClassTableEntry($1->varName, $4, $5);
+                                                                    updateClassTableEntry($1->varName, $4, $5); 
                                                                 }
                                 END_DECL mthdDefList RCURL
             ;

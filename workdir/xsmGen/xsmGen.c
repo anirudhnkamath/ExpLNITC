@@ -11,47 +11,22 @@ void setHeader(FILE* targetFile) {
     fprintf(targetFile, "0\nMAIN\n0\n0\n0\n0\n0\n0\n");
 }
 
-void initialiseMainFn(FILE* targetFile) {
-    fprintf(targetFile, "MAIN:\n");
-    
-    // loop for initialising heap
-
-    // int label1 = getNewLabel();
-    // int label2 = getNewLabel();
-    // int label3 = getNewLabel();
-
-    // fprintf(targetFile, "MOV R0, %d\n", HEAP_START);
-
-    // fprintf(targetFile, "L%d:\n", label1);
-
-    // fprintf(targetFile, "MOV R1, R0\n");
-    // fprintf(targetFile, "ADD R1, 8\n");
-    // fprintf(targetFile, "MOV R2, %d\n", HEAP_END);
-    // fprintf(targetFile, "LT R2, R1\n");
-    // fprintf(targetFile, "JNZ R2, L%d\n", label2);
-
-    // fprintf(targetFile, "MOV [R0], R1\n");
-    // fprintf(targetFile, "JMP L%d\n", label3);
-
-    // fprintf(targetFile, "L%d:\n", label2);
-    // fprintf(targetFile, "MOV [R0], -1\n");
-
-    // fprintf(targetFile, "L%d:\n", label3);
-    // fprintf(targetFile, "ADD R0, 8\n");
-    // fprintf(targetFile, "MOV R3, %d\n", HEAP_END);
-    // fprintf(targetFile, "MOV R1, R0\n");
-    // fprintf(targetFile, "LE R1, R3\n");
-    // fprintf(targetFile, "JNZ R1, L%d\n", label1);
-
+void xsmInit(FILE* targetFile) {
     int freeReg1 = getFreeRegister();
     fprintf(targetFile, "MOV R%d, \"Init\"\n", freeReg1);
     fprintf(targetFile, "PUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\n", freeReg1, freeReg1, freeReg1, freeReg1, freeReg1);
     fprintf(targetFile, "CALL 0\n");
     fprintf(targetFile, "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n", freeReg1, freeReg1, freeReg1, freeReg1, freeReg1);
     releaseRegister(freeReg1);
+}
+
+void initialiseMainFn(FILE* targetFile) {
+    fprintf(targetFile, "MAIN:\n");
+
+    // initialise
+    xsmInit(targetFile);
 
     // setting up BP and SP
-
     fprintf(targetFile, "MOV BP, %d\n", nextBinding+2);
     fprintf(targetFile, "MOV SP, %d\n", nextBinding+2);
 
@@ -63,6 +38,9 @@ void initialiseMainFn(FILE* targetFile) {
         temp = temp->next;
     }
     releaseRegister(freeReg);
+
+    // set v table entries
+    initialiseVTable(targetFile);
 }
 
 void printToConsole(int regIndex, FILE* targetFile) {
@@ -294,3 +272,53 @@ void xsmFree(Tnode* tupNode, FILE* targetFile) {
     releaseRegister(addrReg);
 }
 
+void initialiseVTable(FILE* targetFile) {
+
+    // set up v table entries
+
+    ClassTable* class = classTableHead;
+    while(class) {
+        int base = STACK_START + (class->index * MAX_FIELDS);
+
+        ClsMthdList* method = class->mthdList;
+        while(method) {
+            int addr = base + method->index;
+
+            int reg1 = getFreeRegister();
+            int reg2 = getFreeRegister();
+
+            fprintf(targetFile, "MOV R%d, F%d\n", reg1, method->fLabel);
+            fprintf(targetFile, "MOV R%d, %d\n", reg2, addr);
+            fprintf(targetFile, "MOV [R%d], R%d\n", reg2, reg1);
+
+            releaseRegister(reg1);
+            releaseRegister(reg2);
+
+            method = method->next;
+        }
+
+        class = class->next;
+    }
+
+    // set up v table pointers for each class variable
+
+    GsTableEntry* var = gsTableHead;
+    while(var) {
+        // dont do for non-class variables
+        if(!var->class) {
+            var = var->next;
+            continue;
+        }
+
+        int varAddr = var->binding + 1;
+        int vTableAddr = STACK_START + (var->class->index * MAX_FIELDS);
+
+        int reg1 = getFreeRegister();
+
+        fprintf(targetFile, "MOV R%d, %d\n", reg1, varAddr);
+        fprintf(targetFile, "MOV [R%d], %d\n", reg1, vTableAddr);
+
+        releaseRegister(reg1);
+        var = var->next;
+    }
+}

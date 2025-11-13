@@ -145,11 +145,38 @@ GsTableEntry* setGsTableType(GsTableEntry* head, char* typeName) {
             exit(1);
         }
 
-        if(temp->fLabel == _NA_ && temp->isPtr == _NA_) {
+        // function
+        if(temp->fLabel != _NA_) {
+            // do nothing
+        }
+
+        // array
+        else if(temp->dimensions) {
+            if(class || (type && type->fields)) {
+                printf("Error : user-type or class arrays not allowed\n");
+                exit(1);
+            }
+            
             temp->binding = getNextBinding(temp->size);
         }
 
+        // pointers
         else if(temp->isPtr == 1) {
+            if(class || (type && type->fields)) {
+                printf("Error : pointers only allowed for primitive types\n");
+                exit(1);
+            }
+
+            temp->binding = getNextBinding(1);
+        }
+
+        // class id
+        else if(class) {
+            temp->binding = getNextBinding(2);
+        }
+
+        // type id
+        else {
             temp->binding = getNextBinding(1);
         }
 

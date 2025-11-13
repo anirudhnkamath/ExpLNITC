@@ -16,6 +16,7 @@ jz_instr (JZ[ ]{register},[ ]{label_name})
 jnz_instr (JNZ[ ]{register},[ ]{label_name})
 jmp_instr (JMP[ ]{label_name})
 call_instr (CALL[ ]{label_name})
+mov_instr (MOV[ ]{register},[ ]{label_name})
 main_header MAIN
 
 %%
@@ -96,6 +97,21 @@ main_header MAIN
         fprintf(translatedFile, "CALL %d\n", addr);
     }
 }
+
+{mov_instr}\n {
+    if(scanNumber == 1) {
+        addr += 2;
+    }
+    else {
+        char curLabel[10], curReg[10];
+        sscanf(yytext, "MOV %s %s\n", curReg, curLabel);
+
+        int addr = findLabelAddr(curLabel);
+        fprintf(translatedFile, "MOV %s %d\n", curReg, addr);
+    }
+}
+
+
 
 .*\n {
     if(scanNumber == 1) {

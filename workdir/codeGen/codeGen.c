@@ -120,7 +120,23 @@ void generateReadCode(Tnode* node, FILE* targetFile) {
 
 void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
 
-    if(rhs->tnodeType == NODE_ALLOC || rhs->tnodeType == NODE_NEW) {
+    if(rhs->tnodeType == NODE_NEW) {
+        int heapReg = xsmAlloc(targetFile);
+        int storeReg = getEffectiveAddr(lhs, targetFile);
+        fprintf(targetFile, "MOV [R%d], R%d\n", storeReg, heapReg);
+
+        // vtable
+        int vTableAddr = STACK_START + (rhs->left->class->index * MAX_FIELDS);
+        fprintf(targetFile, "ADD R%d, 1\n", storeReg);
+        fprintf(targetFile, "MOV [R%d], %d\n", storeReg, vTableAddr);
+
+        releaseRegister(heapReg);
+        releaseRegister(storeReg);
+
+        return;
+    }
+
+    if(rhs->tnodeType == NODE_ALLOC) {
         int heapReg = xsmAlloc(targetFile);
         int storeReg = getEffectiveAddr(lhs, targetFile);
         fprintf(targetFile, "MOV [R%d], R%d\n", storeReg, heapReg);
@@ -134,6 +150,14 @@ void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
     int exprReg = evaluateExpression(rhs, targetFile);
 
     fprintf(targetFile, "MOV [R%d], R%d\n", lhsAddr, exprReg);
+
+    // virtual table set up
+    if(lhs->class && rhs->class) {
+        fprintf(targetFile, "ADD R%d, 1\n", lhsAddr);
+        fprintf(targetFile, "ADD R%d, 1\n", exprReg);
+        fprintf(targetFile, "MOV [R%d], [R%d]\n", lhsAddr, exprReg);
+    }
+
     releaseRegister(lhsAddr);
     releaseRegister(exprReg);
 }
@@ -493,11 +517,18 @@ int evaluateMethod(Tnode* fnNode, int selfReg, FILE* targetFile) {
 
     // push space for retval and call function
     ClsMthdList* foundMthd = searchInMthdDecl(fnNode->left->class->mthdList, fnNode->left->varName);
-    int label = foundMthd->fLabel;
+    if(!foundMthd) {
+        printf("Error : Invalid method called\n");
+        exit(1);
+    }
+    int vTableAddr = (STACK_START + (fnNode->left->class->index * MAX_FIELDS)) + foundMthd->index;
+
     resetRegisters();
     fprintf(targetFile, "PUSH R0\n");
-    fprintf(targetFile, "CALL F%d\n", label);
+    fprintf(targetFile, "MOV R0, [%d]\n", vTableAddr);
+    fprintf(targetFile, "CALL R0\n");
     resetRegisters();
+
 
     // retrieve return val in freeReg1
     registerFree[freeReg1] = 0;

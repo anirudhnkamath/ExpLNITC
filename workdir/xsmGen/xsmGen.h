@@ -24,5 +24,8 @@ void functionExitCodeGen(FILE* targetFile);
 
 int xsmAlloc(FILE* targetFile);
 void xsmFree(Tnode* node, FILE* targetFile);
+void xsmInit(FILE* targetFile);
+
+void initialiseVTable(FILE* targetFile);
 
 #endif
