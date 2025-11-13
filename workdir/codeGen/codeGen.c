@@ -151,15 +151,22 @@ void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
 
     fprintf(targetFile, "MOV [R%d], R%d\n", lhsAddr, exprReg);
 
+    releaseRegister(lhsAddr);
+    releaseRegister(exprReg);
+
     // virtual table set up
     if(lhs->class && rhs->class) {
+
+        int lhsAddr = getEffectiveAddr(lhs, targetFile);
+        int exprReg = getEffectiveAddr(rhs, targetFile);
+
         fprintf(targetFile, "ADD R%d, 1\n", lhsAddr);
         fprintf(targetFile, "ADD R%d, 1\n", exprReg);
         fprintf(targetFile, "MOV [R%d], [R%d]\n", lhsAddr, exprReg);
-    }
 
-    releaseRegister(lhsAddr);
-    releaseRegister(exprReg);
+        releaseRegister(lhsAddr);
+        releaseRegister(exprReg);
+    }
 }
 
 void generateWhileLoop(Tnode* node, FILE* targetFile) {
@@ -477,7 +484,7 @@ int evaluateFunction(Tnode* fnNode, FILE* targetFile) {
     return freeReg1;
 }
 
-int evaluateMethod(Tnode* fnNode, int selfReg, FILE* targetFile) {
+int evaluateMethod(Tnode* fnNode, int selfReg, int vtableReg, FILE* targetFile) {
 
     // get free registers for later use
     int freeReg1 = getFreeRegister();
@@ -495,7 +502,8 @@ int evaluateMethod(Tnode* fnNode, int selfReg, FILE* targetFile) {
         }
     }
     resetRegisters();
-    registerFree[freeReg1] = registerFree[freeReg2] = registerFree[selfReg] = 0;
+    registerFree[freeReg1] = registerFree[freeReg2] = 0;
+    registerFree[selfReg] = registerFree[vtableReg] = 0;
 
 
     // push all arguments
@@ -521,11 +529,14 @@ int evaluateMethod(Tnode* fnNode, int selfReg, FILE* targetFile) {
         printf("Error : Invalid method called\n");
         exit(1);
     }
-    int vTableAddr = (STACK_START + (fnNode->left->class->index * MAX_FIELDS)) + foundMthd->index;
+    int offset = foundMthd->index;
+
+    fprintf(targetFile, "MOV R%d, [R%d]\n", freeReg1, vtableReg);
+    fprintf(targetFile, "ADD R%d, %d\n", freeReg1, offset);
 
     resetRegisters();
     fprintf(targetFile, "PUSH R0\n");
-    fprintf(targetFile, "MOV R0, [%d]\n", vTableAddr);
+    fprintf(targetFile, "MOV R0, [R%d]\n", freeReg1);
     fprintf(targetFile, "CALL R0\n");
     resetRegisters();
 

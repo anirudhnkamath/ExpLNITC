@@ -50,7 +50,7 @@ decl
     animal a;
     dog b;
     animal x;
-    int n, retval;
+    int n;
 enddecl
 
 int main() {
@@ -59,12 +59,14 @@ int main() {
         read(n);
 
         if (n > 10) then
+            breakpoint;
             x = new(animal);
         else
+            breakpoint;
             x = new(dog);
         endif;
-
-        retval = x.speak();
+        breakpoint;
+        n = x.speak();
         return 0;
     end
 }

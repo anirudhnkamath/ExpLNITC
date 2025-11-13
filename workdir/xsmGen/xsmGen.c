@@ -103,6 +103,9 @@ int getEffectiveAddr(Tnode* idNode, FILE* targetFile) {
         releaseRegister(addrReg);
 
         int addrReg = getEffectiveAddr(idNode->left, targetFile);
+        int vtableReg = getFreeRegister();
+        fprintf(targetFile, "MOV R%d, R%d\n", vtableReg, addrReg);
+        fprintf(targetFile, "ADD R%d, 1\n", vtableReg);
         fprintf(targetFile, "MOV R%d, [R%d]\n", addrReg, addrReg);
 
         if(idNode->right->tnodeType == NODE_ID) {
@@ -121,11 +124,12 @@ int getEffectiveAddr(Tnode* idNode, FILE* targetFile) {
 
         // weird
         else if(idNode->right->tnodeType == NODE_FN_CALL) {
-            int freeReg = evaluateMethod(idNode->right, addrReg, targetFile);
+            int freeReg = evaluateMethod(idNode->right, addrReg, vtableReg, targetFile);
             fprintf(targetFile, "MOV R%d, R%d\n", addrReg, freeReg);
             releaseRegister(freeReg);
         }
 
+        releaseRegister(vtableReg);
         return addrReg;
     }
 
