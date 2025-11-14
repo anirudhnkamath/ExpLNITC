@@ -138,6 +138,14 @@ mthdDef     :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
 
                                                                     $4 = addSelfToParams($4);
                                                                     lsTableHead = addParamsToLsTable(lsTableHead, $4);
+                                                                
+                                                                    LsTableEntry* cur = lsTableHead;
+                                                                    while(cur) {
+                                                                        if(cur->binding < 0)
+                                                                            cur->binding -= 1;
+                                                                        cur = cur->next;
+                                                                    }
+
                                                                 }
                                                     body RCURL  {
                                                                     $$ = $9;

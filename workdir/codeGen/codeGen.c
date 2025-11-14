@@ -520,6 +520,8 @@ int evaluateMethod(Tnode* fnNode, int selfReg, int vtableReg, FILE* targetFile) 
     // push self value
     if(fnNode->left->class) {
         fprintf(targetFile, "PUSH R%d\n", selfReg);
+        fprintf(targetFile, "MOV R%d, [R%d]\n", freeReg1, vtableReg);
+        fprintf(targetFile, "PUSH R%d skldjflsdkjf\n", freeReg1);
     }
 
 
@@ -546,7 +548,7 @@ int evaluateMethod(Tnode* fnNode, int selfReg, int vtableReg, FILE* targetFile) 
     fprintf(targetFile, "POP R%d\n", freeReg1);
 
     // temporary method to pop all args
-    for(int i=0; i<numArgs + 1; i++)
+    for(int i=0; i<numArgs + 2; i++)
         fprintf(targetFile, "POP R%d\n", freeReg2);
 
 

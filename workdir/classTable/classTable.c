@@ -253,8 +253,8 @@ ClsFldList* createClsFld(char* type, char* name) {
 
     ClassTable* ctype = searchInClassTable(classTableHead, type);
     if (ctype) {
-        newFld->clsType = ctype;
-        return newFld;
+        printf("Error : class-type fields not allowed\n");
+        exit(1);
     }
 
     printf("Error: undefined type for class field\n");
