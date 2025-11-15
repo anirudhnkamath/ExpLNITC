@@ -5,6 +5,8 @@
     #include "./define/constants.h"
 %}
 
+%option yylineno
+
 %%
 
 [0-9]+ {
@@ -108,7 +110,8 @@
 ";" { return EOL; }
 
 \/\/.*\n {}
-[ \t\n]+ {}
+[ \t]+ {}
+[\n] {}
 . { return -1; }
 
 %%

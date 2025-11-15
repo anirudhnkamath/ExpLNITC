@@ -3,6 +3,8 @@
 
 #include "../gsTable/gsTable.h"
 
+int yyerror(const char* msg);
+
 typedef struct ParamListEntry ParamListEntry;
 typedef struct LsTableEntry LsTableEntry;
 

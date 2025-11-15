@@ -5,6 +5,8 @@
 #include "../node/node.h"
 #include "../typeTable/typeTable.h"
 
+int yyerror(const char* msg);
+
 typedef struct ClassTable ClassTable;
 typedef struct ClsFldList ClsFldList;
 typedef struct ClsMthdList ClsMthdList;
@@ -54,10 +56,10 @@ ClsFldList* searchInClsFld(ClsFldList* head, char* name);
 ClsFldList* concatClsFld(ClsFldList* head1, ClsFldList* head2);
 
 ClsMthdList* createMthdDecl(char* type, char* name, struct ParamListEntry* paramList);
-ClsMthdList* searchInMthdDecl(ClsMthdList* head, char* name);
+ClsMthdList* searchInMthdDecl(ClsMthdList* head, char* name, ParamListEntry* params, int nameMatters);
 ClsMthdList* concatMthdDecl(ClsMthdList* head1, ClsMthdList* head2);
 ClsMthdList* createMthdDecl(char* type, char* name, ParamListEntry* paramList);
 ClsMthdList* validateMthd(TypeTable* returnType, Tnode* idNode, ParamListEntry* fnParams);
-
+ClsMthdList* findMthdByArgs(ClsMthdList* head, char* name, Tnode* args);
 
 #endif

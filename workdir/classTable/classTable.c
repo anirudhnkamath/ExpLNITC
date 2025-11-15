@@ -37,8 +37,7 @@ ClassTable* createEmptyClass(char* className, char* parentName) {
     if(parentName) {
         parent = searchInClassTable(classTableHead, parentName);
         if(!parent) {
-            printf("Error : invalid super class in class definition\n");
-            exit(1);
+            yyerror("invalid super class in class definition\n");
         }
     }
     else
@@ -56,14 +55,12 @@ ClassTable* createEmptyClass(char* className, char* parentName) {
 
     ClassTable* temp = searchInClassTable(classTableHead, className);
     if (temp) {
-        printf("Error : duplicate name classes detected\n");
-        exit(1);
+        yyerror("duplicate name classes detected\n");
     }
 
     TypeTable* ttemp = searchInTypeTable(typeTableHead, className);
     if(ttemp) {
-        printf("Error : class name is same as previously defined type\n");
-        exit(1);
+        yyerror("class name is same as previously defined type\n");
     }
 
     return newCls;
@@ -83,13 +80,13 @@ void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsM
     ClassTable* clsEntry = searchInClassTable(classTableHead, name);
     ClassTable* parent = clsEntry->parentPtr;
 
-    // add parent fldlist to final fldlist
+    // copy parent fields into final field list
     ClsFldList* finalFldList = NULL;
     if (parent) {
-
         ClsFldList* pcur = parent->fieldList;
         while (pcur) {
 
+            // duplicate all entries
             ClsFldList* newFld = (ClsFldList*)malloc(sizeof(ClsFldList));
             newFld->name = strdup(pcur->name);
             newFld->type = pcur->type;
@@ -98,13 +95,13 @@ void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsM
             newFld->next = NULL;
 
             finalFldList = concatClsFld(finalFldList, newFld);
-
             pcur = pcur->next;
         }
     }
 
     // add child fldlist to final fldlist
     finalFldList = concatClsFld(finalFldList, clsFldList);
+
 
 
     // add parent methodlist to final mtdhlist
@@ -134,19 +131,39 @@ void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsM
         clsMthdList = clsMthdList->next;
         curMthd->next = NULL;
 
-        ClsMthdList* override = searchInMthdDecl(finalMthdList, curMthd->name);
+        // overriden fuction should have same signature
+        ClsMthdList* override1 = searchInMthdDecl(finalMthdList, curMthd->name, curMthd->paramlist, 0);
+        ClsMthdList* override2 = searchInMthdDecl(finalMthdList, curMthd->name, curMthd->paramlist, 1);
 
-        if(override) {
-            override->type = curMthd->type;
-            override->paramlist = curMthd->paramlist;
-            override->fLabel = curMthd->fLabel;
-        } 
-        else {
-            finalMthdList = concatMthdDecl(finalMthdList, curMthd);
+        if(override1 && !override2) {
+            yyerror("invalid overriding function\n");
         }
+
+        if(override1 && override1->type != curMthd->type) {
+            yyerror("invalid return type for overriding function\n");
+        }
+        
+        // copy content to parents node
+        if(override1) {
+            override1->type = curMthd->type;
+            override1->paramlist = curMthd->paramlist;
+            override1->fLabel = curMthd->fLabel;
+        } 
+
+        // else append
+        else {
+            if(!finalMthdList)
+                finalMthdList = curMthd;
+            else {
+                ClsMthdList* temp = finalMthdList;
+                while(temp->next) {
+                    temp = temp->next;
+                }
+                temp->next = curMthd;
+            }
+        }
+
     }
-
-
 
 
     clsEntry->fieldList = finalFldList;
@@ -165,13 +182,11 @@ void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsM
     clsEntry->methodCount = mIndex;
 
     if(fIndex > MAX_FIELDS) {
-        printf("Error : maximum fields in a class is limited to 8\n");
-        exit(1);
+        yyerror("maximum fields in a class is limited to 8\n");
     }
 
     if(mIndex > MAX_FIELDS) {
-        printf("Error : maximum methods in a class is limited to 8\n");
-        exit(1);
+        yyerror("maximum methods in a class is limited to 8\n");
     }
 
     // reserve space before global variables for vtable
@@ -179,7 +194,6 @@ void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsM
     
     return;
 }
-
 
 ClassTable* setClassTableIndices(ClassTable* head) {
     if (!head) return NULL;
@@ -253,12 +267,10 @@ ClsFldList* createClsFld(char* type, char* name) {
 
     ClassTable* ctype = searchInClassTable(classTableHead, type);
     if (ctype) {
-        printf("Error : class-type fields not allowed\n");
-        exit(1);
+        yyerror("class-type fields not allowed\n");
     }
 
     printf("Error: undefined type for class field\n");
-    exit(1);
 }
 
 ClsFldList* searchInClsFld(ClsFldList* head, char* name) {
@@ -283,8 +295,7 @@ ClsFldList* concatClsFld(ClsFldList* head1, ClsFldList* head2) {
 
     while (curr2) {
         if(searchInClsFld(head1, curr2->name) != NULL) {
-            printf("Error : duplicate fields in class\n");
-            exit(1);
+            yyerror("duplicate fields in class\n");
         }
 
         curr2 = curr2->next;
@@ -300,32 +311,73 @@ ClsMthdList* concatMthdDecl(ClsMthdList* head1, ClsMthdList* head2) {
     if (!head2) return head1;
     if (!head1) return head2;
 
-    ClsMthdList* curr2 = head2;
+    ClsMthdList* m2 = head2;
+    while (m2) {
+        ClsMthdList* m1 = head1;
 
-    while (curr2) {
-        if(searchInMthdDecl(head1, curr2->name) != NULL) {
-            printf("Error : multiple class methods with same name\n");
-            exit(1);
+        while (m1) {
+            if (strcmp(m1->name, m2->name) == 0) {
+                ParamListEntry *a = m1->paramlist, *b = m2->paramlist;
+                
+                int same = 1;
+                while (a && b) {
+                    if (a->type != b->type) {
+                        same = 0;
+                        break;
+                    }
+
+                    a = a->next;
+                    b = b->next;
+                }
+
+                if (same && !a && !b) {
+                    yyerror("multiple class methods with same signature\n");
+                }
+            }
+            m1 = m1->next;
         }
-        curr2 = curr2->next;
+
+        m2 = m2->next;
     }
 
-    ClsMthdList* tail1 = head1;
-    while (tail1->next)
-        tail1 = tail1->next;
-
-    tail1->next = head2;
+    ClsMthdList* tail = head1;
+    while (tail->next)
+        tail = tail->next;
+    tail->next = head2;
 
     return head1;
 }
 
-ClsMthdList* searchInMthdDecl(ClsMthdList* head, char* name) {
+ClsMthdList* searchInMthdDecl(ClsMthdList* head, char* name, ParamListEntry* params, int nameMatters) {
     ClsMthdList* temp = head;
+
     while (temp) {
-        if (strcmp(temp->name, name) == 0)
-            return temp;
+
+        if (strcmp(temp->name, name) == 0) {
+
+            ParamListEntry* p = temp->paramlist;
+            ParamListEntry* q = params;
+
+            int same = 1;
+
+            while (p && q) {
+                if ((nameMatters && strcmp(p->varName, q->varName) != 0) || 
+                    p->type != q->type
+                ) {
+                    same = 0;
+                    break;
+                }
+                p = p->next;
+                q = q->next;
+            }
+
+            if (same && !p && !q)
+                return temp;
+        }
+
         temp = temp->next;
     }
+
     return NULL;
 }
 
@@ -345,7 +397,6 @@ ClsMthdList* createMthdDecl(char* type, char* name, ParamListEntry* paramList) {
     }
 
     printf("Error: Undefined return type for class method\n");
-    exit(1);
 }
 
 ClsMthdList* validateMthd(TypeTable* returnType, Tnode* idNode, ParamListEntry* fnParams) {
@@ -354,17 +405,15 @@ ClsMthdList* validateMthd(TypeTable* returnType, Tnode* idNode, ParamListEntry* 
     while(foundClass->next)
         foundClass = foundClass->next;
 
-    ClsMthdList* found = searchInMthdDecl(foundClass->mthdList, idNode->varName);
+    ClsMthdList* found = searchInMthdDecl(foundClass->mthdList, idNode->varName, fnParams, 1);
     if(!found) {
-        printf("Error : The method defined was not declared\n");
-        exit(1);
+        yyerror("The method defined was not declared\n");
     }
 
     curFnType = found->type;
 
     if(strcmp(returnType->name, found->type->name) != 0) {
-        printf("Error : Mismatch in return type of method definition\n");
-        exit(1);
+        yyerror("Mismatch in return type of method definition\n");
     }
 
     ParamListEntry* declParams = found->paramlist;
@@ -375,17 +424,44 @@ ClsMthdList* validateMthd(TypeTable* returnType, Tnode* idNode, ParamListEntry* 
             strcmp(temp1->varName, temp2->varName) != 0 ||
             temp1->isPtr != temp2->isPtr
         ) {
-            printf("Error : Parameters of method definition and declaration conflict\n");
-            exit(1);
+            yyerror("Parameters of method definition and declaration conflict\n");
         }
         temp1 = temp1->next;
         temp2 = temp2->next;
     }
 
     if(temp1 || temp2) {
-        printf("Error : Parameters of method definition and declaration conflict\n");
-        exit(1);
+        yyerror("Parameters of method definition and declaration conflict\n");
     }
 
     return found;
+}
+
+ClsMthdList* findMthdByArgs(ClsMthdList* head, char* name, Tnode* args) {
+    ClsMthdList* temp = head;
+    while(temp) {   
+
+        if(strcmp(temp->name, name) == 0) {
+            ParamListEntry* p = temp->paramlist;
+            Tnode* q = args;
+
+            int same = 1;
+            while(p && q) {
+                if(p->type != q->type) {
+                    same = 0;
+                    break;
+                }
+
+                p = p->next;
+                q = q->argList;
+            }
+
+            if(same && !p && !q)
+                return temp;
+        }
+
+        temp = temp->next;
+    }
+
+    return NULL;
 }

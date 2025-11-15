@@ -4,6 +4,8 @@
 #include "../gsTable/gsTable.h"
 #include "../typeTable/typeTable.h"
 
+int yyerror(const char* msg);
+
 typedef struct GsTableEntry GsTableEntry;
 typedef struct ClassTable ClassTable;
 

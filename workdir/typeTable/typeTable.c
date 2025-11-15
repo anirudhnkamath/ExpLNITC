@@ -30,8 +30,7 @@ TypeTable* createNewType(char* varName, FieldList* fields) {
 
     t->size = size > 0 ? size : 1;
     if(size > HEAP_BLOCK_SIZE) {
-        printf("Error : user-types cannot have more than 8 fields\n");
-        exit(1);
+        yyerror("user-types cannot have more than 8 fields\n");
     }
 
     return t;
@@ -50,8 +49,7 @@ TypeTable* updateType(char* varName, FieldList* fields) {
 
     t->size = size > 0 ? size : 1;
     if(size > HEAP_BLOCK_SIZE) {
-        printf("Error : user-types cannot have more than 8 fields\n");
-        exit(1);
+        yyerror("user-types cannot have more than 8 fields\n");
     }
 
     return t;
@@ -73,8 +71,7 @@ TypeTable* concatTypeTable(TypeTable* head1, TypeTable* head2) {
     TypeTable* temp2 = head2;
     while(temp2) {
         if(searchInTypeTable(head1, temp2->name)) {
-            printf("Error : duplicate type detected\n");
-            exit(1);
+            yyerror("duplicate type detected\n");
         }
 
         temp2 = temp2->next;
@@ -90,8 +87,7 @@ TypeTable* concatTypeTable(TypeTable* head1, TypeTable* head2) {
 TypeTable* validateType(TypeTable* head, char* typeName) {
     TypeTable* t = searchInTypeTable(head, typeName);
     if(!t) {
-        printf("Error : invalid type used\n");
-        exit(1);
+        yyerror("invalid type used\n");
     }
 
     return t;
@@ -148,8 +144,7 @@ FieldList* searchInFieldList(FieldList* head, char* name) {
 FieldList* createField(char *name, TypeTable *type) {
 
     if(!type) {
-        printf("Error : field type not declared\n");
-        exit(1);
+        yyerror("field type not declared\n");
     }
 
     FieldList *f = (FieldList*)malloc(sizeof(FieldList));
@@ -165,8 +160,7 @@ FieldList* concatFieldList(FieldList* head1, FieldList* head2) {
     FieldList* temp2 = head2;
     while(temp2) {
         if(searchInFieldList(head1, temp2->name)) {
-            printf("Error : duplicate fields detected\n");
-            exit(1);
+            yyerror("duplicate fields detected\n");
         }
 
         temp2 = temp2->next;

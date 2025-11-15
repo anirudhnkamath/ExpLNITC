@@ -1,6 +1,8 @@
 #ifndef LABEL_H
 #define LABEL_H
 
+int yyerror(const char* msg);
+
 struct Label {
     char labelName[10];
     int addr;

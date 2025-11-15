@@ -526,11 +526,7 @@ int evaluateMethod(Tnode* fnNode, int selfReg, int vtableReg, FILE* targetFile) 
 
 
     // push space for retval and call function
-    ClsMthdList* foundMthd = searchInMthdDecl(fnNode->left->class->mthdList, fnNode->left->varName);
-    if(!foundMthd) {
-        printf("Error : Invalid method called\n");
-        exit(1);
-    }
+    ClsMthdList* foundMthd = findMthdByArgs(fnNode->left->class->mthdList, fnNode->left->varName, fnNode->left->argList);
     int offset = foundMthd->index;
 
     fprintf(targetFile, "MOV R%d, [R%d]\n", freeReg1, vtableReg);

@@ -9,64 +9,47 @@ class
     animal {
         decl
             str name;
-            int setname(str name);
+
             int speak();
+            int speak(int loudness);
+            
+            int setname(str name);
         enddecl
-
-        int setname(str name) {
-            decl enddecl
-            begin
-                self.name = name;
-                return 1;
-            end
-        }
-
-        int speak() {
-            decl enddecl
-            begin
-                write("Animal sound");
-                return 1;
-            end
-        }
     }
 
     dog extends animal {
         decl
-            str breed;
-            int speak();
-        enddecl
+          
 
-        int speak() {
-            decl enddecl
-            begin
-                write("Bark Bark!");
-                return 1;
-            end
-        }
+            int speak(int loudness);
+            
+            
+            int fetch();
+        enddecl
+    }
+
+    poodle extends dog {
+        decl
+            int cutenesslevel;
+
+            int speak(int loudness);
+            
+            int dotrick();
+        enddecl
     }
 endclass
 
 decl
-    animal a;
-    dog b;
-    animal x;
-    int n;
+    newtype myVar; 
+    poodle myPoodle;
 enddecl
 
 int main() {
-    decl enddecl
+    decl
+        int x;
+    enddecl
     begin
-        read(n);
-
-        if (n > 10) then
-            breakpoint;
-            x = new(animal);
-        else
-            breakpoint;
-            x = new(dog);
-        endif;
-        breakpoint;
-        n = x.speak();
+        x = myPoodle.speak(10);
         return 0;
     end
 }

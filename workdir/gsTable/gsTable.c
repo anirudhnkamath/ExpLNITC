@@ -18,13 +18,11 @@ int nextBinding = STACK_START;
 int getNextBinding(int size) {
 
     if(size <= 0) {
-        printf("Error : Invalid variable size\n");
-        exit(1);
+        yyerror("Invalid variable size\n");
     }
 
     if(nextBinding > STACK_END || nextBinding + size - 1 > STACK_END) {
-        printf("Error: Out of Static Memory\n");
-        exit(1);
+        yyerror("Out of Static Memory\n");
     }
 
     int ret = nextBinding;
@@ -65,8 +63,7 @@ GsTableEntry* concatGsTable(GsTableEntry* head1, GsTableEntry* head2) {
     while(temp) {
         GsTableEntry* found = findInGsTable(head1, temp->varName);
         if(found) {
-            printf("Error : Duplicate variable found\n");
-            exit(1);
+            yyerror("Duplicate variable found\n");
         }
         temp = temp->next;
     }
@@ -130,8 +127,7 @@ GsTableEntry* setGsTableType(GsTableEntry* head, char* typeName) {
     ClassTable* class = searchInClassTable(classTableHead, typeName);
 
     if(!type && !class || type && class) {
-        printf("Error : invalid type in global declarations\n");
-        exit(1);
+        yyerror("invalid type in global declarations\n");
     }
 
     GsTableEntry* temp = head;
@@ -141,8 +137,7 @@ GsTableEntry* setGsTableType(GsTableEntry* head, char* typeName) {
             (temp->isPtr == 1 && class) ||
             (temp->isPtr == 1 && strcmp(type->name, "int") != 0 && strcmp(type->name, "str") != 0)
         ) {
-            printf("Error : user defined or class pointers not allowed\n");
-            exit(1);
+            yyerror("user defined or class pointers not allowed\n");
         }
 
         // function
@@ -153,8 +148,7 @@ GsTableEntry* setGsTableType(GsTableEntry* head, char* typeName) {
         // array
         else if(temp->dimensions) {
             if(class || (type && type->fields)) {
-                printf("Error : user-type or class arrays not allowed\n");
-                exit(1);
+                yyerror("user-type or class arrays not allowed\n");
             }
             
             temp->binding = getNextBinding(temp->size);
@@ -163,8 +157,7 @@ GsTableEntry* setGsTableType(GsTableEntry* head, char* typeName) {
         // pointers
         else if(temp->isPtr == 1) {
             if(class || (type && type->fields)) {
-                printf("Error : pointers only allowed for primitive types\n");
-                exit(1);
+                yyerror("pointers only allowed for primitive types\n");
             }
 
             temp->binding = getNextBinding(1);
@@ -236,8 +229,7 @@ ParamListEntry* createParamListEntry(char* varName, char* typeName, int isPtr) {
     ClassTable* class = searchInClassTable(classTableHead, typeName);
 
     if(!type) {
-        printf("Error : invalid type for parameter\n");
-        exit(1);
+        yyerror("invalid type for parameter\n");
     }
     
     ParamListEntry* n = (ParamListEntry*)malloc(sizeof(ParamListEntry));
@@ -264,8 +256,7 @@ ParamListEntry* concatParamList(ParamListEntry* head1, ParamListEntry* head2) {
     ParamListEntry* temp = head2;
     while(temp) {
         if(findInParamList(head1, temp->varName)) {
-            printf("Error : Duplicate parameters in function declaration\n");
-            exit(1);
+            yyerror("Duplicate parameters in function declaration\n");
         }
         temp = temp->next;
     }
@@ -347,8 +338,7 @@ LsTableEntry* concatLsTable(LsTableEntry* head1, LsTableEntry* head2) {
     while(temp) {
         LsTableEntry* found = findInLsTable(head1, temp->varName);
         if(found) {
-            printf("Error : duplicat local varaible\n");
-            exit(1);
+            yyerror("duplicat local varaible\n");
         }
         temp = temp->next;
     }
@@ -406,8 +396,7 @@ LsTableEntry* setLsTableType(LsTableEntry* head, char* typeName) {
     ClassTable* class = searchInClassTable(classTableHead, typeName);
 
     if(!type) {
-        printf("Error : Invalid type in local declarations\n");
-        exit(1);
+        yyerror("Invalid type in local declarations\n");
     }
     
     LsTableEntry* temp = head;

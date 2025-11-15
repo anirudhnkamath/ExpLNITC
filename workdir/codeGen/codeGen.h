@@ -6,6 +6,8 @@
 #include "../node/node.h"
 #include "../classTable/classTable.h"
 
+int yyerror(const char* msg);
+
 int getStaticAddress(char* varName);
 
 int codeGen(Tnode* node, FILE* targetFile);

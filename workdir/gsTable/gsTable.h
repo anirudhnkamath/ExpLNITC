@@ -4,6 +4,10 @@
 #include "../typeTable/typeTable.h"
 #include "../classTable/classTable.h"
 
+int yyerror(const char* msg);
+
+
+
 typedef struct Tnode Tnode;
 typedef struct ParamListEntry ParamListEntry;
 typedef struct LsTableEntry LsTableEntry;

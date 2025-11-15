@@ -86,18 +86,19 @@ Tnode* createReadNode(Tnode* idNode) {
 
     // read id.id
     else if(idNode->tnodeType == NODE_TUP_FIELD) {
+        if(idNode->right->tnodeType == NODE_FN_CALL) {
+            yyerror("Invalid expression in READ\n");
+        }
     }
 
     else {
-        printf("Error : Invalid node in read\n");
-        exit(1);
+        yyerror("Invalid node in read\n");
     }
 
     if (!idNode->type || 
         (strcmp(idNode->type->name, "int") != 0 && strcmp(idNode->type->name, "str") != 0)
     ) {
-        printf("Error : Invalid read type\n");
-        exit(1);
+        yyerror("Invalid read type\n");
     }
 
     Tnode* n = createEmptyNode();
@@ -113,8 +114,7 @@ Tnode* createWriteNode(Tnode* exprNode) {
     if( !exprNode->type || 
         (strcmp(exprNode->type->name, "int") != 0 && strcmp(exprNode->type->name, "str") != 0)
     ) {
-        printf("Error: Can't write anything other than STR or INT\n");
-        exit(1);
+        yyerror("Can't write anything other than STR or INT\n");
     }
 
     n->left = exprNode;
@@ -130,8 +130,7 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
 
     if(exprNode->tnodeType == NODE_ALLOC) {
         if(!leftNode->type || leftNode->type->fields == NULL) {
-            printf("Error : heap memory can be allocated only for user-defined types\n");
-            exit(1);
+            yyerror("heap memory can be allocated only for user-defined types\n");
         }
         else 
             return n;
@@ -139,8 +138,7 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
 
     if(exprNode->tnodeType == NODE_NULL) {
         if(!leftNode->type || !leftNode->type->fields) {
-            printf("Error : null value can be only assigned to user-defined types\n");
-            exit(1);
+            yyerror("null value can be only assigned to user-defined types\n");
         }
         else 
             return n;
@@ -150,8 +148,7 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
         if( !leftNode->class || 
             (leftNode->class != exprNode->left->class && !isParentClass(exprNode->left->class, leftNode->class))
         ) {
-            printf("Error : type mismatch in assigning NEW\n");
-            exit(1);
+            yyerror("type mismatch in assigning NEW\n");
         }
 
         return n;
@@ -161,8 +158,7 @@ Tnode* createAssignNode(Tnode* leftNode, Tnode* exprNode) {
         (leftNode->isPtr != exprNode->isPtr) ||
         (leftNode->class != exprNode->class && !isParentClass(exprNode->class, leftNode->class))
     ) {
-        printf("Error : type mismatch in assignment\n");
-        exit(1);
+        yyerror("type mismatch in assignment\n");
     }
     
     return n;
@@ -174,8 +170,7 @@ Tnode* createIfElseNode(Tnode* condNode, Tnode* ifNode, Tnode* elseNode) {
     n->tnodeType = NODE_IF_ELSE;
     
     if(!condNode->type || strcmp(condNode->type->name, "bool") != 0) {
-        printf("Error: Mistmatch type\n");
-        exit(1);
+        yyerror("Mistmatch type\n");
     }
 
     n->left = condNode;
@@ -189,8 +184,7 @@ Tnode* createIfNode(Tnode* condNode, Tnode* stmtNode) {
     n->tnodeType = NODE_IF;
     
     if(!condNode->type || strcmp(condNode->type->name, "bool") != 0) {
-        printf("Error: Mistmatch type\n");
-        exit(1);
+        yyerror("Mistmatch type\n");
     }
 
     n->left = condNode;
@@ -204,8 +198,7 @@ Tnode* createLoopNode(int tnodeType, Tnode* condNode, Tnode* stmtNode) {
     n->tnodeType = tnodeType;
 
     if(!condNode->type || strcmp(condNode->type->name, "bool") != 0) {
-        printf("Error: Mistmatch type\n");
-        exit(1);
+        yyerror("Mistmatch type\n");
     }
 
     n->left = condNode;
@@ -229,8 +222,7 @@ Tnode* createArithOpNode(int tnodeType, Tnode* left, Tnode* right) {
     if( !left->type || !right->type || 
         strcmp(left->type->name, "int") != 0 || strcmp(right->type->name, "int") != 0
     ) {
-        printf("Error: invalid type in arith OP\n");
-        exit(1);
+        yyerror("invalid type in arith OP\n");
     }
 
     n->left = left;
@@ -253,8 +245,7 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
     TypeTable* rt = right->type;
 
     if(!lt || !rt) {
-        printf("Error : invalid operands in rel OP\n");
-        exit(1);
+        yyerror("invalid operands in rel OP\n");
     }
 
     if(tnodeType == NODE_EQ || tnodeType == NODE_NEQ) {
@@ -266,13 +257,11 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
         }
 
         if(strcmp(lt->name, rt->name) != 0) {
-            printf("Error : type mismatch in comparison\n");
-            exit(1);
+            yyerror("type mismatch in comparison\n");
         }
 
         if(lt->fields != NULL) {
-            printf("Error : user-defined types cannot be compared\n");
-            exit(1);
+            yyerror("user-defined types cannot be compared\n");
         }
 
         return n;
@@ -280,13 +269,11 @@ Tnode* createRelOpNode(int tnodeType, Tnode* left, Tnode* right) {
 
     else {
         if(strcmp(lt->name, rt->name) != 0) {
-            printf("Error : type mismatch in comparison\n");
-            exit(1);
+            yyerror("type mismatch in comparison\n");
         }
 
         if(lt->fields != NULL) {
-            printf("Error : user-defined types cannot be compared\n");
-            exit(1);
+            yyerror("user-defined types cannot be compared\n");
         }
     }
 
@@ -298,8 +285,7 @@ Tnode* createLogOpNode(int tNodeType, Tnode* left, Tnode* right) {
     if( !left->type || !right->type || 
         strcmp(left->type->name, "bool") != 0 || strcmp(right->type->name, "bool") != 0
     ) {
-        printf("Error: mistmatch type\n");
-        exit(1);
+        yyerror("mistmatch type\n");
     }
 
     Tnode* n = createEmptyNode();
@@ -316,8 +302,7 @@ Tnode* createAddrToNode(Tnode* idNode) {
     validateProperId(idNode);
 
     if(!idNode->type || idNode->type->fields) {
-        printf("Error : pointers only allower with primitive types\n");
-        exit(1);
+        yyerror("pointers only allower with primitive types\n");
     }
 
     Tnode* n = createEmptyNode();
@@ -334,8 +319,7 @@ Tnode* createDerefNode(Tnode* idNode) {
 
     TypeTable* curType; 
     if(idNode->isPtr != 1) {
-        printf("Error : invalid address access\n");
-        exit(1);
+        yyerror("invalid address access\n");
     }
     else curType = idNode->type;
 
@@ -354,8 +338,7 @@ Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
     setIdNodeType(idNode);
 
     if(idNode->gsTableEntry->fLabel == _NA_) {
-        printf("Error : ID doesnt accept aruments\n");
-        exit(1);
+        yyerror("ID doesnt accept aruments\n");
     }
 
     // checking datattypes with declarations
@@ -367,15 +350,13 @@ Tnode* createFnCallNode(Tnode* idNode, Tnode* argListNode) {
             temp1->class != temp2->class ||
             temp1->isPtr != temp2->isPtr
         ) {
-            printf("Error : type mismatch in function call\n");
-            exit(1);
+            yyerror("type mismatch in function call\n");
         }
         temp1 = temp1->next;
         temp2 = temp2->argList;
     }
     if(temp1 || temp2) {
-        printf("Error : invalid function call arguments\n");
-        exit(1);
+        yyerror("invalid function call arguments\n");
     }
 
     n->tnodeType = NODE_FN_CALL;
@@ -396,8 +377,7 @@ Tnode* addArgToArgList(Tnode* list, Tnode* expr) {
 
 Tnode* createReturnNode(Tnode* exprNode) {
     if(!exprNode->type || strcmp(exprNode->type->name, curFnType->name) != 0) {
-        printf("Error : invalid return type for function\n");
-        exit(1);
+        yyerror("invalid return type for function\n");
     }
 
     Tnode* n = createEmptyNode();
@@ -419,14 +399,12 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
             if(tupNode->tnodeType == NODE_ID && strcmp(tupNode->varName, "self") == 0) {
                 ClsFldList* foundField = NULL;
                 if(tupNode->class->fieldList == NULL) {
-                    printf("Error : invalid class field being accessed\n");
-                    exit(1);
+                    yyerror("invalid class field being accessed\n");
                 }
 
                 else foundField = searchInClsFld(tupNode->class->fieldList, fieldNode->varName);
                 if(!foundField) {
-                    printf("Error : invalid field in class\n");
-                    exit(1);
+                    yyerror("invalid field in class\n");
                 }
 
                 Tnode* n = createEmptyNode();
@@ -446,8 +424,7 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
 
             // something else is accessing
             else {
-                printf("Error : private fields cannot be accesses without self pointer\n");
-                exit(1);
+                yyerror("private fields cannot be accesses without self pointer\n");
             }
         }
 
@@ -455,14 +432,12 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
         else {
         
             if(tupNode->type || !tupNode->class->mthdList) {
-                printf("Error : method called on invalid type\n");
-                exit(1);
+                yyerror("method called on invalid type\n");
             }
 
-            ClsMthdList* curMthd = searchInMthdDecl(tupNode->class->mthdList, fieldNode->left->varName);
+            ClsMthdList* curMthd = findMthdByArgs(tupNode->class->mthdList, fieldNode->left->varName, fieldNode->left->argList);
             if(!curMthd) {
-                printf("Error : method called on invalid type\n");
-                exit(1);
+                yyerror("method called on invalid type\n");
             }
 
             ParamListEntry* temp1 = curMthd->paramlist;
@@ -473,8 +448,7 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
                     temp1->class != temp2->class ||
                     temp1->isPtr != temp2->isPtr
                 ) {
-                    printf("Error : conflicting arguments in method call\n");
-                    exit(1);
+                    yyerror("conflicting arguments in method call\n");
                 }
 
                 temp1 = temp1->next;
@@ -482,8 +456,7 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
             }
 
             if(temp1 || temp2) {
-                printf("Error : conflicting arguments in method call\n");
-                exit(1);
+                yyerror("conflicting arguments in method call\n");
             }
 
             Tnode* n = createEmptyNode();
@@ -493,8 +466,7 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
             n->right->left->class = tupNode->class;
 
             if(n->right->class) {
-                printf("Error : methods cannot return classes\n");
-                exit(1);
+                yyerror("methods cannot return classes\n");
             }
 
             n->type = curMthd->type;
@@ -506,14 +478,12 @@ Tnode* createTupEntryNode(Tnode* tupNode, Tnode* fieldNode) {
     else {
         FieldList* foundField = NULL;
         if(tupNode->type->fields == NULL) {
-            printf("Error : invalid user-type being accessed\n");
-            exit(1);
+            yyerror("invalid user-type being accessed\n");
         }
 
         else foundField = searchInFieldList(tupNode->type->fields, fieldNode->varName);
         if(!foundField) {
-            printf("Error : invalide field in user-type\n");
-            exit(1);
+            yyerror("invalide field in user-type\n");
         }
 
         Tnode* n = createEmptyNode();
@@ -541,8 +511,7 @@ Tnode* createFreeNode(Tnode* exprNode) {
         strcmp(exprNode->type->name, "int") == 0 || 
         strcmp(exprNode->type->name, "str") == 0
     ) {
-        printf("Error : primitive values cannot be freed\n");
-        exit(1);
+        yyerror("primitive values cannot be freed\n");
     }
 
     n->left = exprNode;
@@ -568,8 +537,7 @@ Tnode* createMthdCallNode(Tnode* idNode, Tnode* argList) {
 Tnode* createNewNode(Tnode* idNode) {
     ClassTable* class = searchInClassTable(classTableHead, idNode->varName);
     if(!class) {
-        printf("Error : NEW called on invalid class name\n");
-        exit(1);
+        yyerror("NEW called on invalid class name\n");
     }
 
     Tnode* n = createEmptyNode();
@@ -582,8 +550,7 @@ Tnode* createNewNode(Tnode* idNode) {
 
 Tnode* createDeleteNode(Tnode* exprNode) {
     if(!exprNode->class) {
-        printf("Error : variables of non-class type cannot be deleted\n");
-        exit(1);
+        yyerror("variables of non-class type cannot be deleted\n");
     }
 
     Tnode* n = createEmptyNode();
@@ -612,8 +579,7 @@ void setIdNodeType(Tnode* idNode) {
         return;
     }
 
-    printf("Error : Undeclared variable being used\n");
-    exit(1);
+    yyerror("Undeclared variable being used\n");
 }
 
 void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParams) {
@@ -622,24 +588,20 @@ void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParam
     curFnType = idNode->type;
 
     if(!curFnType) {
-        printf("Error : invalid return type for function\n");
-        exit(1);
+        yyerror("invalid return type for function\n");
     }
 
     GsTableEntry* found = findInGsTable(gsTableHead, idNode->varName);
     if(!found) {
-        printf("Error : The defined function was never declared\n");
-        exit(1);
+        yyerror("The defined function was never declared\n");
     }
 
     if(strcmp(retType->name, found->type->name) != 0) {
-        printf("Error : Return type of function definition and declaration conflicts\n");
-        exit(1);
+        yyerror("Return type of function definition and declaration conflicts\n");
     }
 
     if(found->fLabel == _NA_) {
-        printf("Error : Wrong function name in function definition\n");
-        exit(1);
+        yyerror("Wrong function name in function definition\n");
     }
 
     ParamListEntry* declParams = found->paramList;
@@ -650,16 +612,14 @@ void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParam
             temp1->isPtr != temp2->isPtr ||
             strcmp(temp1->varName, temp2->varName) != 0
         ) {
-            printf("Error : Parameters of function definition and declaration conflict\n");
-            exit(1);
+            yyerror("Parameters of function definition and declaration conflict\n");
         }
         temp1 = temp1->next;
         temp2 = temp2->next;
     }
 
     if(temp1 || temp2) {
-        printf("Error : Parameters of function definition and declaration conflict\n");
-        exit(1);
+        yyerror("Parameters of function definition and declaration conflict\n");
     }
 
     return;
@@ -667,8 +627,7 @@ void validateFunction(TypeTable* retType, Tnode* idNode, ParamListEntry* fnParam
 
 void validateProperId(Tnode* idNode) {
     if(idNode->isPtr == 1) {
-        printf("Error : Invalid use of proper ID\n");
-        exit(1);
+        yyerror("Invalid use of proper ID\n");
     }
     
     // not fn and not array
@@ -684,19 +643,16 @@ void validateProperId(Tnode* idNode) {
         (strcmp(idNode->type->name, "int") == 0 || strcmp(idNode->type->name, "str") == 0)
     ) return;
 
-    printf("Error : Invalid use of proper ID\n");
-    exit(1);
+    yyerror("Invalid use of proper ID\n");
 }
 
 void validateArrOffset(Tnode* idNode, Tnode* indexExprNode) {
     if(idNode->lsTableEntry) {
-        printf("Error : Invalid ID being indexed\n");
-        exit(1);
+        yyerror("Invalid ID being indexed\n");
     }
 
     if(idNode->gsTableEntry && idNode->gsTableEntry->dimensions == NULL) {
-        printf("Error : Invalid ID being indexed\n");
-        exit(1);
+        yyerror("Invalid ID being indexed\n");
     }
 
     Tnode* temp1 = idNode->gsTableEntry->dimensions;
@@ -708,31 +664,26 @@ void validateArrOffset(Tnode* idNode, Tnode* indexExprNode) {
     }
 
     if(temp1 || temp2) {
-        printf("Error : invalid indexing\n");
-        exit(1);
+        yyerror("invalid indexing\n");
     }
 }
 
 void validateIdForExpr(Tnode* idNode) {
     if(idNode->gsTableEntry) {
         if(idNode->gsTableEntry->fLabel != _NA_) {
-            printf("Error : invalid ID used in expression\n");
-            exit(1);
+            yyerror("invalid ID used in expression\n");
         }
         if(idNode->gsTableEntry->dimensions) {
-            printf("Error : invalid ID used in expression\n");
-            exit(1);
+            yyerror("invalid ID used in expression\n");
         }
         if(idNode->gsTableEntry->isPtr == 1) {
-            printf("Error : invalid ID used in expression\n");
-            exit(1);
+            yyerror("invalid ID used in expression\n");
         }
     }
 
     else { // in ls table
         if(idNode->isPtr == 1) {
-            printf("Error : invalid ID used in expression\n");
-            exit(1);
+            yyerror("invalid ID used in expression\n");
         }
     }
 }

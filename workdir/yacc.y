@@ -16,6 +16,8 @@
     int yylex(void);
     int yyerror(const char *s);
     void initiateCodeGen(Tnode* node);
+
+    int yylineno;
 %}
 
 %union {
@@ -464,7 +466,9 @@ tupEntry    :   ID DOT ID                       { setIdNodeType($1); $$ = create
 %%
 
 int yyerror(const char* s) {
-    printf("Error: %s\n", s);
+    printf("Error : %s\n", s);
+    printf("Line number : %d\n", yylineno);
+    exit(1);
     return 0;
 }
 
