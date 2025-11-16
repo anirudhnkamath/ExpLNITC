@@ -1,55 +1,46 @@
 type
-    newtype {
-        int a;
-        str b;
-    }
 endtype
 
 class
     animal {
         decl
+            animal son;
             str name;
-
-            int speak();
-            int speak(int loudness);
-            
-            int setname(str name);
+            int say(str word);
+            int sonsay(str word);
         enddecl
-    }
 
-    dog extends animal {
-        decl
-          
+        int sonsay(str word) {
+            decl enddecl
+            begin
+                write("in son");
+                write(word);
+                return 1;
+            end
+        }
 
-            int speak(int loudness);
-            
-            
-            int fetch();
-        enddecl
-    }
-
-    poodle extends dog {
-        decl
-            int cutenesslevel;
-
-            int speak(int loudness);
-            
-            int dotrick();
-        enddecl
+        int say(str word) {
+            decl enddecl
+            begin
+                breakpoint;
+                self.son = new(animal);
+                breakpoint;
+                return(self.son.sonsay(word));
+            end
+        }
     }
 endclass
 
 decl
-    newtype myVar; 
-    poodle myPoodle;
+    animal a;
+    int temp;
 enddecl
 
 int main() {
     decl
-        int x;
     enddecl
     begin
-        x = myPoodle.speak(10);
-        return 0;
+        a = new(animal);
+        return a.say("hi");
     end
 }

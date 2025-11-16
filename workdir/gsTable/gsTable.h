@@ -92,6 +92,7 @@ LsTableEntry* concatLsTable(LsTableEntry* head1, LsTableEntry* head2);
 LsTableEntry* addParamsToLsTable(LsTableEntry* head, ParamListEntry* paramListHead);
 LsTableEntry* setLsTableType(LsTableEntry* head, char* typeName);
 LsTableEntry* insertSelfToLsTable(LsTableEntry* head);
+void decrLsTableBinding();
 void setLDeclBinding(LsTableEntry* head);
 void freeLsTable();
 void printLsTable();

@@ -85,8 +85,8 @@ program     :   tDeclBlock clsDeclBlock gDeclBlock fDefBlock mainBlock
 
 /*  CLASS DECLARATIONS  */
 
-clsDeclBlock:   CLASS clsDeclList ENDCLASS      { classTableHead = setClassTableIndices(classTableHead); }
-            |   CLASS ENDCLASS                  { classTableHead = NULL; }
+clsDeclBlock:   CLASS clsDeclList ENDCLASS      { }
+            |   CLASS ENDCLASS                  { }
             ;
 
 clsDeclList :   clsDeclList clsDecl             {}
@@ -141,13 +141,7 @@ mthdDef     :   type ID LPAR paramList RPAR LCURL lDeclBlock    {
                                                                     $4 = addSelfToParams($4);
                                                                     lsTableHead = addParamsToLsTable(lsTableHead, $4);
                                                                 
-                                                                    LsTableEntry* cur = lsTableHead;
-                                                                    while(cur) {
-                                                                        if(cur->binding < 0)
-                                                                            cur->binding -= 1;
-                                                                        cur = cur->next;
-                                                                    }
-
+                                                                    decrLsTableBinding(targetFile);
                                                                 }
                                                     body RCURL  {
                                                                     $$ = $9;

@@ -172,8 +172,10 @@ void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsM
     // set index and count
 
     int fIndex = 0;
-    for (ClsFldList* f = finalFldList; f; f = f->next)
-        f->index = fIndex++;
+    for (ClsFldList* f = finalFldList; f; f = f->next) {
+        f->index = fIndex;
+        fIndex += ((f->clsType) ? 2 : 1);
+    }
     clsEntry->fieldCount = fIndex;
 
     int mIndex = 0;
@@ -191,7 +193,16 @@ void updateClassTableEntry(char* name, ClsFldList* clsFldList, ClsMthdList* clsM
 
     // reserve space before global variables for vtable
     getNextBinding(MAX_FIELDS);
+
+    int curCount = 0;
+    ClassTable* temp = classTableHead;
+    while(temp) {
+        curCount += 1;
+        temp = temp->next;
+    }
     
+    clsEntry->index = curCount - 1;
+
     return;
 }
 
@@ -267,7 +278,8 @@ ClsFldList* createClsFld(char* type, char* name) {
 
     ClassTable* ctype = searchInClassTable(classTableHead, type);
     if (ctype) {
-        yyerror("class-type fields not allowed\n");
+        newFld->clsType = ctype;
+        return newFld;
     }
 
     printf("Error: undefined type for class field\n");

@@ -420,6 +420,16 @@ LsTableEntry* insertSelfToLsTable(LsTableEntry* head) {
     return concatLsTable(head, n);
 }
 
+void decrLsTableBinding() {
+    // decrenent the binding for self.vtableptr
+    LsTableEntry* cur = lsTableHead;
+    while(cur) {
+    if(cur->binding < 0)
+        cur->binding -= 1;
+    cur = cur->next;
+    }
+}
+
 void setLDeclBinding(LsTableEntry* head) {
     int bind = LDECL_BINDING_START;
 

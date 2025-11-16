@@ -127,6 +127,7 @@ void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
 
         // vtable
         int vTableAddr = STACK_START + (rhs->left->class->index * MAX_FIELDS);
+
         fprintf(targetFile, "ADD R%d, 1\n", storeReg);
         fprintf(targetFile, "MOV [R%d], %d\n", storeReg, vTableAddr);
 
@@ -521,7 +522,7 @@ int evaluateMethod(Tnode* fnNode, int selfReg, int vtableReg, FILE* targetFile) 
     if(fnNode->left->class) {
         fprintf(targetFile, "PUSH R%d\n", selfReg);
         fprintf(targetFile, "MOV R%d, [R%d]\n", freeReg1, vtableReg);
-        fprintf(targetFile, "PUSH R%d skldjflsdkjf\n", freeReg1);
+        fprintf(targetFile, "PUSH R%d\n", freeReg1);
     }
 
 
