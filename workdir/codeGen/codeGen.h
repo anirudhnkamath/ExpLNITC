@@ -8,8 +8,6 @@
 
 int yyerror(const char* msg);
 
-int getStaticAddress(char* varName);
-
 int codeGen(Tnode* node, FILE* targetFile);
 
 int evaluateExpression(Tnode* node, FILE* targetFile);
@@ -20,8 +18,6 @@ void generateIfElse(Tnode* node, FILE* targetFile);
 void generateRepeatUntil(Tnode* node, FILE* targetFile);
 void generateDoWhile(Tnode* node, FILE* targetFile);
 
-void generateWriteCode(Tnode* node, FILE* targetFile);
-void generateReadCode(Tnode* node, FILE* targetFile);
 void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile);
 
 int evaluateFunction(Tnode* fnNode, FILE* targetFile);

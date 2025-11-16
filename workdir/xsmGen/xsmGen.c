@@ -14,10 +14,12 @@ void setHeader(FILE* targetFile) {
 void xsmInit(FILE* targetFile) {
     int freeReg1 = getFreeRegister();
     fprintf(targetFile, "MOV R%d, \"Init\"\n", freeReg1);
-    fprintf(targetFile, "PUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\n", freeReg1, freeReg1, freeReg1, freeReg1, freeReg1);
-    fprintf(targetFile, "CALL 0\n");
-    fprintf(targetFile, "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n", freeReg1, freeReg1, freeReg1, freeReg1, freeReg1);
+    fprintf(targetFile, "PUSH R%d\n", freeReg1);
     releaseRegister(freeReg1);
+
+    fprintf(targetFile, "ADD SP, 4\n");
+    fprintf(targetFile, "CALL 0\n");
+    fprintf(targetFile, "SUB SP, 5\n");
 }
 
 void initialiseMainFn(FILE* targetFile) {
@@ -54,10 +56,10 @@ void printToConsole(int regIndex, FILE* targetFile) {
 
     fprintf(targetFile, "CALL 0\n");
 
+    // dont waste lines
     fprintf(
         targetFile,
-        "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n",
-        freeReg, freeReg, freeReg, freeReg, freeReg
+        "SUB SP, 5\n"
     );
 
     releaseRegister(freeReg);
@@ -68,16 +70,16 @@ void exitProgram(FILE* targetFile) {
 
     fprintf(
         targetFile,
-        "MOV R%d, \"Exit\"\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\nPUSH R%d\n",
-        freeReg, freeReg, freeReg, freeReg, freeReg, freeReg
+        "MOV R%d, \"Exit\"\nPUSH R%d\nADD SP, 4\n",
+        freeReg, freeReg
     );
 
     fprintf(targetFile, "CALL 0\n");
 
+    // dont waste lines
     fprintf(
         targetFile,
-        "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n",
-        freeReg, freeReg, freeReg, freeReg, freeReg
+        "SUB SP, 5\n"
     );
 
     releaseRegister(freeReg);
@@ -197,10 +199,10 @@ void readFromConsole(Tnode* idNode, FILE* targetFile) {
 
     fprintf(targetFile, "CALL 0\n");
 
+    // dont waste lines
     fprintf(
         targetFile,
-        "POP R%d\nPOP R%d\nPOP R%d\nPOP R%d\nPOP R%d\n",
-        freeReg, freeReg, freeReg, freeReg, freeReg
+        "SUB SP, 5\n"
     );
 
     releaseRegister(freeReg);
@@ -238,18 +240,12 @@ int xsmAlloc(FILE* targetFile) {
     int reg1 = getFreeRegister();
     fprintf(targetFile, "MOV R%d, \"Alloc\"\n", reg1);
     fprintf(targetFile, "PUSH R%d\n", reg1);
-    fprintf(targetFile, "PUSH R%d\n", reg1);
-    fprintf(targetFile, "PUSH R%d\n", reg1);
-    fprintf(targetFile, "PUSH R%d\n", reg1);
-    fprintf(targetFile, "PUSH R%d\n", reg1);
+    fprintf(targetFile, "ADD SP, 4\n");
 
     fprintf(targetFile, "CALL 0\n");
 
     fprintf(targetFile, "POP R%d\n", retReg);
-    fprintf(targetFile, "POP R%d\n", reg1);
-    fprintf(targetFile, "POP R%d\n", reg1);
-    fprintf(targetFile, "POP R%d\n", reg1);
-    fprintf(targetFile, "POP R%d\n", reg1);
+    fprintf(targetFile, "SUB SP, 4\n");
     
     releaseRegister(reg1);
     return retReg;
@@ -263,17 +259,11 @@ void xsmFree(Tnode* tupNode, FILE* targetFile) {
     fprintf(targetFile, "MOV R%d, \"Free\"\n", freeReg);
     fprintf(targetFile, "PUSH R%d\n", freeReg);
     fprintf(targetFile, "PUSH R%d\n", addrReg);
-    fprintf(targetFile, "PUSH R%d\n", freeReg);
-    fprintf(targetFile, "PUSH R%d\n", freeReg);
-    fprintf(targetFile, "PUSH R%d\n", freeReg);
+    fprintf(targetFile, "ADD SP, 3\n");
 
     fprintf(targetFile, "CALL 0\n");
 
-    fprintf(targetFile, "POP R%d\n", freeReg);
-    fprintf(targetFile, "POP R%d\n", freeReg);
-    fprintf(targetFile, "POP R%d\n", freeReg);
-    fprintf(targetFile, "POP R%d\n", freeReg);
-    fprintf(targetFile, "POP R%d\n", freeReg);
+    fprintf(targetFile, "SUB SP, 5\n");
 
     releaseRegister(freeReg);
     releaseRegister(addrReg);
@@ -290,17 +280,7 @@ void initialiseVTable(FILE* targetFile) {
         ClsMthdList* method = class->mthdList;
         while(method) {
             int addr = base + method->index;
-
-            int reg1 = getFreeRegister();
-            int reg2 = getFreeRegister();
-
-            fprintf(targetFile, "MOV R%d, F%d\n", reg1, method->fLabel);
-            fprintf(targetFile, "MOV R%d, %d\n", reg2, addr);
-            fprintf(targetFile, "MOV [R%d], R%d\n", reg2, reg1);
-
-            releaseRegister(reg1);
-            releaseRegister(reg2);
-
+            fprintf(targetFile, "MOV [%d], F%d\n", addr, method->fLabel);
             method = method->next;
         }
 
@@ -322,8 +302,7 @@ void initialiseVTable(FILE* targetFile) {
 
         int reg1 = getFreeRegister();
 
-        fprintf(targetFile, "MOV R%d, %d\n", reg1, varAddr);
-        fprintf(targetFile, "MOV [R%d], %d\n", reg1, vTableAddr);
+        fprintf(targetFile, "MOV [%d], %d\n", varAddr, vTableAddr);
 
         releaseRegister(reg1);
         var = var->next;

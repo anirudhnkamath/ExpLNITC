@@ -18,12 +18,14 @@ int codeGen(Tnode* node, FILE* targetFile) {
             break;
 
         case NODE_WRITE : {
-            generateWriteCode(node->left, targetFile);
+            int exprReg = evaluateExpression(node, targetFile);
+            printToConsole(exprReg, targetFile);
+            releaseRegister(exprReg);
             break;
         }
 
         case NODE_READ : {
-            generateReadCode(node->left, targetFile);
+            readFromConsole(node, targetFile);
             break;
         }
 
@@ -104,18 +106,6 @@ int codeGen(Tnode* node, FILE* targetFile) {
     }
 
     return -1;
-}
-
-void generateWriteCode(Tnode* node, FILE* targetFile) {
-
-    int exprReg = evaluateExpression(node, targetFile);
-
-    printToConsole(exprReg, targetFile);
-    releaseRegister(exprReg);
-}
-
-void generateReadCode(Tnode* node, FILE* targetFile) {
-    readFromConsole(node, targetFile);
 }
 
 void generateAssignCode(Tnode* lhs, Tnode* rhs, FILE* targetFile) {
@@ -519,18 +509,15 @@ int evaluateMethod(Tnode* fnNode, int selfReg, int vtableReg, FILE* targetFile) 
     }
 
     // push self value
-    if(fnNode->left->class) {
-        fprintf(targetFile, "PUSH R%d\n", selfReg);
-        fprintf(targetFile, "MOV R%d, [R%d]\n", freeReg1, vtableReg);
-        fprintf(targetFile, "PUSH R%d\n", freeReg1);
-    }
+    fprintf(targetFile, "PUSH R%d\n", selfReg);
+    fprintf(targetFile, "MOV R%d, [R%d]\n", freeReg1, vtableReg);
+    fprintf(targetFile, "PUSH R%d\n", freeReg1);
 
 
     // push space for retval and call function
     ClsMthdList* foundMthd = findMthdByArgs(fnNode->left->class->mthdList, fnNode->left->varName, fnNode->left->argList);
     int offset = foundMthd->index;
 
-    fprintf(targetFile, "MOV R%d, [R%d]\n", freeReg1, vtableReg);
     fprintf(targetFile, "ADD R%d, %d\n", freeReg1, offset);
 
     resetRegisters();

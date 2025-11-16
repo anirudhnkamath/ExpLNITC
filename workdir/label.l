@@ -16,7 +16,7 @@ jz_instr (JZ[ ]{register},[ ]{label_name})
 jnz_instr (JNZ[ ]{register},[ ]{label_name})
 jmp_instr (JMP[ ]{label_name})
 call_instr (CALL[ ]{label_name})
-mov_instr (MOV[ ]{register},[ ]{label_name})
+mov_instr (MOV[ ]\[{number}\],[ ]{label_name})
 main_header MAIN
 
 %%

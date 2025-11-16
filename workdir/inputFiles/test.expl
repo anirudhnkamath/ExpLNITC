@@ -2,45 +2,55 @@ type
 endtype
 
 class
-    animal {
+    parent{
         decl
-            animal son;
-            str name;
-            int say(str word);
-            int sonsay(str word);
+            int x;
+            int f(int a);
         enddecl
 
-        int sonsay(str word) {
-            decl enddecl
+        int f(int a){
+            decl
+            enddecl
             begin
-                write("in son");
-                write(word);
+                write("in parent");
                 return 1;
             end
         }
 
-        int say(str word) {
-            decl enddecl
+    }
+
+    child extends parent{
+        decl
+            int y;
+            int f(int a);
+        enddecl
+
+        int f(int a){
+            decl
+            enddecl
             begin
-                breakpoint;
-                self.son = new(animal);
-                breakpoint;
-                return(self.son.sonsay(word));
+                write("in child class");
+                return 0;
             end
         }
     }
 endclass
 
+
 decl
-    animal a;
-    int temp;
+    parent obj;
 enddecl
 
-int main() {
+int main(){
     decl
+        int x;
     enddecl
+
     begin
-        a = new(animal);
-        return a.say("hi");
+        obj = new(parent);
+        x = obj.f(1);
+        obj = new(child);
+        x = obj.f(1);
+        return 0;
     end
 }
